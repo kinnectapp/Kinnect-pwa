@@ -25,7 +25,7 @@ const Splash: React.FC = () => {
 
   const goToSignup = () => {
     // change to your signup route
-    navigate("/auth/signup");
+    navigate("/auth/register");
   };
 
   const goToLogin = () => {
