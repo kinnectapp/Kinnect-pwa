@@ -25,7 +25,7 @@ const Register: React.FC = () => {
         onSubmit={(e) => {
           e.preventDefault();
           // call signup API then:
-          navigate("/auth/register/verify");
+          navigate("/auth/set-password");
         }}
       >
         <div className="space-y-3 pr-2">

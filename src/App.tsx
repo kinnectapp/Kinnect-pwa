@@ -3,6 +3,8 @@ import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import SplashRoutes from "./routes/SplashRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
+import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
+import OnboardingRoutes from "./routes/OnboardingRoutes";
 
 export const Fallback: React.FC = () => (
   <div className="flex min-h-[70vh] w-full flex-1 items-center justify-center bg-white">
@@ -26,7 +28,10 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/*" element={<SplashRoutes />} />
         <Route path="/auth/*" element={<AuthRoutes />} />
+        <Route path="/onboarding/*" element={<OnboardingRoutes />} />
       </Routes>
+
+      <PWAUpdatePrompt />
     </BrowserRouter>
   );
 };

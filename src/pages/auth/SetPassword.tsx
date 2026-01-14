@@ -11,7 +11,7 @@ import {
 import { PasswordRules } from "@/components/auth/PasswordRules";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 
-const ResetPassword: React.FC = () => {
+const SetPassword: React.FC = () => {
   const navigate = useNavigate();
 
   const [password, setPassword] = React.useState("");
@@ -22,31 +22,28 @@ const ResetPassword: React.FC = () => {
 
   const ruleState = getPasswordRuleState(password);
   const allValid = areAllPasswordRulesValid(ruleState);
-  const passwordsMatch =
-    confirmPassword.length > 0 && confirmPassword === password;
+  const passwordsMatch = confirmPassword.length > 0 && confirmPassword === password;
 
   const canSubmit = allValid && passwordsMatch;
 
   return (
     <AuthLayout
-      title="Reset Password"
-      description="Input and confirm your new password below"
+      title="Set Password"
+      description="Input and confirm your password below"
     >
       <form
         className="flex h-full flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           if (!canSubmit) return;
-          // call reset API here
-          navigate("/auth/login");
+          // send to API then move to verify-email or home
+          navigate("/auth/register/verify");
         }}
       >
         <div className="space-y-4">
-          {/* new password */}
+          {/* password */}
           <div className="space-y-1.5">
-            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
-              Password
-            </Label>
+            <Label className="text-[14px] font-[500] text-[#1C1C1C]">Password</Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
@@ -71,7 +68,7 @@ const ResetPassword: React.FC = () => {
             <PasswordRules state={ruleState} visible={touched} />
           </div>
 
-          {/* confirm new password */}
+          {/* confirm password */}
           <div className="space-y-1.5">
             <Label className="text-[14px] font-[500] text-[#1C1C1C]">
               Confirm Password
@@ -101,8 +98,12 @@ const ResetPassword: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <Button type="submit" className="w-full" disabled={!canSubmit}>
-            Reset Password
+          <Button
+            type="submit"
+             className="w-full"
+            disabled={!canSubmit}
+          >
+            Submit
           </Button>
         </div>
       </form>
@@ -110,4 +111,4 @@ const ResetPassword: React.FC = () => {
   );
 };
 
-export default ResetPassword;
+export default SetPassword;

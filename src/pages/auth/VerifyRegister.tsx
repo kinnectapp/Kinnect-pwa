@@ -18,7 +18,7 @@ const VerifyRegister: React.FC = () => {
         onSubmit={(e) => {
           e.preventDefault();
           // verify and then:
-          navigate("/auth/login");
+          navigate("/onboarding");
         }}
       >
         <OtpInput onChange={setCode} />
