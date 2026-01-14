@@ -1,8 +1,7 @@
   import { LazyRoute } from "@/App";
 import Login from "@/pages/auth/Login";
 import Siignup from "@/pages/auth/Siignup";
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+ import { Routes, Route } from "react-router-dom";
 
 const AuthRoutes = () => (
   <Routes>
