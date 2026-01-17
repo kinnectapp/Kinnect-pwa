@@ -1,49 +1,91 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { useLogin } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { hashString } from "@/utils/utils";
+
+const loginSchema = z.object({
+  email: z.string().min(3, "Email or username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
+  const { login, isLoggingIn } = useLogin();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    login({
+      email: data.email,
+      password: hashString(data.password),
+    }, {
+      onSuccess: () => {
+        navigate("/app");
+      },
+      onError: (error) => {
+        console.error("Login failed:", error);
+        toast.error("Login failed. Please check your credentials and try again.", { duration: 4000, style: { borderRadius: '8px', background: '#333', color: 'red' } });
+      },
+    });
+  };
 
   return (
     <AuthLayout
       title="Sign In to your account"
       description="Fill the fields below to sign in to your account"
     >
-      <form
-        className="flex h-full flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          // handle real login here
-          navigate("/app");
-        }}
-      >
+      <form className="flex h-full flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
-              Email Address or Username
+            <Label htmlFor="email" className="text-[14px] font-[500] text-[#1C1C1C]">
+              Email Address
             </Label>
             <Input
+              id="identifier"
               type="text"
               placeholder="Enter email or username"
-              className="h-11 border-[#E4E4F0] text-[14px]"
+              className={`h-11 border-[#E4E4F0] text-[14px] ${errors.email ? "border-red-500" : ""}`}
+              {...register("email")}
             />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
+            <Label htmlFor="password" className="text-[14px] font-[500] text-[#1C1C1C]">
               Password
             </Label>
             <div className="relative">
               <Input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter password"
-                className="h-11 border-[#E4E4F0] pr-10 text-[14px]"
+                className={`h-11 border-[#E4E4F0] pr-10 text-[14px] ${errors.password ? "border-red-500" : ""}`}
+                {...register("password")}
               />
               <button
                 type="button"
@@ -53,21 +95,22 @@ const Login: React.FC = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password.message}</p>
+            )}
           </div>
 
           <div className="mt-1 text-right">
-            <Link
-              to="/auth/forgot-password"
-              className="text-[16px] underline font-medium text-[#55288D]"
-            >
+            <Link to="/auth/forgot-password" className="text-[16px] underline font-medium text-[#55288D]">
               Forgot Password?
             </Link>
           </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-4">
-          <Button type="submit"  >
-            Sign In
+          <Button type="submit" disabled={isLoggingIn}>
+            {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoggingIn ? "Signing In..." : "Sign In"}
           </Button>
 
           <p className="text-center text-[13px] text-[#6C6C80]">
@@ -78,27 +121,23 @@ const Login: React.FC = () => {
           </p>
 
           <div className="mt-2 border-t border-dashed border-[#E4E4F0] pt-4 space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-full border-[#E4E4F0] text-[14px]"
-            >
-              <span className="mr-2 text-lg">G</span>
-              Continue with Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-full border-[#E4E4F0] text-[14px]"
-            >
-              <span className="mr-2 text-lg"></span>
-              Continue with Apple
-            </Button>
+             <SocialLoginButtons />
           </div>
         </div>
       </form>
     </AuthLayout>
   );
 };
+
+const SocialLoginButtons = () => (
+  <>
+    <Button variant="outline" className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]">
+      <span className="mr-2 text-lg">G</span> Continue with Google
+    </Button>
+    <Button variant="outline" className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]">
+      <span className="mr-2 text-lg"></span> Continue with Apple
+    </Button>
+  </>
+);
 
 export default Login;
