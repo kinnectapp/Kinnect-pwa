@@ -5,7 +5,7 @@ import SplashRoutes from "./routes/SplashRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
 import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
 import OnboardingRoutes from "./routes/OnboardingRoutes";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
 import AppRoutes from "./routes/AppRoutes";
 
 export const Fallback: React.FC = () => (
