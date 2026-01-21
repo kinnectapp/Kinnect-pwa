@@ -125,7 +125,7 @@ const PersonalityTest: React.FC = () => {
           backgroundImage: `url(${Confetti})`,
           backgroundSize: "contain",
         }}
-        className="h-[100dvh]  flex border border-red-500  px-6 pt-8 pb-6 "
+        className="h-[100dvh]  flex  px-6 pt-8 pb-6 "
       >
         <div className="flex flex-1 gap-3 justify-center flex-col items-center">
           <SuccessIcon />
