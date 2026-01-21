@@ -10,8 +10,10 @@ const AppRoutes = () => (
   <Routes>
     <Route element={<MainComponent />}>
       <Route path="/" element={<LazyRoute Component={HomePage} />} />
-      {/* Move interests here if it should share the layout */}
-      <Route path="community" element={<LazyRoute Component={CommunityPage} />} />
+      <Route
+        path="community"
+        element={<LazyRoute Component={CommunityPage} />}
+      />
       <Route path="chats" element={<LazyRoute Component={ChatPage} />} />
       <Route path="profile" element={<LazyRoute Component={ProfilePage} />} />
     </Route>
