@@ -6,31 +6,65 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
- 
+
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
- background: #37185D;
+  background: #37185d;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-body{
-   max-width: 1025px;
+body {
+  max-width: 1025px;
   /* border: 1px solid red; */
   margin: auto;
   min-height: 100dvh;
- 
 }
 
+.background-gradient {
+  background: linear-gradient(
+    to right,
+    #4d0142,
+    #4d0142,
+    #4d0142,
+    #4d0142,
+    #150212c8,
+    #330b64,
+    #330b64
+  );
+
+  
+}
+
+.profile-match-gradient {
+  background: linear-gradient(
+    to bottom,  
+    #0B0116 300px,  
+    #fff 300px  
+  );
+}
+
+
+.splash-gradient {
+  background: linear-gradient(
+   
+    
+    #4d014200,
+    #00000068,
+    #00000086,
+    #000000
+  );
+
+  
+}
 
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
   }
-
 }
 
 @layer base {
