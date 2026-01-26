@@ -1,8 +1,7 @@
 // ProfileComplete.tsx
 import { SuccessIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+ import {  useNavigate } from "react-router-dom";
 import Confetti from "../../assets/images/confetti.svg";
 import { ArrowRight } from "lucide-react";
 

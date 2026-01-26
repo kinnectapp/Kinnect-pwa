@@ -57,7 +57,7 @@ const WhereNext = () => {
         </Link>
 
         <Link to="/onboarding/community">
-          <div className=" mb-6 text-[#fff] bg-gradient-to-r from-[#55288D]   via-[#2B042599] to-[#850070]   p-4 rounded-[8px] w-full">
+          <div className=" mb-6 text-[#fff] background-gradient  p-4 rounded-[8px] w-full">
             <CommunityIcon />
             <div className="font-semibold text-[18px] mt-4 mb-2 ">
               Join A Community

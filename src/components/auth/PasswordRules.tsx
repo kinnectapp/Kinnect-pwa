@@ -1,6 +1,5 @@
 import React from "react";
-import { CheckCircle2, Circle } from "lucide-react";
-import type { PasswordRuleState } from "@/lib/password-rules";
+ import type { PasswordRuleState } from "@/lib/password-rules";
 import { VerifyIcon } from "../icons";
 
 type PasswordRulesProps = {

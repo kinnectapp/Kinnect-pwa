@@ -1,8 +1,8 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+ import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/logo.svg";
 import { Button } from "@/components/ui/button";
 const Communities = () => {
+  const navigate = useNavigate();
   const Communities = [
     {
       name: "Relationship Advice",
@@ -44,29 +44,27 @@ const Communities = () => {
         </p>
       </div>
 
+      {Communities.map((data, i) => (
+        <div
+          key={i}
+          className="border min-h-[180px] mb-5 rounded-[8px] p-4 bg-[#FBF8FF] border-[#55288D66]"
+        >
+          <p className="font-semibold mb-2 text-[18px] text-[#1C1C1C]">
+            {data?.name}
+          </p>
+          <p className="text-[12px] mb-6 max-w-[90%]">{data.descriptions}</p>
 
-      {
-        Communities.map((data, i)=>(
-<div key={i} className="border min-h-[180px] mb-5 rounded-[8px] p-4 bg-[#FBF8FF] border-[#55288D66]">
-        <p className="font-semibold mb-2 text-[18px] text-[#1C1C1C]">
-         {data?.name}
-        </p>
-        <p className="text-[12px] mb-6 max-w-[90%]">
-       {data.descriptions}
-        </p>
-
-        <Button className="h-[34px] w-full text-[12px]" variant={"secondary"}>
-          Tap To Join
-        </Button>
-      </div>
-        ))
-      }
-
-      
+          <Button className="h-[34px] w-full text-[12px]" variant={"secondary"}>
+            Tap To Join
+          </Button>
+        </div>
+      ))}
 
       {/* bottom area */}
       <div className="mt-6 space-y-2">
-        <Button className="w-full">Submit</Button>
+        <Button onClick={() => navigate("/app")} className="w-full">
+          Submit
+        </Button>
       </div>
     </div>
   );

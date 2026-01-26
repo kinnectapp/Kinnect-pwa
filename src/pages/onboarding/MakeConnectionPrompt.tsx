@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/logo.svg";
 import BgPattern from "../../assets/images/onboarding-pattern.svg";
-import { DealbreakerIcon, PersonalityIcon, ProfilesetupIcon, StarIcon } from "@/components/icons";
+import { DealbreakerIcon,  ProfilesetupIcon } from "@/components/icons";
 
 const MakeConnectionPrompt: React.FC = () => {
   const navigate = useNavigate();
