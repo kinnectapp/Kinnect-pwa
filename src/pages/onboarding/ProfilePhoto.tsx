@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import   { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, X, Plus, ImageIcon, Trash2 } from "lucide-react";
+import { ChevronLeft,   Plus, ImageIcon, Trash2 } from "lucide-react";
 
 const ProfilePhoto = () => {
   const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
