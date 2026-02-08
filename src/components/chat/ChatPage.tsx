@@ -137,23 +137,21 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-white">
-        <div className="flex-1">
-          <ChatHeader
-            userName="Theressa Webb"
-            userAge={24}
-            lastSeen="Wed June 22, 2024"
-            avatarUrl="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
-          />
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto">
+    <div className="flex flex-col h-[100dvh] bg-gray-50">
+      <ChatHeader
+        userName="Theressa Webb"
+        userAge={24}
+        lastSeen="Wed June 22, 2024"
+        avatarUrl="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
+      />
+      <div className="flex-1 mt-16 mb-[200px] overflow-y-auto">
         <MessageList messages={messages} isTyping={isTyping} />
         <div ref={messagesEndRef} />
       </div>
-      <QuickReplies onReplyClick={handleQuickReply} />
-      <MessageInput onSendMessage={handleSendMessage} />
+      <div className="  fixed w-full bottom-0  ">
+        <QuickReplies onReplyClick={handleQuickReply} />
+        <MessageInput onSendMessage={handleSendMessage} />
+      </div>
     </div>
   );
 };

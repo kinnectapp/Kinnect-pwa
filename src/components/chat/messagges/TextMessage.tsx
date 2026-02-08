@@ -17,13 +17,13 @@ const TextMessage: React.FC<TextMessageProps> = ({ message }) => {
   return (
     <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       <div
-        className={`max-w-xs px-4 py-2 rounded-2xl ${
+        className={`max-w-xs px-4 py-2 rounded-md ${
           isUser
-            ? "bg-purple-500 text-white rounded-br-none"
+            ? "bg-[#55288D] text-white rounded-br-none"
             : "bg-gray-100 text-gray-900 rounded-bl-none"
         }`}
       >
-        <p className="text-sm leading-relaxed break-words">{message.content}</p>
+        <p className="text-xs leading-relaxed break-words">{message.content}</p>
       </div>
       <div
         className={`flex flex-col justify-end text-xs text-gray-400 gap-1 ${

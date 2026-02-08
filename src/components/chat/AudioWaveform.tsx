@@ -46,7 +46,7 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
   return (
     <div className="flex items-center gap-2 flex-1">
       <svg
-        className="w-20 h-8"
+        className="w-20 h-5"
         viewBox="0 0 80 32"
         preserveAspectRatio="none"
       >
@@ -60,7 +60,7 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
               key={index}
               x={x}
               y={16 - height / 2}
-              width={80 / waveform.length - 1}
+              width={60 / waveform.length - 1}
               height={height}
               fill={color}
               rx="1"
@@ -68,7 +68,7 @@ const AudioWaveform: React.FC<AudioWaveformProps> = ({
           );
         })}
       </svg>
-      <span className={`text-xs font-medium ${isDark ? "text-white" : "text-purple-600"}`}>
+      <span className={`text-xs font-medium ${isDark ? "text-white" : "text-[#55288D]"}`}>
         {Math.floor(duration)}s
       </span>
     </div>

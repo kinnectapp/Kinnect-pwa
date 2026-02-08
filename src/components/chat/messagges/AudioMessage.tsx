@@ -26,24 +26,24 @@ const AudioMessage: React.FC<AudioMessageProps> = ({
   return (
     <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
       <div
-        className={`flex items-center gap-3 px-4 py-3 rounded-2xl ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-md ${
           isUser
-            ? "bg-purple-500 rounded-br-none"
+            ? "bg-[#55288D] rounded-br-none"
             : "bg-purple-100 rounded-bl-none"
         }`}
       >
         <button
           onClick={onPlayToggle}
-          className={`flex-shrink-0 p-2 rounded-full transition-colors ${
+          className={`flex-shrink-0 p-1 rounded-full transition-colors ${
             isUser
               ? "bg-white/20 hover:bg-white/30 text-white"
               : "bg-purple-200 hover:bg-purple-300 text-purple-600"
           }`}
         >
           {isPlaying ? (
-            <Pause className="w-4 h-4" />
+            <Pause className="w-3 h-3" />
           ) : (
-            <Play className="w-4 h-4" />
+            <Play className="w-3 h-3" />
           )}
         </button>
         <AudioWaveform
