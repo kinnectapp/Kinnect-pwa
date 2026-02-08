@@ -1,5 +1,6 @@
 import { LazyRoute } from "@/App";
 import ChatPage from "@/pages/app/chat";
+import ChatidPage from "@/pages/app/ChatIdPage";
 import CommunityPage from "@/pages/app/community";
 import HomePage from "@/pages/app/home";
 import MatchProfile from "@/pages/app/MatchProfile";
@@ -9,6 +10,8 @@ import { Routes, Route } from "react-router-dom";
 
 const AppRoutes = () => (
   <Routes>
+    <Route path="chat/:id" element={<LazyRoute Component={ChatidPage} />} />
+
     <Route element={<MainComponent />}>
       <Route path="" element={<LazyRoute Component={HomePage} />} />
       <Route

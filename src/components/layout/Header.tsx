@@ -4,7 +4,7 @@ import { BellIcon, UserProfiileIcon } from "../icons";
 
 export const Header: React.FC = () => {
   return (
-    <header className="flex items-center justify-between sticky top-0 bg-white px-4 py-4">
+    <header className="flex z-[9999] items-center justify-between sticky top-0 bg-white px-4 py-4">
       <Logo />
 
       <div className="flex items-center gap-3">
