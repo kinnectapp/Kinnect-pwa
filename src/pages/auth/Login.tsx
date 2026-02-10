@@ -38,18 +38,29 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    login({
-      email: data.email,
-      password: hashString(data.password),
-    }, {
-      onSuccess: () => {
-        navigate("/app");
+    login(
+      {
+        email: data.email,
+        password: hashString(data.password),
       },
-      onError: (error) => {
-        console.error("Login failed:", error);
-        toast.error("Login failed. Please check your credentials and try again.", { duration: 4000, style: { borderRadius: '8px', background: '#333', color: 'red' } });
+      {
+        onSuccess: () => {
+          navigate("/app");
+        },
+        onError: (error: any) => {
+          // Extract actual error message from API response
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Login failed. Please check your credentials and try again.";
+
+          toast.error(errorMessage, {
+            duration: 4000,
+            style: { borderRadius: "8px", background: "#333", color: "red" },
+          });
+        },
       },
-    });
+    );
   };
 
   return (
@@ -57,10 +68,16 @@ const Login: React.FC = () => {
       title="Sign In to your account"
       description="Fill the fields below to sign in to your account"
     >
-      <form className="flex h-full flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex h-full flex-col gap-4"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-[14px] font-[500] text-[#1C1C1C]">
+            <Label
+              htmlFor="email"
+              className="text-[14px] font-[500] text-[#1C1C1C]"
+            >
               Email Address
             </Label>
             <Input
@@ -76,7 +93,10 @@ const Login: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-[14px] font-[500] text-[#1C1C1C]">
+            <Label
+              htmlFor="password"
+              className="text-[14px] font-[500] text-[#1C1C1C]"
+            >
               Password
             </Label>
             <div className="relative">
@@ -101,7 +121,10 @@ const Login: React.FC = () => {
           </div>
 
           <div className="mt-1 text-right">
-            <Link to="/auth/forgot-password" className="text-[16px] underline font-medium text-[#55288D]">
+            <Link
+              to="/auth/forgot-password"
+              className="text-[16px] underline font-medium text-[#55288D]"
+            >
               Forgot Password?
             </Link>
           </div>
@@ -121,7 +144,7 @@ const Login: React.FC = () => {
           </p>
 
           <div className="mt-2 border-t border-dashed border-[#E4E4F0] pt-4 space-y-3">
-             <SocialLoginButtons />
+            <SocialLoginButtons />
           </div>
         </div>
       </form>
@@ -131,10 +154,16 @@ const Login: React.FC = () => {
 
 const SocialLoginButtons = () => (
   <>
-    <Button variant="outline" className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]">
+    <Button
+      variant="outline"
+      className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]"
+    >
       <span className="mr-2 text-lg">G</span> Continue with Google
     </Button>
-    <Button variant="outline" className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]">
+    <Button
+      variant="outline"
+      className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]"
+    >
       <span className="mr-2 text-lg"></span> Continue with Apple
     </Button>
   </>

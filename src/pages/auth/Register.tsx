@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,78 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { toast } from "sonner";
+
+interface RegistrationData {
+  firstname: string;
+  lastname: string;
+  username: string;
+  email: string;
+  phone: string;
+  gender: string;
+  dob: string;
+}
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState<RegistrationData>({
+    firstname: "",
+    lastname: "",
+    username: "",
+    email: "",
+    phone: "",
+    gender: "",
+    dob: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.firstname.trim())
+      newErrors.firstname = "First name is required";
+    if (!formData.lastname.trim()) newErrors.lastname = "Last name is required";
+    if (!formData.username.trim()) newErrors.username = "Username is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.dob) newErrors.dob = "Date of birth is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
 
   return (
     <AuthLayout
@@ -24,7 +93,14 @@ const Register: React.FC = () => {
         className="flex h-full flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
-          // call signup API then:
+
+          if (!validateForm()) {
+            toast.error("Please fill in all required fields");
+            return;
+          }
+
+          // Store registration data in sessionStorage to pass to SetPassword page
+          sessionStorage.setItem("registrationData", JSON.stringify(formData));
           navigate("/auth/set-password");
         }}
       >
@@ -35,18 +111,34 @@ const Register: React.FC = () => {
                 First Name
               </Label>
               <Input
+                name="firstname"
                 placeholder="First name"
-                className="h-11 border-[#E4E4F0] text-[14px]"
+                value={formData.firstname}
+                onChange={handleChange}
+                className={`h-11 border-[#E4E4F0] text-[14px] ${
+                  errors.firstname ? "border-red-500" : ""
+                }`}
               />
+              {errors.firstname && (
+                <p className="text-xs text-red-500">{errors.firstname}</p>
+              )}
             </div>
             <div className="flex-1 space-y-1.5">
               <Label className="text-[14px] font-[500] text-[#1C1C1C]">
                 Last Name
               </Label>
               <Input
+                name="lastname"
                 placeholder="Last name"
-                className="h-11 border-[#E4E4F0] text-[14px]"
+                value={formData.lastname}
+                onChange={handleChange}
+                className={`h-11 border-[#E4E4F0] text-[14px] ${
+                  errors.lastname ? "border-red-500" : ""
+                }`}
               />
+              {errors.lastname && (
+                <p className="text-xs text-red-500">{errors.lastname}</p>
+              )}
             </div>
           </div>
 
@@ -55,9 +147,17 @@ const Register: React.FC = () => {
               Username
             </Label>
             <Input
+              name="username"
               placeholder="Username"
-              className="h-11 border-[#E4E4F0] text-[14px]"
+              value={formData.username}
+              onChange={handleChange}
+              className={`h-11 border-[#E4E4F0] text-[14px] ${
+                errors.username ? "border-red-500" : ""
+              }`}
             />
+            {errors.username && (
+              <p className="text-xs text-red-500">{errors.username}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -65,10 +165,18 @@ const Register: React.FC = () => {
               Email Address
             </Label>
             <Input
+              name="email"
               type="email"
               placeholder="sampleemail@kinnect.com"
-              className="h-11 border-[#E4E4F0] text-[14px]"
+              value={formData.email}
+              onChange={handleChange}
+              className={`h-11 border-[#E4E4F0] text-[14px] ${
+                errors.email ? "border-red-500" : ""
+              }`}
             />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -83,10 +191,18 @@ const Register: React.FC = () => {
                 <span className="mr-1">🇳🇬</span> +234
               </button>
               <Input
+                name="phone"
                 placeholder="812 3456 790"
-                className="h-11 flex-1 border-[#E4E4F0] text-[14px]"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`h-11 flex-1 border-[#E4E4F0] text-[14px] ${
+                  errors.phone ? "border-red-500" : ""
+                }`}
               />
             </div>
+            {errors.phone && (
+              <p className="text-xs text-red-500">{errors.phone}</p>
+            )}
           </div>
 
           <div className="flex gap-3">
@@ -94,8 +210,15 @@ const Register: React.FC = () => {
               <Label className="text-[14px] font-[500] text-[#1C1C1C]">
                 Gender
               </Label>
-              <Select>
-                <SelectTrigger className="h-11 border-[#E4E4F0] text-[14px]">
+              <Select
+                value={formData.gender}
+                onValueChange={(value) => handleSelectChange("gender", value)}
+              >
+                <SelectTrigger
+                  className={`h-11 border-[#E4E4F0] text-[14px] ${
+                    errors.gender ? "border-red-500" : ""
+                  }`}
+                >
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,15 +227,26 @@ const Register: React.FC = () => {
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.gender && (
+                <p className="text-xs text-red-500">{errors.gender}</p>
+              )}
             </div>
             <div className="flex-1 space-y-1.5">
               <Label className="text-[14px] font-[500] text-[#1C1C1C]">
                 Date of Birth
               </Label>
               <Input
+                name="dob"
                 type="date"
-                className="h-11 border-[#E4E4F0] text-[14px]"
+                value={formData.dob}
+                onChange={handleChange}
+                className={`h-11 border-[#E4E4F0] text-[14px] ${
+                  errors.dob ? "border-red-500" : ""
+                }`}
               />
+              {errors.dob && (
+                <p className="text-xs text-red-500">{errors.dob}</p>
+              )}
             </div>
           </div>
 
@@ -125,9 +259,7 @@ const Register: React.FC = () => {
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
-          <Button type="submit" >
-            Create account
-          </Button>
+          <Button type="submit">Create account</Button>
 
           <p className="text-center text-[13px] text-[#6C6C80]">
             Already have an account?{" "}

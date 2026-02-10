@@ -6,12 +6,12 @@ export const useLogin = () => {
   const loginToStore = useAuthStore((state) => state.login)
 
 
- const { mutate, isPending} = useMutation({
-    mutationFn: authService.login,
-    onSuccess: (data) => {  
-      loginToStore(data.user, data.token)
-    }
-  })
+const { mutate, isPending} = useMutation({
+  mutationFn: authService.login,
+  onSuccess: (data) => {  
+    loginToStore(data.user, data.token, data.refreshToken)
+  }
+})
 
   return {
     login: mutate,

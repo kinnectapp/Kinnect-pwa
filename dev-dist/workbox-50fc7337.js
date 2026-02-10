@@ -2241,17 +2241,8 @@ define(['exports'], (function (exports) { 'use strict';
       license that can be found in the LICENSE file or at
       https://opensource.org/licenses/MIT.
     */
-    /**
-     * Returns a promise that resolves and the passed number of milliseconds.
-     * This utility is an async/await-friendly version of `setTimeout`.
-     *
-     * @param {number} ms
-     * @return {Promise}
-     * @private
-     */
-    function timeout(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
+  
+    
 
     // @ts-ignore
     try {
@@ -2513,7 +2504,7 @@ define(['exports'], (function (exports) { 'use strict';
         const request = toRequest(key);
         // Run in the next task to avoid blocking other cache reads.
         // https://github.com/w3c/ServiceWorker/issues/1397
-        await timeout(0);
+        
         const effectiveRequest = await this.getCacheKey(request, 'write');
         {
           if (effectiveRequest.method && effectiveRequest.method !== 'GET') {
