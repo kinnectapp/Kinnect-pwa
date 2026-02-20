@@ -20,7 +20,7 @@ export interface SendOtpPayload {
 }
 
 export interface VerifyOtpPayload {
-  otp: number;
+  otp: string;
   email: string;
 }
 
@@ -45,7 +45,7 @@ export interface LogoutPayload {
 }
 
 export interface User {
-  id: string;
+  id: string | number;
   email: string;
   firstname: string;
   lastname: string;
@@ -53,21 +53,34 @@ export interface User {
   gender: string;
   dob: string;
   phone: string;
+  isVerified?: boolean;
+  verified?: boolean;
+  personalityCompleted?: boolean;
+  personalityId?: number | null;
   avatar?: string;
   bio?: string;
-  verified: boolean;
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
+}
+
+export interface LoginApiData {
+  user: User;
+  token?: string;
+  accessToken?: string;
+  refreshToken: string;
+  [key: string]: unknown;
 }
 
 export interface AuthResponse {
   data: {
     user: User;
-    accessToken: string;
+    accessToken?: string;
+    token?: string;
     refreshToken: string;
   };
   message: string;
-  status: boolean;
+  status: boolean | string;
 }
 
 export interface OtpResponse {
@@ -85,6 +98,17 @@ export interface VerifyOtpResponse {
   };
   message: string;
   status: boolean;
+}
+
+export interface VerifyEmailResponse {
+  data: {
+    token?: string;
+    accessToken?: string;
+    refreshToken: string;
+    user?: User;
+  };
+  message: string;
+  status: boolean | string;
 }
 
 export interface ForgotPasswordResponse {
@@ -127,3 +151,86 @@ export interface CompleteProfileResponse {
   message: string;
   status: boolean;
 }
+
+export interface UpdateProfilePayload {
+  username?: string;
+  occupation?: string;
+  incognito?: boolean;
+  phone?: string;
+  dob?: string;
+  gender?: string;
+  bio?: string;
+  religion?: string;
+  bodyType?: string;
+  complexion?: string;
+  education?: string;
+  smokeRate?: string;
+  drinkRate?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  profilePhotos?: string[];
+}
+
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export interface UpdateInterestsPayload {
+  interests: string[];
+}
+
+export interface PersonalityTestPayload {
+  agreeablenessA: number;
+  agreeablenessB: number;
+  agreeablenessC: number;
+  agreeablenessD: number;
+  agreeablenessE: number;
+  conscientiousnessA: number;
+  conscientiousnessB: number;
+  conscientiousnessC: number;
+  conscientiousnessD: number;
+  conscientiousnessE: number;
+  neuroticismA: number;
+  neuroticismB: number;
+  neuroticismC: number;
+  neuroticismD: number;
+  neuroticismE: number;
+  personalityScore: number;
+  personalitySummary: string;
+  personalityPercentage: number;
+  personalityFlag: string;
+  agreeablenessTotal: number;
+  agreeablenessPercentage: number;
+  agreeablenessSummary: string;
+  agreeablenessFlag: string;
+  conscientiousnessTotal: number;
+  conscientiousnessPercentage: number;
+  conscientiousnessSummary: string;
+  conscientiousnessFlag: string;
+  neuroticismTotal: number;
+  neuroticismPercentage: number;
+  neuroticismSummary: string;
+  neuroticismFlag: string;
+  user: Record<string, unknown>;
+}
+
+export interface BookSessionPayload {
+  name: string;
+  email: string;
+  reason: string;
+  date: string;
+  time: string;
+  userId: number;
+}
+
+export type DealBreakerPayload = {
+  preferredReligion: Record<string, number>;
+  smokingRate: Record<string, number>;
+  bodyType: Record<string, number>;
+  complexion: Record<string, number>;
+  education: Record<string, number>;
+};

@@ -18,10 +18,17 @@ import {
   AuthResponse,
   OtpResponse,
   VerifyOtpResponse,
+  VerifyEmailResponse,
   ForgotPasswordResponse,
   ResetPasswordResponse,
   CompleteProfilePayload,
   CompleteProfileResponse,
+  UpdateProfilePayload,
+  ChangePasswordPayload,
+  UpdateInterestsPayload,
+  PersonalityTestPayload,
+  BookSessionPayload,
+  DealBreakerPayload,
 } from "@/lib/types/auth";
 
 export const useAuth = () => {
@@ -167,14 +174,100 @@ export const useAuth = () => {
   const useUpdateProfileMutation = (): UseMutationResult<
     CompleteProfileResponse,
     Error,
-    CompleteProfilePayload
+    UpdateProfilePayload
   > => {
     return useMutation({
-      mutationFn: async (payload: CompleteProfilePayload) => {
-        const response = await http.patch<CompleteProfileResponse>(
+      mutationFn: async (payload: UpdateProfilePayload) => {
+        const response = await http.put<CompleteProfileResponse>(
           endpoints.users.updateProfile,
           payload,
         );
+        return response.data;
+      },
+    });
+  };
+
+  // Get single user mutation
+  const useGetUserMutation = (): UseMutationResult<any, Error, string> => {
+    return useMutation({
+      mutationFn: async (userId: string) => {
+        const response = await http.get(endpoints.users.single(userId));
+        return response.data;
+      },
+    });
+  };
+
+  // Update interests mutation
+  const useUpdateInterestsMutation = (): UseMutationResult<
+    any,
+    Error,
+    UpdateInterestsPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: UpdateInterestsPayload) => {
+        const response = await http.put(
+          endpoints.users.updateInterests,
+          payload,
+        );
+        return response.data;
+      },
+    });
+  };
+
+  // Change password mutation
+  const useChangePasswordMutation = (): UseMutationResult<
+    any,
+    Error,
+    ChangePasswordPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: ChangePasswordPayload) => {
+        const response = await http.put(
+          endpoints.users.changePassword,
+          payload,
+        );
+        return response.data;
+      },
+    });
+  };
+
+  // Add personality test result mutation
+  const useAddPersonalityMutation = (): UseMutationResult<
+    any,
+    Error,
+    PersonalityTestPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: PersonalityTestPayload) => {
+        const response = await http.post(endpoints.personality.add, payload);
+        return response.data;
+      },
+    });
+  };
+
+  // Book session mutation
+  const useBookSessionMutation = (): UseMutationResult<
+    any,
+    Error,
+    BookSessionPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: BookSessionPayload) => {
+        const response = await http.post(endpoints.session.create, payload);
+        return response.data;
+      },
+    });
+  };
+
+  // Add deal breaker mutation
+  const useAddDealBreakerMutation = (): UseMutationResult<
+    any,
+    Error,
+    DealBreakerPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: DealBreakerPayload) => {
+        const response = await http.post(endpoints.dealBreaker.create, payload);
         return response.data;
       },
     });
@@ -243,13 +336,13 @@ export const useAuth = () => {
 
   // Verify email mutation
   const useVerifyEmailMutation = (): UseMutationResult<
-    AuthResponse,
+    VerifyEmailResponse,
     Error,
-    { code: string }
+    VerifyOtpPayload
   > => {
     return useMutation({
-      mutationFn: async (payload: { code: string }) => {
-        const response = await http.post<AuthResponse>(
+      mutationFn: async (payload: VerifyOtpPayload) => {
+        const response = await http.post<VerifyEmailResponse>(
           endpoints.auth.verifyEmail,
           payload,
         );
@@ -279,6 +372,12 @@ export const useAuth = () => {
     useFileUploadMutation,
     useCompleteProfileMutation,
     useUpdateProfileMutation,
+    useChangePasswordMutation,
+    useGetUserMutation,
+    useUpdateInterestsMutation,
+    useAddPersonalityMutation,
+    useAddDealBreakerMutation,
+    useBookSessionMutation,
     useLogoutMutation,
     useRefreshTokenMutation,
     useGoogleAuthMutation,

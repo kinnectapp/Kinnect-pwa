@@ -11,7 +11,9 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { useLogin } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { hashString } from "@/utils/utils";
+import { handleApiError } from "@/api/serviceUtils";
+import useAuth from "@/api/auth";
+import { LoginApiData } from "@/lib/types/auth";
 
 const loginSchema = z.object({
   email: z.string().min(3, "Email or username is required"),
@@ -23,7 +25,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
-  const { login, isLoggingIn } = useLogin();
+  const { login, isLoggingIn, persistSession } = useLogin();
+  const { useSendOtpMutation } = useAuth();
+  const { mutateAsync: resendOtp } = useSendOtpMutation();
 
   const {
     register,
@@ -41,18 +45,54 @@ const Login: React.FC = () => {
     login(
       {
         email: data.email,
-        password: hashString(data.password),
+        password: data.password,
       },
       {
-        onSuccess: () => {
+        onSuccess: async (response: LoginApiData) => {
+          const user = response?.user;
+          const isVerified = Boolean(user?.isVerified ?? user?.verified);
+          const hasCompletedPersonality = Boolean(
+            user?.personalityCompleted || user?.personalityId,
+          );
+
+          if (!user) {
+            toast.error("Login succeeded but user data was not returned.");
+            return;
+          }
+
+          if (!isVerified) {
+            const verificationEmail = user.email || data.email;
+
+            if (verificationEmail) {
+              sessionStorage.setItem("verificationEmail", verificationEmail);
+              try {
+                await resendOtp({ email: verificationEmail });
+              } catch (error: any) {
+                toast.error(handleApiError(error));
+              }
+            }
+
+            toast.error("Account is not verified. Please verify your email.");
+            navigate("/auth/register/verify");
+            return;
+          }
+
+          try {
+            await persistSession(response);
+          } catch (error: any) {
+            toast.error(handleApiError(error));
+            return;
+          }
+
+          if (!hasCompletedPersonality) {
+            navigate("/onboarding/personality_test");
+            return;
+          }
+
           navigate("/app");
         },
         onError: (error: any) => {
-          // Extract actual error message from API response
-          const errorMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Login failed. Please check your credentials and try again.";
+          const errorMessage = handleApiError(error);
 
           toast.error(errorMessage, {
             duration: 4000,

@@ -6,12 +6,15 @@ import { OtpInput } from "./OtpInput";
 import useAuth from "@/api/auth";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 const VerifyRegister: React.FC = () => {
   const navigate = useNavigate();
-  const { useVerifyEmailMutation } = useAuth();
+  const { useVerifyEmailMutation, useSendOtpMutation } = useAuth();
   const { mutate: verifyEmail, isPending } = useVerifyEmailMutation();
+  const { mutate: sendOtp, isPending: isResending } = useSendOtpMutation();
   const login = useAuthStore((state) => state.login);
+  const setTokens = useAuthStore((state) => state.setTokens);
 
   const [code, setCode] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -29,27 +32,57 @@ const VerifyRegister: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      toast.error("Email not found. Please start over.");
+      return;
+    }
+
     if (code.length !== 6) {
       toast.error("Please enter a valid 6-digit code");
       return;
     }
 
     verifyEmail(
-      { code },
+      { email, otp: code },
       {
-        onSuccess: (response) => {
-          // Log user in with response data
-          if (response.data) {
-            login(
-              response.data.user,
-              response.data.accessToken,
-              response.data.refreshToken,
-            );
-            // Clear sessionStorage
-            sessionStorage.removeItem("verificationEmail");
-            toast.success("Email verified successfully!");
-            navigate("/onboarding");
+        onSuccess: async (response) => {
+          const accessToken = response.data?.accessToken || response.data?.token;
+          const refreshToken = response.data?.refreshToken;
+
+          if (!accessToken || !refreshToken) {
+            toast.error("Verification succeeded but tokens were not returned.");
+            return;
           }
+
+          if (response.data?.user) {
+            await login(response.data.user, accessToken, refreshToken);
+          } else {
+            await setTokens(accessToken, refreshToken);
+          }
+
+          // Clear sessionStorage
+          sessionStorage.removeItem("verificationEmail");
+          toast.success("Email verified successfully!");
+          navigate("/onboarding");
+        },
+      },
+    );
+  };
+
+  const handleResendOtp = () => {
+    if (!email) {
+      toast.error("Email not found. Please start over.");
+      return;
+    }
+
+    sendOtp(
+      { email },
+      {
+        onSuccess: () => {
+          toast.success("A new OTP has been sent to your email.");
+        },
+        onError: (error: any) => {
+          toast.error(handleApiError(error));
         },
       },
     );
@@ -75,9 +108,14 @@ const VerifyRegister: React.FC = () => {
 
         <p className="mt-10 text-center text-[14px] text-[#6C6C80]">
           Didn’t get a code?{" "}
-          <span className="font-medium text-[#55288D] text-[14px]">
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={isResending}
+            className="font-medium text-[#55288D] text-[14px] disabled:opacity-60"
+          >
             Resend Code
-          </span>
+          </button>
         </p>
       </form>
     </AuthLayout>

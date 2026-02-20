@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowRight, MoveRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BookSessionIcon,
   CrownIcon,
@@ -7,34 +8,48 @@ import {
   LocationIcon,
   MakeConnectionIcon,
 } from "@/components/icons";
+import { useAuthStore } from "@/store/auth.store";
+import { http } from "@/api/http";
 import { Link, useNavigate } from "react-router-dom";
 import Splash2Img from "../../assets/images/splash2.png";
 
+type Community = {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+  isActive: boolean;
+};
+
+type CommunitiesResponse = {
+  data?: {
+    data?: Community[];
+  };
+};
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [showConnections, setShowConnections] = useState(false);
-  const communities = [
-    {
-      name: "Relationship Advice",
-      members: "1200",
-      coverImage: "",
+  const displayName = user?.firstname || user?.username || "there";
+
+  const { data: communitiesResponse, isLoading: isLoadingCommunities } = useQuery({
+    queryKey: ["active-communities"],
+    queryFn: async () => {
+      const response = await http.get<CommunitiesResponse>(
+        "/community?isActive=true",
+      );
+      return response.data;
     },
-    {
-      name: "Personal Development",
-      members: "1200",
-      coverImage: "",
-    },
-    {
-      name: "For Her",
-      members: "40",
-      coverImage: "",
-    },
-    {
-      name: "For Him",
-      members: "120",
-      coverImage: "",
-    },
-  ];
+  });
+
+  const communities = (communitiesResponse?.data?.data ?? []).slice(0, 4);
+
+  const truncateText = (text: string, maxLength = 60): string => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength).trim()}...`;
+  };
 
   const Connections = [
     {
@@ -72,7 +87,7 @@ const HomePage: React.FC = () => {
           {/* Welcome Section */}
           <section>
             <h1 className="text-[22px] font-semibold text-[#1C1C1C]">
-              Welcome Tade
+              Welcome {displayName}
             </h1>
             <p className="text-[#77707F] leading-[20px] text-sm mt-1">
               Discover and engage with potential matches who share your values
@@ -151,29 +166,46 @@ const HomePage: React.FC = () => {
           <h2 className="font-semibold text-[18px] text-[#55288D] mb-4">
             Kinnect Communities
           </h2>
-          <div className="grid overflow-clip grid-cols-2 gap-3">
-            {communities.map((community, i) => (
-              <Link key={i} to="">
+          {isLoadingCommunities ? (
+            <div className="grid overflow-clip grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, index) => (
                 <div
-                  style={{
-                    backgroundImage: `url(${Splash2Img})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                  className="border overflow-clip flex flex-col justify-end  h-[210px] rounded-[8px]"
+                  key={index}
+                  className="h-[210px] rounded-[8px] bg-[#F3F3F6] animate-pulse border"
                 >
-                  <div className="splash-gradient  py-4 px-2">
-                    <div className="text-[16px] text-white font-semibold">
-                      {community.name}
-                    </div>
-                    <div className="text-[12px] text-[#D5D4D7]">
-                      {community.members} members
-                    </div>
+                  <div className="h-full w-full flex flex-col justify-end p-3">
+                    <div className="h-4 w-3/4 rounded bg-[#E2E2E8]" />
+                    <div className="h-3 w-full rounded bg-[#E2E2E8] mt-2" />
+                    <div className="h-3 w-2/3 rounded bg-[#E2E2E8] mt-1" />
                   </div>
                 </div>
-              </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid overflow-clip grid-cols-2 gap-3">
+              {communities.map((community) => (
+                <Link key={community.id} to="/app/community">
+                  <div
+                    style={{
+                      backgroundImage: `url(${community.image || Splash2Img})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                    className="border overflow-clip flex flex-col justify-end  h-[210px] rounded-[8px]"
+                  >
+                    <div className="splash-gradient  py-4 px-2">
+                      <div className="text-[16px] text-white font-semibold">
+                        {community.name}
+                      </div>
+                      <div className="text-[12px] text-[#D5D4D7]">
+                        {truncateText(community.description)}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <Link to="/onboarding/booksession">

@@ -1,6 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/logo.svg";
+import useAuth from "@/api/auth";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 const ALL_INTERESTS = [
   "Reading",
@@ -29,6 +32,8 @@ const ALL_INTERESTS = [
 
 const Interests: React.FC = () => {
   const navigate = useNavigate();
+  const { useUpdateInterestsMutation } = useAuth();
+  const { mutate: updateInterests, isPending } = useUpdateInterestsMutation();
   const [selected, setSelected] = React.useState<string[]>([]);
 
   const toggleInterest = (value: string) => {
@@ -40,10 +45,19 @@ const Interests: React.FC = () => {
   const canSubmit = selected.length >= 5;
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
-    // send selected interests to API / context here
-    // console.log(selected);
-    navigate("/onboarding/personality_intro"); // change to your next route
+    if (!canSubmit || isPending) return;
+
+    updateInterests(
+      { interests: selected },
+      {
+        onSuccess: () => {
+          navigate("/onboarding/personality_intro");
+        },
+        onError: (error: any) => {
+          toast.error(handleApiError(error));
+        },
+      },
+    );
   };
 
   return (
@@ -92,16 +106,16 @@ const Interests: React.FC = () => {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || isPending}
           className={[
             "w-full mt-4 rounded-full px-6 py-3 text-[15px] font-semibold",
             "transition-opacity",
-            canSubmit
+            canSubmit && !isPending
               ? "bg-[#55288D] text-white "
               : "bg-[#E9E1FF] text-[#A59AD0] opacity-80",
           ].join(" ")}
         >
-          Submit
+          {isPending ? "Submitting..." : "Submit"}
         </button>
 
         

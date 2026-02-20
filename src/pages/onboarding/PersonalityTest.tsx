@@ -1,14 +1,26 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import {
-  PERSONALITY_QUESTIONS,
-  PersonalityQuestion,
-} from "@/data/personality-questions";
 import { Button } from "@/components/ui/button";
 import Confetti from "../../assets/images/confetti.svg";
-import BgPattern from "../../assets/images/onboarding-pattern.svg";
 import { SuccessIcon } from "@/components/icons";
+import useAuth from "@/api/auth";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
+import { PersonalityTestPayload } from "@/lib/types/auth";
+import { personalityQuestions } from "@/lib/utils/constants";
+
+type PersonalityQuestion = {
+  id: number;
+  text: string;
+};
+
+const PERSONALITY_QUESTIONS: PersonalityQuestion[] = personalityQuestions.map(
+  (item, index) => ({
+    id: index + 1,
+    text: item.question,
+  }),
+);
 
 const OPTIONS = [
   "Totally Disagree",
@@ -21,6 +33,120 @@ const OPTIONS = [
 type AnswerValue = 0 | 1 | 2 | 3 | 4;
 
 const TOTAL_QUESTIONS = PERSONALITY_QUESTIONS.length;
+const TRAIT_MAX_SCORE = 25;
+const OVERALL_MAX_SCORE = 75;
+
+const round = (value: number): number => Math.round(value);
+
+const getFlag = (percentage: number): string => {
+  if (percentage < 40) return "LOW";
+  if (percentage < 70) return "MODERATE";
+  return "HIGH";
+};
+
+const getTraitSummary = (trait: string, percentage: number): string => {
+  if (percentage < 40) return `${trait} needs improvement.`;
+  if (percentage < 70) return `${trait} is balanced.`;
+  return `${trait} is a strong trait.`;
+};
+
+const getPersonalitySummary = (
+  agreeablenessPercentage: number,
+  conscientiousnessPercentage: number,
+  neuroticismPercentage: number,
+): string => {
+  const traits = [
+    { name: "agreeableness", value: agreeablenessPercentage },
+    { name: "conscientiousness", value: conscientiousnessPercentage },
+    { name: "neuroticism", value: neuroticismPercentage },
+  ];
+
+  const dominantTrait = traits.reduce((prev, current) =>
+    current.value > prev.value ? current : prev,
+  );
+
+  return `Your dominant trait is ${dominantTrait.name}.`;
+};
+
+const buildPersonalityPayload = (
+  answers: (AnswerValue | null)[],
+): PersonalityTestPayload | null => {
+  if (answers.some((answer) => answer === null)) {
+    return null;
+  }
+
+  const scores = (answers as AnswerValue[]).map((value) => value + 1);
+
+  const agreeableness = scores.slice(0, 5);
+  const conscientiousness = scores.slice(5, 10);
+  const neuroticism = scores.slice(10, 15);
+
+  const agreeablenessTotal = agreeableness.reduce((sum, item) => sum + item, 0);
+  const conscientiousnessTotal = conscientiousness.reduce(
+    (sum, item) => sum + item,
+    0,
+  );
+  const neuroticismTotal = neuroticism.reduce((sum, item) => sum + item, 0);
+
+  const personalityScore =
+    agreeablenessTotal + conscientiousnessTotal + neuroticismTotal;
+
+  const agreeablenessPercentage = round(
+    (agreeablenessTotal / TRAIT_MAX_SCORE) * 100,
+  );
+  const conscientiousnessPercentage = round(
+    (conscientiousnessTotal / TRAIT_MAX_SCORE) * 100,
+  );
+  const neuroticismPercentage = round((neuroticismTotal / TRAIT_MAX_SCORE) * 100);
+  const personalityPercentage = round((personalityScore / OVERALL_MAX_SCORE) * 100);
+
+  const personalitySummary = getPersonalitySummary(
+    agreeablenessPercentage,
+    conscientiousnessPercentage,
+    neuroticismPercentage,
+  );
+
+  return {
+    agreeablenessA: agreeableness[0],
+    agreeablenessB: agreeableness[1],
+    agreeablenessC: agreeableness[2],
+    agreeablenessD: agreeableness[3],
+    agreeablenessE: agreeableness[4],
+    conscientiousnessA: conscientiousness[0],
+    conscientiousnessB: conscientiousness[1],
+    conscientiousnessC: conscientiousness[2],
+    conscientiousnessD: conscientiousness[3],
+    conscientiousnessE: conscientiousness[4],
+    neuroticismA: neuroticism[0],
+    neuroticismB: neuroticism[1],
+    neuroticismC: neuroticism[2],
+    neuroticismD: neuroticism[3],
+    neuroticismE: neuroticism[4],
+    personalityScore,
+    personalitySummary,
+    personalityPercentage,
+    personalityFlag: getFlag(personalityPercentage),
+    agreeablenessTotal,
+    agreeablenessPercentage,
+    agreeablenessSummary: getTraitSummary(
+      "Agreeableness",
+      agreeablenessPercentage,
+    ),
+    agreeablenessFlag: getFlag(agreeablenessPercentage),
+    conscientiousnessTotal,
+    conscientiousnessPercentage,
+    conscientiousnessSummary: getTraitSummary(
+      "Conscientiousness",
+      conscientiousnessPercentage,
+    ),
+    conscientiousnessFlag: getFlag(conscientiousnessPercentage),
+    neuroticismTotal,
+    neuroticismPercentage,
+    neuroticismSummary: getTraitSummary("Neuroticism", neuroticismPercentage),
+    neuroticismFlag: getFlag(neuroticismPercentage),
+    user: {},
+  };
+};
 
 const getCircleColors = (optionIndex: number, selected: boolean) => {
   if (!selected) {
@@ -60,6 +186,9 @@ const getCircleColors = (optionIndex: number, selected: boolean) => {
 const PersonalityTest: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { useAddPersonalityMutation } = useAuth();
+  const { mutate: addPersonality, isPending: isSubmitting } =
+    useAddPersonalityMutation();
 
   const qParam = Number(searchParams.get("q"));
 
@@ -82,6 +211,9 @@ const PersonalityTest: React.FC = () => {
     Array(TOTAL_QUESTIONS).fill(null)
   );
   const [completed, setCompleted] = React.useState(false);
+  const [completionSummary, setCompletionSummary] = React.useState(
+    "Your reliability is a strength, but empathy and emotional stability are areas for improvement, and developing these skills will help you navigate challenging situations.",
+  );
 
   const currentQuestion: PersonalityQuestion =
     PERSONALITY_QUESTIONS[currentIndex];
@@ -102,9 +234,28 @@ const PersonalityTest: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (!canContinue) return;
+    if (!canContinue || isSubmitting) return;
     if (isLast) {
-      setCompleted(true);
+      const payload = buildPersonalityPayload(answers);
+      if (!payload) {
+        toast.error("Please answer all questions before submitting.");
+        return;
+      }
+
+      addPersonality(payload, {
+        onSuccess: (response: any) => {
+          const apiSummary =
+            response?.data?.personality?.personalitySummary ||
+            response?.data?.user?.personalitySummary ||
+            payload.personalitySummary;
+
+          setCompletionSummary(apiSummary);
+          setCompleted(true);
+        },
+        onError: (error: any) => {
+          toast.error(handleApiError(error));
+        },
+      });
       return;
     }
     goToQuestion(currentIndex + 1);
@@ -112,7 +263,7 @@ const PersonalityTest: React.FC = () => {
 
   const handleBack = () => {
     if (currentIndex === 0) {
-      navigate("/quiz/personality-intro");
+      navigate("/onboarding/personality_intro");
       return;
     }
     goToQuestion(currentIndex - 1);
@@ -138,15 +289,13 @@ const PersonalityTest: React.FC = () => {
           </p>
 
           <div className="mt-5 w-full rounded-2xl bg-[#FAF8FB] max-w-[350px] text-center px-4 py-3 text-[14px] leading-relaxed text-[#1C1C1C] border border-[#54278C26]">
-            Your reliability is a strength, but empathy and emotional stability
-            are areas for improvement, and developing these skills will help you
-            navigate challenging situations.
+            {completionSummary}
           </div>
 
           <div className="mt-6 w-full space-y-5">
             <Button
               type="button"
-              onClick={() => navigate("/app/home")}
+              onClick={() => navigate("/onboarding/whats_next")}
               className="w-full "
             >
               Continue
@@ -227,11 +376,11 @@ const PersonalityTest: React.FC = () => {
       <div className="mt-6">
         <Button
           type="button"
-          disabled={!canContinue}
+          disabled={!canContinue || isSubmitting}
           onClick={handleNext}
           className="w-full"
         >
-          {isLast ? "Submit" : "Continue"}
+          {isSubmitting ? "Submitting..." : isLast ? "Submit" : "Continue"}
         </Button>
       </div>
     </div>

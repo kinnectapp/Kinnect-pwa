@@ -37,7 +37,7 @@ const PersonalityIntro: React.FC = () => {
         <Button
           type="button"
           variant={"secondary"}
-          onClick={() => navigate("/app/home")} // or wherever "Maybe Later" goes
+          onClick={() => navigate("/app")} // or wherever "Maybe Later" goes
           className="w-full"
         >
           Maybe Later

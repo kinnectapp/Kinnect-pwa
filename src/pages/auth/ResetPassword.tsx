@@ -3,44 +3,76 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
   areAllPasswordRulesValid,
   getPasswordRuleState,
 } from "@/lib/password-rules";
 import { PasswordRules } from "@/components/auth/PasswordRules";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import useAuth from "@/api/auth";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
+  const { useResetPasswordMutation } = useAuth();
+  const { mutate: resetPassword, isPending } = useResetPasswordMutation();
 
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [touched, setTouched] = React.useState(false);
+  const [resetToken, setResetToken] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const token = sessionStorage.getItem("forgotPasswordToken");
+    if (!token) {
+      toast.error("Reset token not found. Request password recovery again.");
+      navigate("/auth/forgot-password");
+      return;
+    }
+    setResetToken(token);
+  }, [navigate]);
 
   const ruleState = getPasswordRuleState(password);
   const allValid = areAllPasswordRulesValid(ruleState);
   const passwordsMatch =
     confirmPassword.length > 0 && confirmPassword === password;
 
-  const canSubmit = allValid && passwordsMatch;
+  const canSubmit = allValid && passwordsMatch && !!resetToken && !isPending;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    resetPassword(
+      {
+        token: resetToken,
+        password,
+        confirmPassword,
+      },
+      {
+        onSuccess: () => {
+          sessionStorage.removeItem("forgotPasswordToken");
+          sessionStorage.removeItem("forgotPasswordEmail");
+          toast.success("Password reset successful. Please sign in.");
+          navigate("/auth/login");
+        },
+        onError: (error: any) => {
+          toast.error(handleApiError(error));
+        },
+      },
+    );
+  };
 
   return (
     <AuthLayout
       title="Reset Password"
       description="Input and confirm your new password below"
     >
-      <form
-        className="flex h-full flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!canSubmit) return;
-          // call reset API here
-          navigate("/auth/login");
-        }}
-      >
+      <form className="flex h-full flex-col gap-4" onSubmit={handleSubmit}>
         <div className="space-y-4">
           {/* new password */}
           <div className="space-y-1.5">
@@ -102,7 +134,8 @@ const ResetPassword: React.FC = () => {
 
         <div className="mt-6">
           <Button type="submit" className="w-full" disabled={!canSubmit}>
-            Reset Password
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending ? "Resetting..." : "Reset Password"}
           </Button>
         </div>
       </form>

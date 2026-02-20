@@ -23,8 +23,17 @@ interface RegistrationData {
   dob: string;
 }
 
+const COUNTRY_CODES = [
+  { code: "+234", label: "Nigeria (+234)" },
+  { code: "+1", label: "USA/Canada (+1)" },
+  { code: "+44", label: "UK (+44)" },
+  { code: "+233", label: "Ghana (+233)" },
+  { code: "+27", label: "South Africa (+27)" },
+];
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [countryCode, setCountryCode] = useState("+234");
   const [formData, setFormData] = useState<RegistrationData>({
     firstname: "",
     lastname: "",
@@ -99,8 +108,14 @@ const Register: React.FC = () => {
             return;
           }
 
+          const normalizedPhone = formData.phone.replace(/\D/g, "");
+          const payload: RegistrationData = {
+            ...formData,
+            phone: `${countryCode}${normalizedPhone}`,
+          };
+
           // Store registration data in sessionStorage to pass to SetPassword page
-          sessionStorage.setItem("registrationData", JSON.stringify(formData));
+          sessionStorage.setItem("registrationData", JSON.stringify(payload));
           navigate("/auth/set-password");
         }}
       >
@@ -184,12 +199,18 @@ const Register: React.FC = () => {
               Phone Number
             </Label>
             <div className="flex gap-2">
-              <button
-                type="button"
-                className="flex h-11 items-center rounded-md border border-[#E4E4F0] bg-[#FAFAFF] px-3 text-[13px]"
-              >
-                <span className="mr-1">🇳🇬</span> +234
-              </button>
+              <Select value={countryCode} onValueChange={setCountryCode}>
+                <SelectTrigger className="h-11 w-[170px] border-[#E4E4F0] bg-[#FAFAFF] text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_CODES.map((item) => (
+                    <SelectItem key={item.code} value={item.code}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 name="phone"
                 placeholder="812 3456 790"

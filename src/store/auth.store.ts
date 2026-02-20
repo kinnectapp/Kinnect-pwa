@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   accessToken: null,
   refreshToken: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
 
   setUser: async (user: User | null) => {
     if (user) {
@@ -89,6 +89,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   initializeAuth: async () => {
+    set({ isLoading: true });
     try {
       const [storedUser, storedAccessToken, storedRefreshToken] =
         await Promise.all([
@@ -107,6 +108,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
     } catch (error) {
       console.error("Error initializing auth:", error);
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));
