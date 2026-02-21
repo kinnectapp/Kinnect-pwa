@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import useAuth from "@/api/auth";
 import { LoginApiData } from "@/lib/types/auth";
+import { GOOGLE_WEB_CLIENT_ID } from "@/env";
 
 const loginSchema = z.object({
   email: z.string().min(3, "Email or username is required"),
@@ -26,8 +27,11 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
   const { login, isLoggingIn, persistSession } = useLogin();
-  const { useSendOtpMutation } = useAuth();
+  const { useSendOtpMutation, useGoogleAuthMutation } = useAuth();
   const { mutateAsync: resendOtp } = useSendOtpMutation();
+  const { mutateAsync: googleAuth, isPending: isGoogleLoading } =
+    useGoogleAuthMutation();
+  const [isGoogleReady, setIsGoogleReady] = React.useState(false);
 
   const {
     register,
@@ -41,6 +45,50 @@ const Login: React.FC = () => {
     },
   });
 
+  React.useEffect(() => {
+    if (window.google?.accounts?.id) {
+      setIsGoogleReady(true);
+      return;
+    }
+
+    const scriptId = "google-identity-services";
+    const existingScript = document.getElementById(scriptId);
+
+    if (existingScript) {
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setIsGoogleReady(true);
+    document.head.appendChild(script);
+  }, []);
+
+  const finalizeAuth = async (response: LoginApiData) => {
+    const user = response?.user;
+
+    if (!user) {
+      toast.error("Login succeeded but user data was not returned.");
+      return;
+    }
+
+    const hasCompletedPersonality = Boolean(
+      user?.personalityCompleted || user?.personalityId,
+    );
+
+    await persistSession(response);
+
+    if (!hasCompletedPersonality) {
+      navigate("/onboarding/personality_test");
+      return;
+    }
+
+    navigate("/app");
+  };
+
   const onSubmit = (data: LoginFormValues) => {
     login(
       {
@@ -51,9 +99,6 @@ const Login: React.FC = () => {
         onSuccess: async (response: LoginApiData) => {
           const user = response?.user;
           const isVerified = Boolean(user?.isVerified ?? user?.verified);
-          const hasCompletedPersonality = Boolean(
-            user?.personalityCompleted || user?.personalityId,
-          );
 
           if (!user) {
             toast.error("Login succeeded but user data was not returned.");
@@ -78,29 +123,68 @@ const Login: React.FC = () => {
           }
 
           try {
-            await persistSession(response);
+            await finalizeAuth(response);
           } catch (error: any) {
             toast.error(handleApiError(error));
-            return;
           }
-
-          if (!hasCompletedPersonality) {
-            navigate("/onboarding/personality_test");
-            return;
-          }
-
-          navigate("/app");
         },
         onError: (error: any) => {
-          const errorMessage = handleApiError(error);
-
-          toast.error(errorMessage, {
+          toast.error(handleApiError(error), {
             duration: 4000,
             style: { borderRadius: "8px", background: "#333", color: "red" },
           });
         },
       },
     );
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!GOOGLE_WEB_CLIENT_ID) {
+      toast.error("Google web client ID is missing.");
+      return;
+    }
+
+    if (!window.google?.accounts?.id || !isGoogleReady) {
+      toast.error("Google login is still loading. Please try again.");
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_WEB_CLIENT_ID,
+      ux_mode: "popup",
+      callback: async (googleResponse) => {
+        try {
+          const credential = googleResponse?.credential;
+          if (!credential) {
+            toast.error("No Google ID token was returned.");
+            return;
+          }
+
+          // Backend contract:
+          // POST /v1/auth/google { token: <google_id_token> }
+          const response = await googleAuth({ token: credential });
+          const dataNode = response?.data ?? (response as any);
+          const user = dataNode?.user;
+          const token = dataNode?.token || dataNode?.accessToken;
+          const refreshToken = dataNode?.refreshToken;
+
+          if (!user || !token || !refreshToken) {
+            toast.error("Google login response is missing session data.");
+            return;
+          }
+
+          await finalizeAuth({
+            user,
+            token,
+            refreshToken,
+          });
+        } catch (error: any) {
+          toast.error(handleApiError(error));
+        }
+      },
+    });
+
+    window.google.accounts.id.prompt();
   };
 
   return (
@@ -183,8 +267,12 @@ const Login: React.FC = () => {
             </Link>
           </p>
 
-          <div className="mt-2 border-t border-dashed border-[#E4E4F0] pt-4 space-y-3">
-            <SocialLoginButtons />
+          <div className="mt-2 space-y-3 border-t border-dashed border-[#E4E4F0] pt-4">
+            <SocialLoginButtons
+              onGoogleLogin={handleGoogleLogin}
+              isGoogleLoading={isGoogleLoading}
+              isGoogleReady={isGoogleReady}
+            />
           </div>
         </div>
       </form>
@@ -192,17 +280,26 @@ const Login: React.FC = () => {
   );
 };
 
-const SocialLoginButtons = () => (
+const SocialLoginButtons: React.FC<{
+  onGoogleLogin: () => void;
+  isGoogleLoading: boolean;
+  isGoogleReady: boolean;
+}> = ({ onGoogleLogin, isGoogleLoading, isGoogleReady }) => (
   <>
     <Button
       variant="outline"
-      className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]"
+      className="h-10 w-full rounded-full border-[#E4E4F0] text-[14px]"
+      onClick={onGoogleLogin}
+      type="button"
+      disabled={!isGoogleReady || isGoogleLoading}
     >
-      <span className="mr-2 text-lg">G</span> Continue with Google
+      <span className="mr-2 text-lg">G</span>
+      {isGoogleLoading ? "Signing in..." : "Continue with Google"}
     </Button>
     <Button
       variant="outline"
-      className="w-full h-10 rounded-full border-[#E4E4F0] text-[14px]"
+      className="h-10 w-full rounded-full border-[#E4E4F0] text-[14px]"
+      type="button"
     >
       <span className="mr-2 text-lg"></span> Continue with Apple
     </Button>

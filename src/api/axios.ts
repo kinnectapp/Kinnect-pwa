@@ -1,4 +1,4 @@
-import { VITE_API_BASE_URL } from "@/env"
+import { API_BASE_URL } from "@/env"
 import { useAuthStore } from "@/store/auth.store"
 import axios from "axios"
 import { clearStorage } from "./storage"
@@ -9,7 +9,7 @@ import { normalizeApiError } from "./serviceUtils"
 
  
 export const api = axios.create({
-  baseURL: VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
    headers: {
     "Content-Type": "application/json"
   }

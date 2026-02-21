@@ -17,7 +17,7 @@ type BookSessionFormValues = {
 };
 
 const BookSession = () => {
-  const [form] = Form.useForm();
+   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { useBookSessionMutation } = useAuth();
   const { mutate: bookSession, isPending } = useBookSessionMutation();
@@ -53,7 +53,7 @@ const BookSession = () => {
   return (
     <div className="  gap-4 p-4 flex h-[100dvh] flex-col">
       {" "}
-      <div className="flex mb-6 iitems-center gap-2">
+      <div onClick={()=>navigate(-1)} className="flex  mb-6 iitems-center gap-2">
         <ChevronLeft /> Back
       </div>
       <div className="">

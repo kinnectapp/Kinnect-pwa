@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { toast } from "sonner";
+import countryList from "@/data/countryList";
 
 interface RegistrationData {
   firstname: string;
@@ -23,17 +24,222 @@ interface RegistrationData {
   dob: string;
 }
 
-const COUNTRY_CODES = [
-  { code: "+234", label: "Nigeria (+234)" },
-  { code: "+1", label: "USA/Canada (+1)" },
-  { code: "+44", label: "UK (+44)" },
-  { code: "+233", label: "Ghana (+233)" },
-  { code: "+27", label: "South Africa (+27)" },
-];
+type CountryItem = {
+  name: string;
+  iso3: string;
+};
+
+const DIAL_CODES: Record<string, string> = {
+  AFG: "+93",
+  ALB: "+355",
+  DZA: "+213",
+  AND: "+376",
+  AGO: "+244",
+  ARG: "+54",
+  ARM: "+374",
+  AUS: "+61",
+  AUT: "+43",
+  AZE: "+994",
+  BHR: "+973",
+  BGD: "+880",
+  BLR: "+375",
+  BEL: "+32",
+  BLZ: "+501",
+  BEN: "+229",
+  BTN: "+975",
+  BOL: "+591",
+  BIH: "+387",
+  BWA: "+267",
+  BRA: "+55",
+  BRN: "+673",
+  BGR: "+359",
+  BFA: "+226",
+  BDI: "+257",
+  KHM: "+855",
+  CMR: "+237",
+  CAN: "+1",
+  CPV: "+238",
+  CAF: "+236",
+  TCD: "+235",
+  CHL: "+56",
+  CHN: "+86",
+  COL: "+57",
+  COM: "+269",
+  COG: "+242",
+  COD: "+243",
+  CRI: "+506",
+  CIV: "+225",
+  HRV: "+385",
+  CUB: "+53",
+  CYP: "+357",
+  CZE: "+420",
+  DNK: "+45",
+  DJI: "+253",
+  DOM: "+1",
+  ECU: "+593",
+  EGY: "+20",
+  SLV: "+503",
+  GNQ: "+240",
+  ERI: "+291",
+  EST: "+372",
+  SWZ: "+268",
+  ETH: "+251",
+  FIN: "+358",
+  FRA: "+33",
+  GAB: "+241",
+  GMB: "+220",
+  GEO: "+995",
+  DEU: "+49",
+  GHA: "+233",
+  GRC: "+30",
+  GTM: "+502",
+  GIN: "+224",
+  GNB: "+245",
+  GUY: "+592",
+  HTI: "+509",
+  HND: "+504",
+  HUN: "+36",
+  ISL: "+354",
+  IND: "+91",
+  IDN: "+62",
+  IRN: "+98",
+  IRQ: "+964",
+  IRL: "+353",
+  ISR: "+972",
+  ITA: "+39",
+  JAM: "+1",
+  JPN: "+81",
+  JOR: "+962",
+  KAZ: "+7",
+  KEN: "+254",
+  KWT: "+965",
+  KGZ: "+996",
+  LAO: "+856",
+  LVA: "+371",
+  LBN: "+961",
+  LSO: "+266",
+  LBR: "+231",
+  LBY: "+218",
+  LIE: "+423",
+  LTU: "+370",
+  LUX: "+352",
+  MDG: "+261",
+  MWI: "+265",
+  MYS: "+60",
+  MDV: "+960",
+  MLI: "+223",
+  MLT: "+356",
+  MRT: "+222",
+  MUS: "+230",
+  MEX: "+52",
+  MDA: "+373",
+  MNG: "+976",
+  MNE: "+382",
+  MAR: "+212",
+  MOZ: "+258",
+  MMR: "+95",
+  NAM: "+264",
+  NPL: "+977",
+  NLD: "+31",
+  NZL: "+64",
+  NIC: "+505",
+  NER: "+227",
+  NGA: "+234",
+  MKD: "+389",
+  NOR: "+47",
+  OMN: "+968",
+  PAK: "+92",
+  PAN: "+507",
+  PNG: "+675",
+  PRY: "+595",
+  PER: "+51",
+  PHL: "+63",
+  POL: "+48",
+  PRT: "+351",
+  QAT: "+974",
+  ROU: "+40",
+  RUS: "+7",
+  RWA: "+250",
+  SAU: "+966",
+  SEN: "+221",
+  SRB: "+381",
+  SLE: "+232",
+  SGP: "+65",
+  SVK: "+421",
+  SVN: "+386",
+  SOM: "+252",
+  ZAF: "+27",
+  KOR: "+82",
+  SSD: "+211",
+  ESP: "+34",
+  LKA: "+94",
+  SDN: "+249",
+  SUR: "+597",
+  SWE: "+46",
+  CHE: "+41",
+  SYR: "+963",
+  TWN: "+886",
+  TJK: "+992",
+  TZA: "+255",
+  THA: "+66",
+  TGO: "+228",
+  TTO: "+1",
+  TUN: "+216",
+  TUR: "+90",
+  TKM: "+993",
+  UGA: "+256",
+  UKR: "+380",
+  ARE: "+971",
+  GBR: "+44",
+  USA: "+1",
+  URY: "+598",
+  UZB: "+998",
+  VEN: "+58",
+  VNM: "+84",
+  YEM: "+967",
+  ZMB: "+260",
+  ZWE: "+263",
+};
+
+const iso3ToIso2 = (iso3: string): string => {
+  if (!iso3 || iso3.length < 2) return "";
+  if (iso3 === "GBR") return "GB";
+  if (iso3 === "USA") return "US";
+  return iso3.slice(0, 2);
+};
+
+const iso2ToFlag = (iso2: string): string => {
+  if (!iso2 || iso2.length !== 2) return "🏳";
+  return iso2
+    .toUpperCase()
+    .replace(/./g, (char) =>
+      String.fromCodePoint(127397 + char.charCodeAt(0)),
+    );
+};
+
+const COUNTRIES = (countryList as CountryItem[])
+  .filter((country) => DIAL_CODES[country.iso3])
+  .map((country) => {
+    const dialCode = DIAL_CODES[country.iso3];
+    const iso2 = iso3ToIso2(country.iso3);
+    const flag = iso2ToFlag(iso2);
+    return {
+      iso3: country.iso3,
+      name: country.name,
+      dialCode,
+      flag,
+      optionLabel: `${country.name} (${dialCode})`,
+      selectedLabel: `${flag} (${dialCode})`,
+    };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const [countryCode, setCountryCode] = useState("+234");
+  const defaultCountry = COUNTRIES.find((country) => country.iso3 === "NGA");
+  const [selectedCountryIso3, setSelectedCountryIso3] = useState(
+    defaultCountry?.iso3 || "NGA",
+  );
   const [formData, setFormData] = useState<RegistrationData>({
     firstname: "",
     lastname: "",
@@ -109,6 +315,10 @@ const Register: React.FC = () => {
           }
 
           const normalizedPhone = formData.phone.replace(/\D/g, "");
+          const selectedCountry =
+            COUNTRIES.find((item) => item.iso3 === selectedCountryIso3) ||
+            defaultCountry;
+          const countryCode = selectedCountry?.dialCode || "+234";
           const payload: RegistrationData = {
             ...formData,
             phone: `${countryCode}${normalizedPhone}`,
@@ -199,14 +409,20 @@ const Register: React.FC = () => {
               Phone Number
             </Label>
             <div className="flex gap-2">
-              <Select value={countryCode} onValueChange={setCountryCode}>
-                <SelectTrigger className="h-11 w-[170px] border-[#E4E4F0] bg-[#FAFAFF] text-[13px]">
-                  <SelectValue />
+              <Select
+                value={selectedCountryIso3}
+                onValueChange={setSelectedCountryIso3}
+              >
+                <SelectTrigger className="h-11 w-fit border-[#E4E4F0] bg-[#FAFAFF] text-[13px]">
+                  <SelectValue>
+                    {COUNTRIES.find((item) => item.iso3 === selectedCountryIso3)
+                      ?.selectedLabel || "🏳 (+234)"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {COUNTRY_CODES.map((item) => (
-                    <SelectItem key={item.code} value={item.code}>
-                      {item.label}
+                  {COUNTRIES.map((item) => (
+                    <SelectItem key={item.iso3} value={item.iso3}>
+                      {item.optionLabel}
                     </SelectItem>
                   ))}
                 </SelectContent>

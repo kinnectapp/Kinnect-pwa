@@ -3,12 +3,12 @@
  */
 
 import axios, { AxiosInstance } from "axios";
-import { VITE_API_BASE_URL } from "@/env";
+import { API_BASE_URL } from "@/env";
 import { attachAuthInterceptors } from "./http";
 
 export const useHttpFormData = (): { http: AxiosInstance } => {
   const httpFormData = axios.create({
-    baseURL: VITE_API_BASE_URL,
+    baseURL: API_BASE_URL,
     headers: {
       "Content-Type": "multipart/form-data",
     },

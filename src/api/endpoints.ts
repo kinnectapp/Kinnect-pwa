@@ -8,8 +8,8 @@ export const endpoints = {
     forgotPassword: "/auth/forgot-password",
     resetPassword: "/auth/forgot-password/reset",
     logout: "/auth/logout",
-    refreshToken: "/auth/refresh-token",
-    googleAuth: "/auth/google",
+    refreshToken: "/v1/auth/token",
+    googleAuth: "/v1/auth/google",
     appleAuth: "/auth/apple",
   },
   users: {
@@ -32,5 +32,8 @@ export const endpoints = {
   },
   dealBreaker: {
     create: "/deal-breaker",
+  },
+  rating: {
+    create: "/rating",
   },
 };

@@ -5,6 +5,10 @@ import CommunityPage from "@/pages/app/community";
 import HomePage from "@/pages/app/home";
 import MatchProfile from "@/pages/app/MatchProfile";
 import MyProfile from "@/pages/app/myProfile";
+import FAQPage from "@/pages/app/faq";
+import TermsPage from "@/pages/app/terms";
+import PrivacyPolicyPage from "@/pages/app/privacy-policy";
+import SubscriptionsPage from "@/pages/app/subscriptions";
 import ProfilePage from "@/pages/app/profile";
 import MainComponent from "@/pages/main";
 import { Routes, Route } from "react-router-dom";
@@ -29,6 +33,16 @@ const AppRoutes = () => (
     <Route
       path="my-profile"
       element={<LazyRoute Component={MyProfile} />}
+    />
+    <Route path="faqs" element={<LazyRoute Component={FAQPage} />} />
+    <Route path="terms" element={<LazyRoute Component={TermsPage} />} />
+    <Route
+      path="privacy-policy"
+      element={<LazyRoute Component={PrivacyPolicyPage} />}
+    />
+    <Route
+      path="subscriptions"
+      element={<LazyRoute Component={SubscriptionsPage} />}
     />
   </Routes>
 );

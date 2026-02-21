@@ -29,6 +29,8 @@ import {
   PersonalityTestPayload,
   BookSessionPayload,
   DealBreakerPayload,
+  RatingPayload,
+  RatingResponse,
 } from "@/lib/types/auth";
 
 export const useAuth = () => {
@@ -273,6 +275,23 @@ export const useAuth = () => {
     });
   };
 
+  // Add rating & review mutation
+  const useAddRatingMutation = (): UseMutationResult<
+    RatingResponse,
+    Error,
+    RatingPayload
+  > => {
+    return useMutation({
+      mutationFn: async (payload: RatingPayload) => {
+        const response = await http.post<RatingResponse>(
+          endpoints.rating.create,
+          payload,
+        );
+        return response.data;
+      },
+    });
+  };
+
   // Logout mutation
   const useLogoutMutation = (): UseMutationResult<any, Error, void> => {
     return useMutation({
@@ -377,6 +396,7 @@ export const useAuth = () => {
     useUpdateInterestsMutation,
     useAddPersonalityMutation,
     useAddDealBreakerMutation,
+    useAddRatingMutation,
     useBookSessionMutation,
     useLogoutMutation,
     useRefreshTokenMutation,

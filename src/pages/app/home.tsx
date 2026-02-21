@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import { http } from "@/api/http";
 import { Link, useNavigate } from "react-router-dom";
-import Splash2Img from "../../assets/images/splash2.png";
+import WhiteImg from "../../assets/images/white.jpg";
 
 type Community = {
   id: number;
@@ -33,15 +33,16 @@ const HomePage: React.FC = () => {
   const [showConnections, setShowConnections] = useState(false);
   const displayName = user?.firstname || user?.username || "there";
 
-  const { data: communitiesResponse, isLoading: isLoadingCommunities } = useQuery({
-    queryKey: ["active-communities"],
-    queryFn: async () => {
-      const response = await http.get<CommunitiesResponse>(
-        "/community?isActive=true",
-      );
-      return response.data;
-    },
-  });
+  const { data: communitiesResponse, isLoading: isLoadingCommunities } =
+    useQuery({
+      queryKey: ["active-communities"],
+      queryFn: async () => {
+        const response = await http.get<CommunitiesResponse>(
+          "/community?isActive=true",
+        );
+        return response.data;
+      },
+    });
 
   const communities = (communitiesResponse?.data?.data ?? []).slice(0, 4);
 
@@ -187,9 +188,10 @@ const HomePage: React.FC = () => {
                 <Link key={community.id} to="/app/community">
                   <div
                     style={{
-                      backgroundImage: `url(${community.image || Splash2Img})`,
+                      backgroundImage: `url(${community.image || WhiteImg})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
+                      backgroundColor: "#00000033",
                     }}
                     className="border overflow-clip flex flex-col justify-end  h-[210px] rounded-[8px]"
                   >
@@ -208,7 +210,7 @@ const HomePage: React.FC = () => {
           )}
         </section>
 
-        <Link to="/onboarding/booksession">
+        <Link to="/app/subscriptions">
           {" "}
           <div className="flex p-4 mt-6 justify-between items-center  background-gradient text-[#fff] w-full">
             <div className="flex items-center gap-4">

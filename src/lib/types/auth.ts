@@ -227,6 +227,17 @@ export interface BookSessionPayload {
   userId: number;
 }
 
+export interface RatingPayload {
+  review: string;
+  rating: number;
+}
+
+export interface RatingResponse {
+  data?: Record<string, unknown>;
+  message: string;
+  status: boolean | string;
+}
+
 export type DealBreakerPayload = {
   preferredReligion: Record<string, number>;
   smokingRate: Record<string, number>;

@@ -21,16 +21,18 @@ type CommunitiesResponse = {
 const Communities = () => {
   const navigate = useNavigate();
 
-  const { data: communitiesResponse, isLoading: isLoadingCommunities } =
-    useQuery({
-      queryKey: ["active-communities"],
-      queryFn: async () => {
-        const response = await http.get<CommunitiesResponse>(
-          "/community?isActive=true",
-        );
-        return response.data;
-      },
-    });
+  const {
+    data: communitiesResponse,
+    //  isLoading: isLoadingCommunities
+  } = useQuery({
+    queryKey: ["active-communities"],
+    queryFn: async () => {
+      const response = await http.get<CommunitiesResponse>(
+        "/community?isActive=true",
+      );
+      return response.data;
+    },
+  });
   const communities = (communitiesResponse?.data?.data ?? []).slice(0, 4);
 
   return (
@@ -56,12 +58,14 @@ const Communities = () => {
           key={community.id}
           className="border flex flex-col justify-between min-h-[180px] mb-5 rounded-[8px] p-4 bg-[#FBF8FF] border-[#55288D66]"
         >
-        <div className="">
+          <div className="">
             <p className="font-semibold mb-2 text-[18px] text-[#1C1C1C]">
-            {community.name}
-          </p>
-          <p className="text-[12px] mb-6 max-w-[90%]">{community.description}</p>
-        </div>
+              {community.name}
+            </p>
+            <p className="text-[12px] mb-6 max-w-[90%]">
+              {community.description}
+            </p>
+          </div>
 
           <Button className="h-[34px] w-full text-[12px]" variant={"secondary"}>
             Tap To Join

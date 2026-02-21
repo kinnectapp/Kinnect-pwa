@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, X } from "lucide-react";
+import { Check, ChevronLeft, Eye, EyeOff, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { OtpInput } from "@/pages/auth/OtpInput";
@@ -1010,7 +1010,7 @@ const DealBreakersModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         Review the traits you've marked as deal breakers to ensure your
         connections align with your preferences.
       </p>
-      <div className="mt-4 max-h-[420px] space-y-3 overflow-auto pr-1">
+      <div className="mt-4 max-h-[60vh] space-y-3 overflow-auto pr-1">
         {categories.map((section) => (
           <div
             key={section.name}

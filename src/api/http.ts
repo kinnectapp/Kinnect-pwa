@@ -8,7 +8,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import { endpoints } from "@/api/endpoints";
-import { VITE_API_BASE_URL } from "@/env";
+import { API_BASE_URL } from "@/env";
 import { useAuthStore } from "@/store/auth.store";
 import {
   clearStorage,
@@ -22,7 +22,7 @@ import { normalizeApiError } from "./serviceUtils";
 type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const refreshClient = axios.create({
-  baseURL: VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -107,17 +107,18 @@ export const attachAuthInterceptors = (client: AxiosInstance) => {
       isRefreshing = true;
 
       try {
-        const refreshToken = await getRefreshToken();
+        const refreshToken =
+          (await getRefreshToken()) || useAuthStore.getState().refreshToken;
 
         if (!refreshToken) {
           throw new Error("No refresh token available");
         }
 
         const { data } = await refreshClient.post(endpoints.auth.refreshToken, {
-          refreshToken,
+          token: refreshToken,
         });
 
-        const tokenData = data?.data ?? {};
+        const tokenData = data?.data ?? data ?? {};
         const newAccessToken = tokenData.accessToken || tokenData.token;
         const newRefreshToken = tokenData.refreshToken || refreshToken;
 
@@ -153,7 +154,7 @@ export const attachAuthInterceptors = (client: AxiosInstance) => {
 };
 
 export const http = axios.create({
-  baseURL: VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

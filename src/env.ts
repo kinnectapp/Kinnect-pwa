@@ -9,7 +9,7 @@ export const {
 
 // Provide defaults or ensure values are defined
 export const API_BASE_URL =
-  VITE_API_BASE_URL || "https://prod-api.kinnectapp.net/v1";
+  VITE_API_BASE_URL || "http://localhost:4500";
 export const APP_STORE_SECRET = VITE_KINNECT_APP_STORE_SECRET || "";
 export const PROJECT_VERSION = VITE_CURRENT_PROJECT_VERSION || "30";
 export const GOOGLE_AUTH_API =
