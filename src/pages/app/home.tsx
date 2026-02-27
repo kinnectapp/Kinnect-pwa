@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, MoveRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -12,6 +12,10 @@ import { useAuthStore } from "@/store/auth.store";
 import { http } from "@/api/http";
 import { Link, useNavigate } from "react-router-dom";
 import WhiteImg from "../../assets/images/white.jpg";
+import useAuth from "@/api/auth";
+import { setUser } from "@/api/storage";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 type Community = {
   id: number;
@@ -31,7 +35,28 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [showConnections, setShowConnections] = useState(false);
-  const displayName = user?.firstname || user?.username || "there";
+  const displayName = user?.firstname || user?.username || "";
+  const { useGetUserMutation } = useAuth();
+
+  const { mutateAsync: getUserById } = useGetUserMutation();
+
+  const handleSubmit = async () => {
+    try {
+      if (user?.id) {
+        const userResponse = await getUserById(String(user.id));
+        const fetchedUser = userResponse?.data?.resp;
+        if (fetchedUser && typeof fetchedUser === "object") {
+          await setUser(fetchedUser as any);
+        }
+      }
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
+  };
+
+  useEffect(() => {
+    handleSubmit();
+  }, [user]);
 
   const { data: communitiesResponse, isLoading: isLoadingCommunities } =
     useQuery({
@@ -87,7 +112,7 @@ const HomePage: React.FC = () => {
         <div className="px-4  space-y-6">
           {/* Welcome Section */}
           <section>
-            <h1 className="text-[22px] font-semibold text-[#1C1C1C]">
+            <h1 className="text-[22px] capitalize font-semibold text-[#1C1C1C]">
               Welcome {displayName}
             </h1>
             <p className="text-[#77707F] leading-[20px] text-sm mt-1">

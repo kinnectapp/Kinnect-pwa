@@ -64,9 +64,23 @@ const SetPassword: React.FC = () => {
     };
 
     register(payload, {
-      onSuccess: () => {
+      onSuccess: (response: any) => {
+        const registerData = response?.data;
+        if (registerData?.id && registerData?.email) {
+          sessionStorage.setItem(
+            "pendingUser",
+            JSON.stringify({
+              id: registerData.id,
+              email: registerData.email,
+            }),
+          );
+        }
+
         // Store email for verification page
-        sessionStorage.setItem("verificationEmail", registrationData.email);
+        sessionStorage.setItem(
+          "verificationEmail",
+          registerData?.email || registrationData.email,
+        );
         // Clear registration data
         sessionStorage.removeItem("registrationData");
         navigate("/auth/register/verify");

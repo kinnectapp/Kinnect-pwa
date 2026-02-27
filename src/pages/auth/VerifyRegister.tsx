@@ -19,6 +19,18 @@ const VerifyRegister: React.FC = () => {
   const [code, setCode] = React.useState("");
   const [email, setEmail] = React.useState("");
 
+  const getPendingUser = () => {
+    try {
+      const raw = sessionStorage.getItem("pendingUser");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.id || !parsed?.email) return null;
+      return { id: parsed.id, email: parsed.email };
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Get email from sessionStorage
     const storedEmail = sessionStorage.getItem("verificationEmail");
@@ -57,11 +69,17 @@ const VerifyRegister: React.FC = () => {
           if (response.data?.user) {
             await login(response.data.user, accessToken, refreshToken);
           } else {
-            await setTokens(accessToken, refreshToken);
+            const pendingUser = getPendingUser();
+            if (pendingUser) {
+              await login(pendingUser, accessToken, refreshToken);
+            } else {
+              await setTokens(accessToken, refreshToken);
+            }
           }
 
           // Clear sessionStorage
           sessionStorage.removeItem("verificationEmail");
+          sessionStorage.removeItem("pendingUser");
           toast.success("Email verified successfully!");
           navigate("/onboarding");
         },

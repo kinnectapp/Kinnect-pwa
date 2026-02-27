@@ -10,6 +10,26 @@ import {
   getUser as getUserStorage,
 } from "@/api/storage";
 
+type AuthUserInput = Partial<User> & Pick<User, "id" | "email">;
+
+const normalizeUser = (user: AuthUserInput): User => {
+  const now = new Date().toISOString();
+
+  return {
+    id: user.id,
+    email: user.email,
+    firstname: typeof user.firstname === "string" ? user.firstname : "",
+    lastname: typeof user.lastname === "string" ? user.lastname : "",
+    username: typeof user.username === "string" ? user.username : "",
+    gender: typeof user.gender === "string" ? user.gender : "",
+    dob: typeof user.dob === "string" ? user.dob : "",
+    phone: typeof user.phone === "string" ? user.phone : "",
+    createdAt: typeof user.createdAt === "string" ? user.createdAt : now,
+    updatedAt: typeof user.updatedAt === "string" ? user.updatedAt : now,
+    ...user,
+  };
+};
+
 interface AuthStore {
   user: User | null;
   accessToken: string | null;
@@ -18,13 +38,13 @@ interface AuthStore {
   isLoading: boolean;
 
   // Actions
-  setUser: (user: User | null) => Promise<void>;
+  setUser: (user: AuthUserInput | null) => Promise<void>;
   setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   setAccessToken: (token: string) => Promise<void>;
   setRefreshToken: (token: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   login: (
-    user: User,
+    user: AuthUserInput,
     accessToken: string,
     refreshToken: string,
   ) => Promise<void>;
@@ -39,11 +59,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isAuthenticated: false,
   isLoading: true,
 
-  setUser: async (user: User | null) => {
+  setUser: async (user: AuthUserInput | null) => {
+    const normalizedUser = user ? normalizeUser(user) : null;
     if (user) {
-      await setUserStorage(user);
+      await setUserStorage(normalizedUser);
     }
-    set({ user, isAuthenticated: !!user });
+    set({ user: normalizedUser, isAuthenticated: !!normalizedUser });
   },
 
   setTokens: async (accessToken: string, refreshToken: string) => {
@@ -66,12 +87,17 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isLoading: loading });
   },
 
-  login: async (user: User, accessToken: string, refreshToken: string) => {
-    await setUserStorage(user);
+  login: async (
+    user: AuthUserInput,
+    accessToken: string,
+    refreshToken: string,
+  ) => {
+    const normalizedUser = normalizeUser(user);
+    await setUserStorage(normalizedUser);
     await setAccessToken(accessToken);
     await setRefreshToken(refreshToken);
     set({
-      user,
+      user: normalizedUser,
       accessToken,
       refreshToken,
       isAuthenticated: true,
@@ -99,8 +125,19 @@ export const useAuthStore = create<AuthStore>((set) => ({
         ]);
 
       if (storedUser && storedAccessToken) {
+        const normalizedStoredUser =
+          storedUser?.id && storedUser?.email
+            ? normalizeUser(storedUser as AuthUserInput)
+            : null;
+
+        if (!normalizedStoredUser) {
+          await clearStorage();
+          set({ isLoading: false });
+          return;
+        }
+
         set({
-          user: storedUser,
+          user: normalizedStoredUser,
           accessToken: storedAccessToken,
           refreshToken: storedRefreshToken,
           isAuthenticated: true,

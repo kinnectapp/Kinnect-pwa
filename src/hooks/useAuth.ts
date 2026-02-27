@@ -17,7 +17,17 @@ const persistSession = async (data: LoginApiData) => {
     throw new Error("Login succeeded but tokens are missing.");
   }
 
-  await loginToStore(data.user, accessToken, data.refreshToken);
+  const fallbackUser =
+    data.user ||
+    (((data as any)?.id && (data as any)?.email
+      ? { id: (data as any).id, email: (data as any).email }
+      : null) as any);
+
+  if (!fallbackUser) {
+    throw new Error("Login succeeded but user data was not returned.");
+  }
+
+  await loginToStore(fallbackUser, accessToken, data.refreshToken);
 };
 
   return {

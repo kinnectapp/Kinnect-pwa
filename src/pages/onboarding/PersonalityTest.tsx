@@ -335,7 +335,7 @@ const PersonalityTest: React.FC = () => {
         <p className="text-[14px] text-[#C7C1CE]">
           Question {currentQuestion.id} / {TOTAL_QUESTIONS}
         </p>
-        <h2 className="mt-3 text-[18px] font-medium leading-[28px]">
+        <h2 className="mt-3 text-[16px] font-medium leading-[28px]">
           {currentQuestion.text}
         </h2>
       </div>
