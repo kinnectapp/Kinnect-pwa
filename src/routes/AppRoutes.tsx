@@ -15,8 +15,6 @@ import { Routes, Route } from "react-router-dom";
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="chat/:id" element={<LazyRoute Component={ChatidPage} />} />
-
     <Route element={<MainComponent />}>
       <Route index element={<LazyRoute Component={HomePage} />} />
       <Route
@@ -26,6 +24,10 @@ const AppRoutes = () => (
       <Route path="chats" element={<LazyRoute Component={ChatPage} />} />
       <Route path="profile" element={<LazyRoute Component={ProfilePage} />} />
     </Route>
+    <Route
+      path="chats/:channelId"
+      element={<LazyRoute Component={ChatidPage} />}
+    />
     <Route
       path="match_profile"
       element={<LazyRoute Component={MatchProfile} />}

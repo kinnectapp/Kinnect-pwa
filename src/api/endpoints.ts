@@ -15,11 +15,29 @@ export const endpoints = {
   users: {
     list: "/users",
     single: (id: string) => `/user/${id}`,
+    profile: "/profile",
+    matches: "/profile/matches",
     completeProfile: "/users/profile/complete",
     updateProfile: "/profile/update",
     changePassword: "/profile/password/change",
     updateInterests: "/profile/interests",
     deleteAccount: "/users/account",
+    jilt: (id: string) => `/profile/dislike/${id}`,
+    block: (id: string) => `/profile/block/${id}`,
+    proceedToDate: (id: string) => `/profile/date/proceed/${id}`,
+  },
+  admin: {
+    kiki: "/admin/kiki",
+  },
+  community: {
+    list: "/community",
+  },
+  report: {
+    add: "/report/add",
+  },
+  subscription: {
+    sponsor: (reportedUserId: string) =>
+      `/subscription/sponsor/${reportedUserId}`,
   },
   image: {
     upload: "/image/upload",

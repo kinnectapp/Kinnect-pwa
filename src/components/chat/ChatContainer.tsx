@@ -3,11 +3,17 @@
 import React, { useState } from "react";
 import CommunityView from "./CommunityView";
 import MessagesList from "./MessagesList";
+import { useChatStore } from "@/store/chat.store";
+import { useUnreadBadgeCount } from "@/hooks/useUnreadBadge";
 
 type Tab = "messages" | "community";
 
 const ChatContainer: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("messages");
+  const unreadCount = useChatStore((state) => state.unreadCount);
+  
+  // Setup unread badge count management
+  useUnreadBadgeCount();
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -22,7 +28,7 @@ const ChatContainer: React.FC = () => {
                 : "text-[#1C1C1C] hover:text-gray-700"
             }`}
           >
-            Messages
+            Messages {unreadCount > 0 ? `(${unreadCount})` : ""}
           </button>
           <button
             onClick={() => setActiveTab("community")}

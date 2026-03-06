@@ -58,7 +58,18 @@ export interface User {
   personalityCompleted?: boolean;
   personalityId?: number | null;
   avatar?: string;
+  image?: string;
+  profilePhoto?: string;
   bio?: string;
+  streamToken?: string;
+  stream_token?: string;
+  incognito?: boolean;
+  plan?: string;
+  subscriptionPlan?: string;
+  subscriptionType?: string;
+  isPaid?: boolean;
+  isPremium?: boolean;
+  hasActiveSubscription?: boolean;
   createdAt: string;
   updatedAt: string;
   [key: string]: unknown;
