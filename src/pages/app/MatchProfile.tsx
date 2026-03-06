@@ -3,6 +3,10 @@
 import React, { useState } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import MoreOptionsModal from "@/components/MoreOptionsModal";
+import { useNavigate } from "react-router-dom";
+import { chatService } from "@/services/chat.service";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 interface Profile {
   id: string;
@@ -51,13 +55,18 @@ const mockProfiles: Profile = {
 };
 
 export const MatchProfile: React.FC = () => {
-   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const navigate = useNavigate();
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
   const currentProfile = mockProfiles;
 
-  const handleMessage = () => {
-    console.log("[v0] Message clicked for:", currentProfile.name);
-    alert(`Opening message chat with ${currentProfile.name}`);
+  const handleMessage = async () => {
+    try {
+      const channelId = await chatService.ensurePersonalChannel(currentProfile.id);
+      navigate(`/app/chats/${channelId}`);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
   const handleMore = () => {
@@ -65,34 +74,57 @@ export const MatchProfile: React.FC = () => {
     setShowMoreOptions(true);
   };
 
-  const handleProceedToDate = () => {
-    console.log("[v0] Proceed to date:", currentProfile.name);
-    alert(`Proceeding to schedule a date with ${currentProfile.name}`);
-    setShowMoreOptions(false);
+  const handleProceedToDate = async () => {
+    try {
+      await chatService.proceedToDate(currentProfile.id);
+      toast.success(`Date request sent to ${currentProfile.name}`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
-  const handleSponsorPlan = () => {
-    console.log("[v0] Sponsor plan clicked:", currentProfile.name);
-    alert(`Opening sponsor plan for ${currentProfile.name}`);
-    setShowMoreOptions(false);
+  const handleSponsorPlan = async () => {
+    try {
+      await chatService.sponsorUser(currentProfile.id);
+      toast.success(`Sponsor request sent for ${currentProfile.name}`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
-  const handleBlock = () => {
-    console.log("[v0] Block user:", currentProfile.name);
-    alert(`${currentProfile.name} has been blocked`);
-    setShowMoreOptions(false);
+  const handleBlock = async () => {
+    try {
+      await chatService.blockUser(currentProfile.id);
+      toast.success(`${currentProfile.name} has been blocked`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
-  const handleReport = () => {
-    console.log("[v0] Report user:", currentProfile.name);
-    alert(`Report submitted for ${currentProfile.name} (anonymous)`);
-    setShowMoreOptions(false);
+  const handleReport = async () => {
+    try {
+      await chatService.reportUser({
+        reportedUserId: currentProfile.id,
+        reason: "Reported from profile",
+      });
+      toast.success(`Report submitted for ${currentProfile.name}`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
-  const handleJilt = () => {
-    console.log("[v0] Jilt user:", currentProfile.name);
-    alert(`${currentProfile.name} removed from matches`);
-    setShowMoreOptions(false);
+  const handleJilt = async () => {
+    try {
+      await chatService.jiltUser(currentProfile.id);
+      toast.success(`${currentProfile.name} removed from matches`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
   return (
@@ -103,7 +135,7 @@ export const MatchProfile: React.FC = () => {
         <div className="w-full max-w-sm transform transition-all duration-300">
           <ProfileCard
             profile={currentProfile}
-             onMessage={handleMessage}
+            onMessage={handleMessage}
             onMore={handleMore}
           />
         </div>

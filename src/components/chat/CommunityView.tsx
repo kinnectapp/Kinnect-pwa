@@ -1,173 +1,187 @@
-"use client";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { ensureStreamConnected } from "@/services/stream-chat.service";
+import { useAuthStore } from "@/store/auth.store";
+import type { Channel } from "stream-chat";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
+import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
 
-import React, { useState } from "react";
-
-interface CommunityGroup {
-  id: string;
-  name: string;
-  avatar: string;
-  description: string;
-  memberCount: number;
-  joinedDate?: string;
-  members?: {
-    id: string;
-    name: string;
-    avatar: string;
-  }[];
-}
+const toPreview = (channel: Channel): CachedChannelPreview => {
+  const resolvedChannelId = channel.id || channel.cid.split(":")[1];
+  const lastMessage = channel.state.messages[channel.state.messages.length - 1];
+  return {
+    id: resolvedChannelId,
+    cid: channel.cid,
+    name: String(channel.data?.name || "Community Channel"),
+    image: String(channel.data?.image || "/pwa-192x192.png"),
+    lastMessageText: lastMessage?.text || "No messages yet",
+    lastMessageAt: lastMessage?.created_at
+      ? String(lastMessage.created_at)
+      : undefined,
+    unreadCount: channel.countUnread(),
+  };
+};
 
 const CommunityView: React.FC = () => {
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const cachedChannels = useChatStore((state) => state.communityChannels);
+  const setCommunityChannels = useChatStore(
+    (state) => state.setCommunityChannels,
+  );
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const communities: CommunityGroup[] = [
-    {
-      id: "1",
-      name: "Kiki",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-      description: "Need help! Let's chat",
-      memberCount: 1,
-      joinedDate: "5 mins ago",
-    },
-    {
-      id: "2",
-      name: "Relationship Advice",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
-      description: "Share and discuss relationship topics",
-      memberCount: 256,
-      joinedDate: "3 weeks ago",
-    },
-    {
-      id: "3",
-      name: "Personal Development",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-      description: "Grow and improve yourself every day",
-      memberCount: 512,
-      joinedDate: "2 months ago",
-      members: [
-        {
-          id: "1",
-          name: "Alex",
-          avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-        },
-        {
-          id: "2",
-          name: "Jordan",
-          avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-        },
-        {
-          id: "3",
-          name: "Casey",
-          avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-        },
-      ],
-    },
-  ];
+  const loadChannels = async () => {
+    if (!user?.id) return;
 
-  const selectedGroupData = communities.find((g) => g.id === selectedGroup);
+    setIsRefreshing(true);
+    setHasError(false);
+    try {
+      const client = await ensureStreamConnected(user);
+      const queried = await client.queryChannels(
+        { type: "groupmessaging", members: { $in: [String(user.id)] } },
+        { last_message_at: -1 },
+        { state: true, watch: true, limit: 30 },
+      );
 
-  if (selectedGroup && selectedGroupData) {
+      setChannels(queried);
+      setCommunityChannels(queried.map((channel) => toPreview(channel)));
+      setHasLoadedOnce(true);
+      setHasError(false);
+    } catch (error) {
+      const errorMsg = handleApiError(error);
+      setErrorMessage(errorMsg);
+      setHasError(true);
+      toast.error(errorMsg);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupChannelListener = async () => {
+      try {
+        await loadChannels();
+
+        const client = await ensureStreamConnected(user);
+        // Listen for message events and refresh channels
+        const subscription = client.on((event) => {
+          if (
+            event.type === "message.new" ||
+            event.type === "notification.added_to_channel"
+          ) {
+            if (isMounted) {
+              void loadChannels();
+            }
+          }
+        });
+        
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.warn("Failed to setup listener:", error);
+      }
+    };
+
+    if (isMounted) {
+      void setupChannelListener();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setCommunityChannels, user?.id]);
+
+  const shouldShowSkeleton =
+    !hasLoadedOnce && !channels.length && cachedChannels.length === 0;
+
+  if (shouldShowSkeleton) {
     return (
-      <div className="flex flex-col h-full bg-white">
-        {/* Group Header */}
-        <div className="border-b border-gray-200 p-4">
-          <button
-            onClick={() => setSelectedGroup(null)}
-            className="text-gray-600 hover:text-gray-900 mb-4 flex items-center gap-2"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back
-          </button>
-          <div className="flex items-center gap-3">
-            <img
-              src={selectedGroupData.avatar || "/placeholder.svg"}
-              alt={selectedGroupData.name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {selectedGroupData.name}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {selectedGroupData.memberCount} Members
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Group Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-gray-600 mb-6">
-            {selectedGroupData.description}
-          </p>
-
-          {selectedGroupData.members && selectedGroupData.members.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Members</h3>
-              <div className="flex gap-2 overflow-x-auto pb-4">
-                {selectedGroupData.members.map((member) => (
-                  <div key={member.id} className="flex-shrink-0 text-center">
-                    <img
-                      src={member.avatar || "/placeholder.svg"}
-                      alt={member.name}
-                      className="w-12 h-12 rounded-full object-cover mb-2"
-                    />
-                    <p className="text-xs text-gray-600">{member.name}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="p-4 space-y-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-16 rounded-md bg-[#F3F3F6] animate-pulse"
+          />
+        ))}
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-    
+  const list: CachedChannelPreview[] = channels.length
+    ? channels.map((channel) => toPreview(channel))
+    : cachedChannels;
 
-      {/* Communities List */}
-      <div className="flex-1 overflow-y-auto">
-       
-        {communities.map((community) => (
-          <button
-            key={community.id}
-            onClick={() => setSelectedGroup(community.id)}
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
-          >
-            <img
-              src={community.avatar || "/placeholder.svg"}
-              alt={community.name}
-              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+  if (!list.length && !hasError) {
+    return (
+      <p className="p-4 text-sm text-[#77707F]">
+        You have not joined any community channels yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      {hasError && (
+        <div className="m-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-red-700">{errorMessage}</p>
+            <button
+              onClick={() => void loadChannels()}
+              className="text-xs text-red-600 hover:text-red-700 mt-1 flex items-center gap-1"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isRefreshing && cachedChannels.length > 0 && (
+        <p className="px-4 py-2 text-xs text-[#77707F]">
+          Refreshing communities...
+        </p>
+      )}
+
+      {list.length === 0 && hasError ? (
+        <p className="p-4 text-sm text-[#77707F]">
+          Unable to load communities. Try refreshing.
+        </p>
+      ) : (
+        list.map((item) => {
+          return (
+            <button
+              key={item.cid}
+              onClick={() => navigate(`/app/chats/${item.id}`)}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
+            >
+              <img
+                src={String(item.image || "/pwa-192x192.png")}
+                alt={String(item.name || "Community")}
+                className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 truncate">
-                  {community.name}
+                  {String(item.name || "Community Channel")}
                 </h3>
+                <p className="text-sm text-gray-500 truncate">
+                  {item.lastMessageText || "No messages yet"}
+                </p>
               </div>
-              <p className="text-sm text-gray-500 truncate">
-                {community.description}
-              </p>
-            </div>
-            <span className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">
-              {community.joinedDate}
-            </span>
-          </button>
-        ))}
-      </div>
+            </button>
+          );
+        })
+      )}
     </div>
   );
 };

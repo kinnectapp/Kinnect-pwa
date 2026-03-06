@@ -5,6 +5,7 @@ export const {
   VITE_GOOGLE_AUTH_API,
   VITE_GOOGLE_WEB_CLIENT_ID,
   VITE_GOOGLE_IOS_CLIENT_ID,
+  VITE_STREAM_API_KEY,
 } = (import.meta as any).env;
 
 // Provide defaults or ensure values are defined
@@ -16,3 +17,4 @@ export const GOOGLE_AUTH_API =
   VITE_GOOGLE_AUTH_API || "https://www.googleapis.com";
 export const GOOGLE_WEB_CLIENT_ID = VITE_GOOGLE_WEB_CLIENT_ID || "";
 export const GOOGLE_IOS_CLIENT_ID = VITE_GOOGLE_IOS_CLIENT_ID || "";
+export const STREAM_API_KEY = VITE_STREAM_API_KEY || "";

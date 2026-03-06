@@ -1,16 +1,11 @@
 import ChatPage from "@/components/chat/ChatPage";
 import React from "react";
- import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const ChatidPage: React.FC = () => {
-    const navigate = useNavigate();
-    const id = "123"; // This would come from route params in a real app
-  return (
-    <ChatPage
-      conversationId={id}
-      onBack={() => navigate(-1)}
-    />
-  );
+  const { channelId = "" } = useParams();
+
+  return <ChatPage channelId={channelId} />;
 };
 
 export default ChatidPage;
