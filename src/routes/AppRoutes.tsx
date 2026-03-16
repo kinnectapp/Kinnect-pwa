@@ -29,13 +29,14 @@ const AppRoutes = () => (
       element={<LazyRoute Component={ChatidPage} />}
     />
     <Route
-      path="match_profile"
+      path="match-profile/:id"
       element={<LazyRoute Component={MatchProfile} />}
     />
     <Route
-      path="my-profile"
-      element={<LazyRoute Component={MyProfile} />}
+      path="match_profile"
+      element={<LazyRoute Component={MatchProfile} />}
     />
+    <Route path="my-profile" element={<LazyRoute Component={MyProfile} />} />
     <Route path="faqs" element={<LazyRoute Component={FAQPage} />} />
     <Route path="terms" element={<LazyRoute Component={TermsPage} />} />
     <Route

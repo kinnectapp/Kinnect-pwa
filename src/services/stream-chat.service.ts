@@ -59,31 +59,46 @@ export const connectStreamUser = async (user: User): Promise<StreamChat> => {
     throw new Error("Missing Stream user id or token.");
   }
 
-  if (client.userID === userId) {
+  // Already connected to this user
+  if (client.userID === userId && client.user?.id) {
     return client;
   }
 
+  // Switch user - disconnect from old user first
   if (client.userID && client.userID !== userId) {
-    await client.disconnectUser();
+    try {
+      await client.disconnectUser();
+    } catch (error) {
+      console.warn("Error disconnecting previous user:", error);
+      // Continue anyway - create new client instance
+      streamClient = null;
+    }
   }
 
-  await client.connectUser(
-    {
-      id: userId,
-      name:
-        safeString(user.username) ||
-        [safeString(user.firstname), safeString(user.lastname)]
-          .filter(Boolean)
-          .join(" ")
-          .trim() ||
-        user.email,
-      image: user.incognito
-        ? undefined
-        : safeString(user.profilePhoto || user.image || user.avatar) ||
-          undefined,
-    },
-    token,
-  );
+  try {
+    await client.connectUser(
+      {
+        id: userId,
+        name:
+          safeString(user.username) ||
+          [safeString(user.firstname), safeString(user.lastname)]
+            .filter(Boolean)
+            .join(" ")
+            .trim() ||
+          user.email,
+        image: user.incognito
+          ? undefined
+          : safeString(user.profilePhoto || user.image || user.avatar) ||
+            undefined,
+      },
+      token,
+    );
+  } catch (error) {
+    console.error("Failed to connect user to Stream:", error);
+    // Reset client for retry
+    streamClient = null;
+    throw error;
+  }
 
   // Setup connection monitoring
   setupConnectionMonitoring(user);
@@ -99,9 +114,16 @@ const setupConnectionMonitoring = (user: User) => {
   connectionMonitorInterval = setInterval(async () => {
     try {
       const client = getStreamClient();
-      if (!client.userID) {
+      // Check if connection is lost
+      if (!client.userID || !client.user?.id) {
+        console.warn("Stream connection lost, attempting reconnect...");
         // Connection lost, attempt reconnect
-        await connectStreamUser(user);
+        try {
+          await connectStreamUser(user);
+          console.log("Stream connection restored");
+        } catch (error) {
+          console.error("Failed to restore connection:", error);
+        }
       }
     } catch (error) {
       console.warn("Connection monitor error:", error);
@@ -124,17 +146,26 @@ export const ensureStreamConnected = async (
     throw new Error("Missing Stream user id or token.");
   }
 
-  if (client.userID === userId && client.user) {
+  // Check if already connected to the correct user
+  if (client.userID === userId && client.user?.id) {
     return client;
   }
 
+  // If there's already a connection in progress, wait for it
   if (connectPromise) {
     return connectPromise;
   }
 
-  connectPromise = connectStreamUser(resolvedUser).finally(() => {
-    connectPromise = null;
-  });
+  // Start new connection
+  connectPromise = connectStreamUser(resolvedUser)
+    .catch((error) => {
+      connectPromise = null;
+      throw error;
+    })
+    .then((result) => {
+      connectPromise = null;
+      return result;
+    });
 
   return connectPromise;
 };
@@ -146,5 +177,11 @@ export const disconnectStreamUser = async () => {
   }
   if (!streamClient) return;
   connectPromise = null;
-  await streamClient.disconnectUser();
+  try {
+    await streamClient.disconnectUser();
+  } catch (error) {
+    console.warn("Error disconnecting from Stream:", error);
+  } finally {
+    streamClient = null;
+  }
 };

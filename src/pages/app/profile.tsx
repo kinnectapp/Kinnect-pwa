@@ -21,6 +21,7 @@ import {
   SuccessIcon,
   TermsIcon,
 } from "@/components/icons";
+import UserImage from "../../assets/images/user-profile.png";
 import confettiImage from "@/assets/images/confetti.svg";
 import { Logo } from "@/components/layout/logo";
 
@@ -518,7 +519,7 @@ const ProfilePage: React.FC = () => {
   const displayEmail = user?.email || "no-email@kinnect.app";
   const profilePhoto =
     (Array.isArray(user?.profilePhotos) ? user?.profilePhotos[0] : null) ||
-    "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=300&q=80";
+    UserImage;
 
   const menuItems = [
     {

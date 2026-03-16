@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { DealBreakerPayload } from "@/lib/types/auth";
+import { useGetProfile } from "@/services/profile.service";
 
 interface DealBreakerQuestion {
   id: string;
@@ -26,9 +27,7 @@ interface DealBreakerQuestion {
 const dealBreakerQuestionList: DealBreakerQuestion[] = [
   ...dealBreakerQuestions.map((question) => ({
     id: question.key,
-    title: question.question
-      .replace(/^Your Preferred /, "")
-      .replace(/\?$/, ""),
+    title: question.question.replace(/^Your Preferred /, "").replace(/\?$/, ""),
     options: question.options.map((option) => ({
       item: option.item,
       mainKey: option.mainKey,
@@ -70,7 +69,10 @@ export default function DealBreakers() {
     const questionParam = params.get("question");
     if (questionParam) {
       const questionIndex = parseInt(questionParam);
-      if (questionIndex >= 0 && questionIndex < dealBreakerQuestionList.length) {
+      if (
+        questionIndex >= 0 &&
+        questionIndex < dealBreakerQuestionList.length
+      ) {
         setCurrentQuestion(questionIndex);
       }
     }
@@ -96,7 +98,10 @@ export default function DealBreakers() {
     } else {
       const initialRankings = getInitialRankings();
       setRankings(initialRankings);
-      localStorage.setItem("dealBreakerRankings", JSON.stringify(initialRankings));
+      localStorage.setItem(
+        "dealBreakerRankings",
+        JSON.stringify(initialRankings),
+      );
     }
   }, [location.search]);
 
@@ -137,9 +142,12 @@ export default function DealBreakers() {
           question.id === "preferredReligion" && option.mainKey === "islman"
             ? "islam"
             : option.mainKey;
-        (payload[question.id as keyof DealBreakerPayload] as Record<string, number>)[
-          normalizedMainKey
-        ] = rank;
+        (
+          payload[question.id as keyof DealBreakerPayload] as Record<
+            string,
+            number
+          >
+        )[normalizedMainKey] = rank;
       });
     });
 
@@ -249,7 +257,9 @@ export default function DealBreakers() {
               </span>
               <Select
                 value={String(questionRankings[index] ?? 0)}
-                onValueChange={(value) => handleRankChange(index, Number(value))}
+                onValueChange={(value) =>
+                  handleRankChange(index, Number(value))
+                }
               >
                 <SelectTrigger className="h-8 w-full border-0 bg-transparent px-0 text-right text-white shadow-none focus:ring-0">
                   <SelectValue placeholder="--select option--" />
@@ -277,6 +287,29 @@ export default function DealBreakers() {
 
 function CompletionScreen() {
   const navigate = useNavigate();
+  const { data: profileData, isLoading: isLoadingProfile } = useGetProfile();
+
+  const handleFindMatch = () => {
+    // Check if personality test is completed
+    if (!profileData?.personalityId) {
+      navigate("/onboarding/takepersonalitytest");
+      return;
+    }
+
+    // Check if required profile fields are set
+    const requiredFields = ["religion", "education", "bodyType", "gender"];
+    const missingFields = requiredFields.filter(
+      (field) => !profileData?.[field as keyof typeof profileData],
+    );
+
+    if (missingFields.length > 0) {
+      navigate("/onboarding/profile");
+      return;
+    }
+
+    // All done, navigate to matches
+    navigate("/app");
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -311,8 +344,12 @@ function CompletionScreen() {
         </p>
 
         {/* Find A Match Button */}
-        <Button onClick={() => navigate("/onboarding/communities")} className="w-full">
-          Find A Match
+        <Button
+          onClick={handleFindMatch}
+          disabled={isLoadingProfile}
+          className="w-full"
+        >
+          {isLoadingProfile ? "Loading..." : "Find A Match"}
         </Button>
       </div>
     </div>

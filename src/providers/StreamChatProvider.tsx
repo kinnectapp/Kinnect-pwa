@@ -1,7 +1,7 @@
 import { chatService } from "@/services/chat.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useChatStore } from "@/store/chat.store";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { setUser } from "@/api/storage";
 import {
   connectStreamUser,
@@ -14,7 +14,11 @@ type Props = {
   children: React.ReactNode;
 };
 
-const showNotification = async (title: string, body: string, channelId: string) => {
+const showNotification = async (
+  title: string,
+  body: string,
+  channelId: string,
+) => {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
@@ -34,7 +38,9 @@ const showNotification = async (title: string, body: string, channelId: string) 
 export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const setUnreadCount = useChatStore((state) => state.setUnreadCount);
+  const prevUserIdRef = useRef<string | null | undefined>(user?.id);
 
+  // Bootstrap and connect on mount
   useEffect(() => {
     let isMounted = true;
     let unsubscribe: (() => void) | null = null;
@@ -43,7 +49,8 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
       if (!user) return;
       try {
         const profileResponse = await chatService.getProfile();
-        const profileUser = profileResponse?.data?.resp ?? profileResponse?.data?.data;
+        const profileUser =
+          profileResponse?.data?.resp ?? profileResponse?.data?.data;
         if (profileUser && typeof profileUser === "object") {
           await setUser(profileUser as Record<string, unknown>);
           if (isMounted) {
@@ -83,16 +90,28 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
       }
     };
 
-    bootstrap();
+    if (user?.id) {
+      void bootstrap();
+    }
 
     return () => {
       isMounted = false;
       if (unsubscribe) {
         unsubscribe();
       }
-      void disconnectStreamUser();
+      // Don't disconnect here - let logout handler do it
     };
-  }, [setUnreadCount, user]);
+  }, [setUnreadCount, user?.id]);
+
+  // Handle logout - detect transition from logged in to logged out
+  useEffect(() => {
+    if (prevUserIdRef.current && !user?.id) {
+      // User was logged in and now is logged out
+      console.log("User logged out, disconnecting Stream...");
+      void disconnectStreamUser();
+    }
+    prevUserIdRef.current = user?.id;
+  }, [user?.id]);
 
   useEffect(() => {
     if (!("Notification" in window)) return;

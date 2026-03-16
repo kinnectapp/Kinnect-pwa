@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronLeft, MoreVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+// import UserImage from "../../assets/images/user-profile.png";
 interface ChatHeaderProps {
   userName?: string;
   userAge?: number;
@@ -11,9 +11,9 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
   userName = "Theressa Webb",
-  userAge = 24,
-  lastSeen = "Wed June 22, 2024",
-  avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
+  // userAge = 24,
+  // lastSeen = "Wed June 22, 2024",
+  // avatarUrl = UserImage,
 }) => {
   const navigate = useNavigate();
 

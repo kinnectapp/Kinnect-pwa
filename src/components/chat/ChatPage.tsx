@@ -4,11 +4,18 @@ import { ChevronLeft, MoreVertical, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useChatStore } from "@/store/chat.store";
-import { isPaidUser, ensureStreamConnected } from "@/services/stream-chat.service";
+import {
+  isPaidUser,
+  ensureStreamConnected,
+} from "@/services/stream-chat.service";
 import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
 import MessageInput from "./MessageInput";
 import AudioMessage from "./messagges/AudioMessage";
+import ChatOptionsModal from "./ChatOptionsModal";
+import ReportModal from "./ReportModal";
+import SponsorModal from "./SponsorModal";
+import ConfirmationModal from "./ConfirmationModal";
 import type { Channel, Event } from "stream-chat";
 
 type Props = {
@@ -38,8 +45,15 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
   const [showActions, setShowActions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [partnerId, setPartnerId] = useState<string>("");
+  const [partnerImage, setPartnerImage] = useState<string>("");
+  const [partnerLocation, setPartnerLocation] = useState<string>("");
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showJiltModal, setShowJiltModal] = useState(false);
+  const [showSponsorModal, setShowSponsorModal] = useState(false);
+  const [isPerformingAction, setIsPerformingAction] = useState(false);
 
   const isPaid = useMemo(() => isPaidUser(user), [user]);
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
@@ -59,7 +73,7 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
         const client = await ensureStreamConnected(user);
         const channels = await client.queryChannels(
           {
-            id: { $eq: channelId },
+            cid: { $eq: channelId },
             members: { $in: [currentUserId] },
           },
           { last_message_at: -1 },
@@ -84,8 +98,12 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
           (member) => member.user_id !== currentUserId,
         );
         setPartnerId(otherMember?.user_id || "");
+        setPartnerImage((otherMember?.user as any)?.image || "");
+        setPartnerLocation(
+          `${(otherMember?.user as any)?.state || ""}, ${(otherMember?.user as any)?.country || ""}`.trim(),
+        );
         setChannel(selected);
-        
+
         // Load initial messages
         const loadedMessages = [...(selected.state.messages || [])];
         setMessages(loadedMessages);
@@ -135,6 +153,34 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   }, [channelId, currentUserId, navigate, user]);
+
+  // Fetch full user data when partner ID is set
+  useEffect(() => {
+    if (!partnerId) return;
+
+    let isMounted = true;
+
+    const fetchUserData = async () => {
+      try {
+        const fullUserData = await chatService.getUserById(partnerId);
+        if (fullUserData && isMounted) {
+          setPartnerImage(fullUserData.image || "");
+          const location =
+            `${fullUserData.state || ""}, ${fullUserData.country || ""}`.trim();
+          setPartnerLocation(location);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+        // Fall back to whatever we have
+      }
+    };
+
+    void fetchUserData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [partnerId]);
 
   // Simplified send message handler - match mobile app pattern
   const handleSend = useCallback(
@@ -187,12 +233,62 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
     [handleSend],
   );
 
-  // Generic action handler for user actions
-  const runAction = useCallback(
-    async (action: () => Promise<unknown>, successMessage: string) => {
+  // Handle Proceed to Date
+  const handleProceedToDate = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.proceedToDate(partnerId);
+      toast.success("Date request sent.");
+      setShowActions(false);
+      setHasError(false);
+    } catch (error) {
+      const errorMsg = handleApiError(error);
+      setErrorMessage(errorMsg);
+      setHasError(true);
+      toast.error(errorMsg);
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId]);
+
+  // Handle Sponsor Plan
+  const handleSponsorPlan = useCallback(async () => {
+    setShowSponsorModal(true);
+  }, []);
+
+  const handleConfirmSponsor = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.sponsorUser(partnerId);
+      toast.success("Sponsor request sent.");
+      setShowSponsorModal(false);
+      setShowActions(false);
+      setHasError(false);
+    } catch (error) {
+      const errorMsg = handleApiError(error);
+      setErrorMessage(errorMsg);
+      setHasError(true);
+      toast.error(errorMsg);
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId]);
+
+  // Handle Report
+  const handleReportUser = useCallback(() => {
+    setShowReportModal(true);
+  }, []);
+
+  const handleConfirmReport = useCallback(
+    async (reason: string) => {
       try {
-        await action();
-        toast.success(successMessage);
+        setIsPerformingAction(true);
+        await chatService.reportUser({
+          reportedUserId: partnerId,
+          reason,
+        });
+        toast.success("User reported. Your report will be reviewed.");
+        setShowReportModal(false);
         setShowActions(false);
         setHasError(false);
       } catch (error) {
@@ -200,16 +296,68 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
         setErrorMessage(errorMsg);
         setHasError(true);
         toast.error(errorMsg);
+      } finally {
+        setIsPerformingAction(false);
       }
     },
-    [],
+    [partnerId],
   );
+
+  // Handle Block
+  const handleBlockUser = useCallback(() => {
+    setShowBlockModal(true);
+  }, []);
+
+  const handleConfirmBlock = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.blockUser(partnerId);
+      toast.success("User blocked.");
+      setShowBlockModal(false);
+      setShowActions(false);
+      setHasError(false);
+      // Navigate back after short delay
+      setTimeout(() => navigate("/app"), 500);
+    } catch (error) {
+      const errorMsg = handleApiError(error);
+      setErrorMessage(errorMsg);
+      setHasError(true);
+      toast.error(errorMsg);
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId, navigate]);
+
+  // Handle Jilt
+  const handleJiltUser = useCallback(() => {
+    setShowJiltModal(true);
+  }, []);
+
+  const handleConfirmJilt = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.jiltUser(partnerId);
+      toast.success("Match removed.");
+      setShowJiltModal(false);
+      setShowActions(false);
+      setHasError(false);
+      // Navigate back after short delay
+      setTimeout(() => navigate("/app"), 500);
+    } catch (error) {
+      const errorMsg = handleApiError(error);
+      setErrorMessage(errorMsg);
+      setHasError(true);
+      toast.error(errorMsg);
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId, navigate]);
 
   // Memoized title like mobile app
   const title = useMemo(() => {
     const cachedTitle =
-      cachedPersonalChannels.find((item) => item.id === channelId)?.name ||
-      cachedCommunityChannels.find((item) => item.id === channelId)?.name;
+      cachedPersonalChannels.find((item) => item.cid === channelId)?.name ||
+      cachedCommunityChannels.find((item) => item.cid === channelId)?.name;
     if (!channel && cachedTitle) return cachedTitle;
     if (!channel) return "Chat";
     const members = Object.values(channel.state.members || {});
@@ -269,63 +417,65 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
       )}
 
       {/* Action menu - like mobile options */}
-      {showActions && partnerId && (
-        <div className="mx-4 mt-3 rounded-lg border bg-white p-3 grid grid-cols-2 gap-2 text-sm">
-          <button
-            onClick={() =>
-              void runAction(
-                () => chatService.proceedToDate(partnerId),
-                "Date request sent.",
-              )
-            }
-            className="rounded-md bg-[#55288D] text-white py-2"
-          >
-            Proceed To Date
-          </button>
-          <button
-            onClick={() =>
-              void runAction(
-                () =>
-                  chatService.reportUser({
-                    reportedUserId: partnerId,
-                    reason: "Reported from chat",
-                  }),
-                "User reported.",
-              )
-            }
-            className="rounded-md bg-[#f4f4f5] py-2"
-          >
-            Report
-          </button>
-          <button
-            onClick={() =>
-              void runAction(() => chatService.blockUser(partnerId), "User blocked.")
-            }
-            className="rounded-md bg-[#f4f4f5] py-2"
-          >
-            Block
-          </button>
-          <button
-            onClick={() =>
-              void runAction(
-                () => chatService.sponsorUser(partnerId),
-                "Sponsor request sent.",
-              )
-            }
-            className="rounded-md bg-[#f4f4f5] py-2"
-          >
-            Sponsor
-          </button>
-          <button
-            onClick={() =>
-              void runAction(() => chatService.jiltUser(partnerId), "Match removed.")
-            }
-            className="rounded-md bg-[#f4f4f5] py-2 col-span-2"
-          >
-            Jilt / Dislike
-          </button>
-        </div>
-      )}
+      <ChatOptionsModal
+        isOpen={showActions}
+        partnerName={title}
+        onClose={() => setShowActions(false)}
+        onProceedToDate={handleProceedToDate}
+        onSponsorPlan={handleSponsorPlan}
+        onBlock={handleBlockUser}
+        onReport={handleReportUser}
+        onJilt={handleJiltUser}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        userName={title}
+        userImage={partnerImage}
+        userLocation={partnerLocation}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleConfirmReport}
+        isLoading={isPerformingAction}
+      />
+
+      {/* Block Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showBlockModal}
+        title="Block Match"
+        message={`Are you sure you want to block ${title}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
+        userImage={partnerImage}
+        userLocation={partnerLocation}
+        confirmText="Block"
+        isDangerous
+        onClose={() => setShowBlockModal(false)}
+        onConfirm={handleConfirmBlock}
+        isLoading={isPerformingAction}
+      />
+
+      {/* Jilt Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showJiltModal}
+        title="Jilt Match"
+        message={`Are you sure you want to jilt this match? By jilting this match, it means your are no longer interested and want to put off this conversation.`}
+        userImage={partnerImage}
+        userLocation={partnerLocation}
+        confirmText="Jilt"
+        isDangerous
+        onClose={() => setShowJiltModal(false)}
+        onConfirm={handleConfirmJilt}
+        isLoading={isPerformingAction}
+      />
+
+      {/* Sponsor Modal */}
+      <SponsorModal
+        isOpen={showSponsorModal}
+        userName={title}
+        userImage={partnerImage}
+        onClose={() => setShowSponsorModal(false)}
+        onConfirm={handleConfirmSponsor}
+        isLoading={isPerformingAction}
+      />
 
       {/* Messages container - match mobile message layout */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
