@@ -218,6 +218,7 @@ export const MatchProfile: React.FC = () => {
           <ProfileCard
             profile={currentProfile}
             onMessage={handleMessage}
+            onMessage={handleMessage}
             onMore={handleMore}
           />
         </div>
