@@ -100,8 +100,18 @@ export const chatService = {
       created_by_id: currentUserId,
     });
 
-    await channel.watch();
-    return channel.id || channelId;
+    try {
+      await channel.watch();
+      return channel.id || channelId;
+    } catch (error: any) {
+      const errorMsg =
+        error?.message ||
+        (typeof error === "string" ? error : JSON.stringify(error));
+      if (typeof errorMsg === "string" && errorMsg.includes("deleted user")) {
+        throw new Error("This user profile is no longer available.");
+      }
+      throw error;
+    }
   },
 
   ensureCommunityChannel: async (community: Community) => {

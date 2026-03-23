@@ -53,9 +53,11 @@ const VerifyRegister: React.FC = () => {
       toast.error("Please enter a valid 6-digit code");
       return;
     }
+      // ✅ Encode OTP to base64
+  const encodedOtp = btoa(code);
 
     verifyEmail(
-      { email, otp: code },
+     { email, otp: encodedOtp },
       {
         onSuccess: async (response) => {
           const accessToken = response.data?.accessToken || response.data?.token;

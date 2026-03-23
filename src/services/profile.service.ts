@@ -15,6 +15,19 @@ export type MatchItem = {
     age?: number;
     gender?: string;
     email?: string;
+    profilePhotos?: string[];
+    dob?: string;
+    firstname?: string;
+    lastname?: string;
+    city?: string;
+    personalitySummary?: string;
+    personalityPercentage?: number | string;
+    education?: string;
+    occupation?: string;
+    religion?: string;
+    drinkRate?: string;
+    smokeRate?: string;
+    interests?: string[];
   };
 };
 
@@ -48,7 +61,7 @@ export const profileService = {
     const { data } = await http.get<ProfileResponse>(endpoints.users.profile);
 
  
-    return data.data?.user ?? {};
+    return data.data?.user || null;
   },
 
   /**

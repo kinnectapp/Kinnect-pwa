@@ -1,7 +1,8 @@
 import React from "react";
-import { Heart, MapPin, ChevronRight } from "lucide-react";
+import { Heart, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MatchItem } from "@/services/profile.service";
+import { ArrowRightIcon } from "./icons";
 
 interface MatchItemProps {
   item: MatchItem;
@@ -22,14 +23,14 @@ const MatchItemComponent: React.FC<MatchItemProps> = ({ item }) => {
   return (
     <button
       onClick={handleClick}
-      className="w-full text-left p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+      className="w-full text-left p-4 rounded-lg bg-[#FAF8FB] hover:bg-gray-100 transition-colors "
     >
       <div className="flex items-start justify-between mb-3">
         {/* Compatibility Badge */}
-        <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-pink-100">
-          <Heart size={16} className="text-pink-500 fill-pink-500" />
-          <span className="text-sm font-semibold text-pink-700">
-            {Number(item.value ?? 0).toFixed()}%
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#F9E0F5]">
+          <Heart size={12} className="text-pink-500 fill-pink-500" />
+          <span className="text-xs font-semibold text-pink-700">
+            {Number(item.profile.personalityPercentage).toFixed()}%
           </span>
         </div>
       </div>
@@ -39,12 +40,12 @@ const MatchItemComponent: React.FC<MatchItemProps> = ({ item }) => {
         <h3 className="text-lg font-semibold text-gray-900">
           {item.profile.username ?? "Unknown User"}
         </h3>
-        <ChevronRight size={20} className="text-gray-400" />
+        <ArrowRightIcon />
       </div>
 
       {/* Location */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <MapPin size={16} className="text-gray-400" />
+      <div className="flex items-center gap-2 text-xs text-[#77707F]">
+        <MapPin fill="#8F92A1" size={16} className="text-white" />
         <span>
           {item.profile.state ? `${item.profile.state}, ` : ""}
           {item.profile.country ?? "Location Unknown"}

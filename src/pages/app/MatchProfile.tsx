@@ -1,4 +1,4 @@
-"use client";
+
 
 import React, { useState, useMemo } from "react";
 import ProfileCard from "@/components/ProfileCard";
@@ -14,23 +14,34 @@ import { useGetProfileMatches } from "@/services/profile.service";
 import { Loader } from "lucide-react";
 import UserImage from "../../assets/images/user-profile.png";
 
+interface ProfileEssentials {
+  dob?: string;
+  education?: string;
+  occupation?: string;
+  religion?: string;
+  drinkRate?: string;
+  smokeRate?: string;
+}
+
 interface Profile {
   id: string;
   name: string;
   location: string;
-  age: number;
-  compatibility: number;
+  dob: string;
+  personalityPercentage: string;
   image: string;
+  images: string[];
   about: string;
   personalityResult: string;
   flags: string[];
-  essentials: string[];
+  essentials: ProfileEssentials;
   interests: string[];
 }
 
 export const MatchProfile: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -38,52 +49,70 @@ export const MatchProfile: React.FC = () => {
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
 
-  // Fetch all matches to find the specific one
-  const { data: matchesData, isLoading: isLoadingMatches } =
-    useGetProfileMatches();
+  const { data: matchesData, isLoading } = useGetProfileMatches();
 
-  // Find the current match by ID
   const currentMatchItem = useMemo(() => {
     if (!matchesData || !id) return null;
-    return matchesData.find((item) => item.profile.id === Number(id));
+    return matchesData.find((item: any) => item.profile.id === Number(id));
   }, [matchesData, id]);
 
-  // Transform match data to Profile interface format
   const currentProfile: Profile | null = useMemo(() => {
     if (!currentMatchItem) return null;
+    console.log("currentMatchItem", currentMatchItem);
+    const { profile,
+      //  value 
+    } = currentMatchItem;
 
-    const { profile, value } = currentMatchItem;
+    const images: string[] =
+      profile.profilePhotos && profile.profilePhotos.length > 0
+        ? profile.profilePhotos
+        : [UserImage];
+
+    let age = profile.age || 0;
+    if (!age && profile.dob) {
+      age = Math.floor(
+        (Date.now() - new Date(profile.dob).getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25)
+      );
+    }
+
     return {
       id: String(profile.id),
-      name: profile.username || "Unknown User",
-      location: `${profile.state || ""}, ${profile.country || ""}`.trim(),
-      age: profile.age || 0,
-      compatibility: Number(value || 0),
-      image: profile.image || UserImage,
+      name:
+        profile.firstname && profile.lastname
+          ? `${profile.firstname} ${profile.lastname}`
+          : profile.username || "Unknown User",
+      location: [profile.city, profile.state, profile.country]
+        .filter(Boolean)
+        .join(", "),
+      dob: String(age),
+      // personalityPercentage: String(value || 0),
+      personalityPercentage: String(Number(profile.personalityPercentage).toFixed() || 0),
+
+      image: images[0],
+      images,
       about: profile.bio || "No bio available",
-      personalityResult: "Personality test result pending...",
+      personalityResult: profile.personalitySummary || "",
       flags: [],
-      essentials: [],
-      interests: [],
+      essentials: {
+        dob: String(age),
+        education: profile.education,
+        occupation: profile.occupation,
+        religion: profile.religion,
+        drinkRate: profile.drinkRate,
+        smokeRate: profile.smokeRate,
+      },
+      interests: profile.interests || [],
     };
   }, [currentMatchItem]);
 
   const handleMessage = async () => {
     if (!currentProfile) return;
     try {
-      const channelId = await chatService.ensurePersonalChannel(
-        currentProfile.id,
-      );
+      const channelId = await chatService.ensurePersonalChannel(currentProfile.id);
       navigate(`/app/chats/${channelId}`);
     } catch (error) {
       toast.error(handleApiError(error));
-    }
-  };
-
-  const handleMore = () => {
-    if (currentProfile) {
-      console.log("[v0] More options opened for:", currentProfile.name);
-      setShowMoreOptions(true);
     }
   };
 
@@ -101,10 +130,6 @@ export const MatchProfile: React.FC = () => {
     }
   };
 
-  const handleSponsorPlan = async () => {
-    setShowSponsorModal(true);
-  };
-
   const handleConfirmSponsor = async () => {
     if (!currentProfile) return;
     try {
@@ -118,10 +143,6 @@ export const MatchProfile: React.FC = () => {
     } finally {
       setIsPerformingAction(false);
     }
-  };
-
-  const handleBlock = async () => {
-    setShowBlockModal(true);
   };
 
   const handleConfirmBlock = async () => {
@@ -140,18 +161,11 @@ export const MatchProfile: React.FC = () => {
     }
   };
 
-  const handleReport = async () => {
-    setShowReportModal(true);
-  };
-
   const handleConfirmReport = async (reason: string) => {
     if (!currentProfile) return;
     try {
       setIsPerformingAction(true);
-      await chatService.reportUser({
-        reportedUserId: currentProfile.id,
-        reason,
-      });
+      await chatService.reportUser({ reportedUserId: currentProfile.id, reason });
       toast.success(`Report submitted for ${currentProfile.name}`);
       setShowReportModal(false);
       setShowMoreOptions(false);
@@ -160,10 +174,6 @@ export const MatchProfile: React.FC = () => {
     } finally {
       setIsPerformingAction(false);
     }
-  };
-
-  const handleJilt = async () => {
-    setShowJiltModal(true);
   };
 
   const handleConfirmJilt = async () => {
@@ -182,7 +192,7 @@ export const MatchProfile: React.FC = () => {
     }
   };
 
-  if (isLoadingMatches) {
+  if (isLoading || !currentProfile) {
     return (
       <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-600">
@@ -193,67 +203,47 @@ export const MatchProfile: React.FC = () => {
     );
   }
 
-  if (!currentProfile) {
-    return (
-      <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Match not found</p>
-          <button
-            onClick={() => navigate("/app")}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Go Back Home
-          </button>
-        </div>
-      </div>
-    );
-  }
+   
 
   return (
-    <div className="min-h-screen  p-4 profile-match-gradient flex items-center justify-center  ">
-      {/* Cards Container */}
+    <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
       <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-        {/* Current Card */}
         <div className="w-full max-w-sm transform transition-all duration-300">
           <ProfileCard
             profile={currentProfile}
             onMessage={handleMessage}
-            onMessage={handleMessage}
-            onMore={handleMore}
+            onMore={() => setShowMoreOptions(true)}
           />
         </div>
       </div>
 
-      {/* More Options Modal */}
       <MoreOptionsModal
         isOpen={showMoreOptions}
         profile={currentProfile}
         onClose={() => setShowMoreOptions(false)}
         onProceedToDate={handleProceedToDate}
-        onSponsorPlan={handleSponsorPlan}
-        onBlock={handleBlock}
-        onReport={handleReport}
-        onJilt={handleJilt}
+        onSponsorPlan={() => setShowSponsorModal(true)}
+        onBlock={() => setShowBlockModal(true)}
+        onReport={() => setShowReportModal(true)}
+        onJilt={() => setShowJiltModal(true)}
       />
 
-      {/* Report Modal */}
       <ReportModal
         isOpen={showReportModal}
-        userName={currentProfile.name}
-        userImage={currentProfile.image}
-        userLocation={currentProfile.location}
+        userName={currentProfile?.name}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
         onClose={() => setShowReportModal(false)}
         onSubmit={handleConfirmReport}
         isLoading={isPerformingAction}
       />
 
-      {/* Block Confirmation Modal */}
       <ConfirmationModal
         isOpen={showBlockModal}
         title="Block Match"
-        message={`Are you sure you want to block ${currentProfile.name}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
-        userImage={currentProfile.image}
-        userLocation={currentProfile.location}
+        message={`Are you sure you want to block ${currentProfile?.name}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
         confirmText="Block"
         isDangerous
         onClose={() => setShowBlockModal(false)}
@@ -261,13 +251,12 @@ export const MatchProfile: React.FC = () => {
         isLoading={isPerformingAction}
       />
 
-      {/* Jilt Confirmation Modal */}
       <ConfirmationModal
         isOpen={showJiltModal}
         title="Jilt Match"
-        message={`Are you sure you want to jilt this match? By jilting this match, it means your are no longer interested and want to put off this conversation.`}
-        userImage={currentProfile.image}
-        userLocation={currentProfile.location}
+        message={`Are you sure you want to jilt this match? By jilting this match, it means you are no longer interested and want to put off this conversation.`}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
         confirmText="Jilt"
         isDangerous
         onClose={() => setShowJiltModal(false)}
@@ -275,11 +264,10 @@ export const MatchProfile: React.FC = () => {
         isLoading={isPerformingAction}
       />
 
-      {/* Sponsor Modal */}
       <SponsorModal
         isOpen={showSponsorModal}
-        userName={currentProfile.name}
-        userImage={currentProfile.image}
+        userName={currentProfile?.name}
+        userImage={currentProfile?.image}
         onClose={() => setShowSponsorModal(false)}
         onConfirm={handleConfirmSponsor}
         isLoading={isPerformingAction}

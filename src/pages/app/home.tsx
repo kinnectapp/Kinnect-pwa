@@ -37,7 +37,7 @@ type CommunitiesResponse = {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-   const displayName = user?.firstname || user?.username || "";
+  const displayName = user?.firstname || user?.username || "";
   const { useGetUserMutation } = useAuth();
 
   const { mutateAsync: getUserById } = useGetUserMutation();
