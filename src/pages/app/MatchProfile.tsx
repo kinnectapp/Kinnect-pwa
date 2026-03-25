@@ -110,6 +110,7 @@ export const MatchProfile: React.FC = () => {
     if (!currentProfile) return;
     try {
       const channelId = await chatService.ensurePersonalChannel(currentProfile.id);
+      // console.log("currentProfile", channelId);
       navigate(`/app/chats/${channelId}`);
     } catch (error) {
       toast.error(handleApiError(error));

@@ -97,6 +97,7 @@ export const connectStreamUser = async (user: User): Promise<StreamChat> => {
     console.error("Failed to connect user to Stream:", error);
     // Reset client for retry
     streamClient = null;
+    console.log("errorerror", error);
     throw error;
   }
 

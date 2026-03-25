@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, AlertCircle } from "lucide-react";
+import { ChevronLeft, MoreVertical, AlertCircle, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
+import UserImg from "../../assets/images/user-profile.png";
 import { useChatStore } from "@/store/chat.store";
 import {
   isPaidUser,
@@ -16,6 +17,7 @@ import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
 import SponsorModal from "./SponsorModal";
 import ConfirmationModal from "./ConfirmationModal";
+import TypingIndicator from "./TypingIndicator";
 import type { Channel, Event } from "stream-chat";
 
 type Props = {
@@ -30,7 +32,8 @@ const formatMessageTime = (messageTime?: string | null) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-const ChatPage: React.FC<Props> = ({ channelId }) => {
+const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
+  const channelId = decodeURIComponent(rawChannelId);
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const cachedPersonalChannels = useChatStore(
@@ -45,6 +48,8 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
   const [showActions, setShowActions] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [partnerId, setPartnerId] = useState<string>("");
+  const [partnerFullName, setPartnerFullName] = useState<string>("");
+  const [partnerAge, setPartnerAge] = useState<string>("");
   const [partnerImage, setPartnerImage] = useState<string>("");
   const [partnerLocation, setPartnerLocation] = useState<string>("");
   const [hasError, setHasError] = useState(false);
@@ -54,6 +59,8 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
   const [showJiltModal, setShowJiltModal] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isPaid = useMemo(() => isPaidUser(user), [user]);
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
@@ -97,8 +104,10 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
         const otherMember = members.find(
           (member) => member.user_id !== currentUserId,
         );
+
+
         setPartnerId(otherMember?.user_id || "");
-        setPartnerImage((otherMember?.user as any)?.image || "");
+        // setPartnerImage((otherMember?.user as any)?.image || "");
         setPartnerLocation(
           `${(otherMember?.user as any)?.state || ""}, ${(otherMember?.user as any)?.country || ""}`.trim(),
         );
@@ -107,14 +116,16 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
         // Load initial messages
         const loadedMessages = [...(selected.state.messages || [])];
         setMessages(loadedMessages);
+        selected.markRead();
 
-        // Setup message event listeners (like mobile app)
+        // Setup message event listenegis (like mobile app)
         const onNewMessage = selected.on("message.new", (event: Event) => {
           if (!event.message) return;
           setMessages((prev) => {
             const next = [...prev];
             if (next.some((m) => m.id === event.message?.id)) return next;
             next.push(event.message);
+            selected.markRead();
             return next;
           });
         });
@@ -129,10 +140,26 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
           setMessages(next);
         });
 
+        // Typing indicators
+        const onTypingStart = selected.on("typing.start", (event: Event) => {
+          if (event.user?.id === currentUserId) return;
+          const name = event.user?.name || event.user?.id || "Someone";
+          setTypingUsers((prev) =>
+            prev.includes(name) ? prev : [...prev, name],
+          );
+        });
+
+        const onTypingStop = selected.on("typing.stop", (event: Event) => {
+          const name = event.user?.name || event.user?.id || "Someone";
+          setTypingUsers((prev) => prev.filter((u) => u !== name));
+        });
+
         unsubscribers = [
           onNewMessage.unsubscribe,
           onUpdate.unsubscribe,
           onDelete.unsubscribe,
+          onTypingStart.unsubscribe,
+          onTypingStop.unsubscribe,
         ];
       } catch (error) {
         const errorMsg = handleApiError(error);
@@ -147,7 +174,7 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
     };
 
     void loadChannel();
-
+channel?.markRead();
     return () => {
       isMounted = false;
       unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -164,9 +191,12 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
       try {
         const fullUserData = await chatService.getUserById(partnerId);
         if (fullUserData && isMounted) {
-          setPartnerImage(fullUserData.image || "");
+          console.log("fullUserData", fullUserData);
+          setPartnerFullName(fullUserData?.data?.resp?.firstname + " " + fullUserData?.data?.resp?.lastname || "");
+          setPartnerAge(fullUserData?.data?.resp?.dob || "");
+          setPartnerImage(fullUserData?.data?.resp?.profilePhotos[0] || "");
           const location =
-            `${fullUserData.state || ""}, ${fullUserData.country || ""}`.trim();
+            `${fullUserData?.data?.resp?.state || ""}, ${fullUserData?.data?.resp?.country || ""}`.trim();
           setPartnerLocation(location);
         }
       } catch (error) {
@@ -182,12 +212,19 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
     };
   }, [partnerId]);
 
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typingUsers]);
+
   // Simplified send message handler - match mobile app pattern
   const handleSend = useCallback(
     async (text: string) => {
       if (!channel || !text.trim()) return;
       try {
         await channel.sendMessage({ text: text.trim() });
+        // Stop typing indicator on send
+        void channel.stopTyping();
         setHasError(false);
       } catch (error) {
         const errorMsg = handleApiError(error);
@@ -198,6 +235,11 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
     },
     [channel],
   );
+
+  // Notify Stream when user is typing
+  const handleTyping = useCallback(() => {
+    void channel?.keystroke();
+  }, [channel]);
 
   // Audio message handler
   const handleSendAudio = useCallback(
@@ -385,12 +427,12 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
   return (
     <div className="flex flex-col h-[100dvh] bg-[#FAF8FB]">
       {/* Header - match mobile */}
-      <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
+      <div className="bg-white p-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
-          <h2 className="font-semibold text-gray-900 text-sm">{title}</h2>
+          <h2 className="font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px]">{title} <span className="w-1.5 h-1.5 rounded-full bg-[#F416C4]"></span> </h2>
           <button
             onClick={() => setShowActions((prev) => !prev)}
             className="p-1 rounded-full hover:bg-gray-100"
@@ -479,12 +521,20 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
 
       {/* Messages container - match mobile message layout */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <div className="  mb-10 flex justify-center gap-2 flex-col items-center ">
+          <img src={partnerImage || UserImg} alt="" className="w-[60px] object-cover h-[60px] rounded-full border" />
+          <p className="text-[#1C1C1C] font-medium text-[14px]">{partnerFullName}, {Math.floor(
+            (Date.now() - new Date(partnerAge).getTime()) /
+            (1000 * 60 * 60 * 24 * 365.25)
+          )}</p>
+        </div>
         {messages.map((message) => {
           const own = message.user?.id === currentUserId;
+          const attachments: any[] = message.attachments || [];
 
           // Handle audio attachments
-          const audioAttachment = message.attachments?.find(
-            (att: any) => att.type === "audio",
+          const audioAttachment = attachments.find(
+            (att) => att.type === "audio",
           );
           if (audioAttachment) {
             return (
@@ -502,26 +552,94 @@ const ChatPage: React.FC<Props> = ({ channelId }) => {
             );
           }
 
+          // Render image/video/file attachments
+          const mediaAttachments = attachments.filter(
+            (att) => att.type !== "audio",
+          );
+
           return (
             <div
               key={message.id}
-              className={`flex ${own ? "justify-end" : "justify-start"}`}
+              className={`flex flex-col gap-1 ${own ? "items-end" : "items-start"}`}
             >
-              <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 ${
-                  own ? "bg-[#55288D] text-white" : "bg-white text-[#1C1C1C]"
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {message.text || "[Unsupported message type]"}
-                </p>
-                <p className="text-[10px] opacity-70 mt-1">
-                  {formatMessageTime(message.created_at)}
-                </p>
-              </div>
+              {/* Media attachments */}
+              {mediaAttachments.map((att, i) => {
+                if (att.type === "image" || att.image_url || att.thumb_url) {
+                  return (
+                    <a
+                      key={i}
+                      href={att.image_url || att.asset_url || att.thumb_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="max-w-[240px] rounded-2xl overflow-hidden block"
+                    >
+                      <img
+                        src={att.thumb_url || att.image_url || att.asset_url}
+                        alt={att.title || "image"}
+                        className="w-full object-cover"
+                      />
+                    </a>
+                  );
+                }
+                if (att.type === "video" || att.mime_type?.startsWith("video/")) {
+                  return (
+                    <video
+                      key={i}
+                      src={att.asset_url}
+                      controls
+                      className="max-w-[240px] rounded-2xl overflow-hidden"
+                    />
+                  );
+                }
+                // Generic file
+                if (att.asset_url || att.type === "file") {
+                  return (
+                    <a
+                      key={i}
+                      href={att.asset_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center gap-2 max-w-[240px] rounded-2xl px-3 py-2 text-sm ${own
+                        ? "bg-[#55288D] text-white"
+                        : "bg-white text-[#1C1C1C]"
+                        }`}
+                    >
+                      <FileText className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{att.title || "File"}</span>
+                      <Download className="w-4 h-4 flex-shrink-0" />
+                    </a>
+                  );
+                }
+                return null;
+              })}
+
+              {/* Text bubble (render even if empty but we have attachments) */}
+              {(message.text || !mediaAttachments.length) && (
+                <div
+                  className={`max-w-[80%] rounded-2xl px-3 py-2 ${own ? "bg-[#55288D] text-white" : "bg-white text-[#1C1C1C]"
+                    }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    {message.text || "[Unsupported message type]"}
+                  </p>
+                  <p className="text-[10px] opacity-70 mt-1">
+                    {formatMessageTime(message.created_at)}
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
+
+        {/* Typing indicator */}
+        {typingUsers.length > 0 && (
+          <div className="flex justify-start">
+            <TypingIndicator typingUsernames={typingUsers} />
+          </div>
+        )}
+
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Quick replies for freemium users - match mobile */}

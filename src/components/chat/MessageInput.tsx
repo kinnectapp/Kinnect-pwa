@@ -8,11 +8,13 @@ import { toast } from "sonner";
 interface MessageInputProps {
   onSendMessage?: (content: string, type: "text" | "audio") => void;
   onSendAudioUrl?: (audioUrl: string, duration: number) => void;
+  onTyping?: () => void;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage = () => {},
   onSendAudioUrl = () => {},
+  onTyping,
 }) => {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -146,7 +148,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
       <div className="flex gap-2">
         <textarea
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
+          onChange={(event) => {
+            setMessage(event.target.value);
+            onTyping?.();
+          }}
           placeholder="Type a message..."
           disabled={isRecording || isUploading}
           className="flex-1 rounded-full border px-4 py-2 text-sm disabled:bg-gray-100 resize-none"

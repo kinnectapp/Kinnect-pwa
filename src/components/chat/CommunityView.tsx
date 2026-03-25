@@ -162,7 +162,7 @@ const CommunityView: React.FC = () => {
           return (
             <button
               key={item.cid}
-              onClick={() => navigate(`/app/chats/${item.id}`)}
+              onClick={() => navigate(`/app/chats/${encodeURIComponent(item.cid)}`)}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
             >
               <img

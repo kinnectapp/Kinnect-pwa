@@ -102,9 +102,12 @@ export const chatService = {
 
     try {
       await channel.watch();
-      return channel.id || channelId;
+       console.log("channelIdchannelId", channelId);
+      
+      
+      return channel.cid || channelId;
     } catch (error: any) {
-      const errorMsg =
+       const errorMsg =
         error?.message ||
         (typeof error === "string" ? error : JSON.stringify(error));
       if (typeof errorMsg === "string" && errorMsg.includes("deleted user")) {

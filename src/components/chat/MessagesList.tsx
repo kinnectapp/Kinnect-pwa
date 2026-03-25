@@ -170,9 +170,9 @@ const MessagesList: React.FC = () => {
         </div>
       )}
 
-      {isRefreshing && cachedChannels.length > 0 && (
+      {/* {isRefreshing && cachedChannels.length > 0 && (
         <p className="px-4 py-2 text-xs text-[#77707F]">Refreshing chats...</p>
-      )}
+      )} */}
 
       {list.length === 0 && hasError ? (
         <p className="p-4 text-sm text-[#77707F]">
@@ -182,7 +182,7 @@ const MessagesList: React.FC = () => {
         list.map((item) => (
           <button
             key={item.cid}
-            onClick={() => navigate(`/app/chats/${item.cid}`)}
+            onClick={() => navigate(`/app/chats/${encodeURIComponent(item.cid)}`)}
             className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-100"
           >
             <img
