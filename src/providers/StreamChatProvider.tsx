@@ -1,7 +1,7 @@
 import { chatService } from "@/services/chat.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useChatStore } from "@/store/chat.store";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { setUser } from "@/api/storage";
 import {
   connectStreamUser,
@@ -9,6 +9,8 @@ import {
   getStreamClient,
 } from "@/services/stream-chat.service";
 import type { User } from "@/lib/types/auth";
+import { Chat } from "stream-chat-react";
+import type { StreamChat } from "stream-chat";
 
 type Props = {
   children: React.ReactNode;
@@ -39,6 +41,7 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const setUnreadCount = useChatStore((state) => state.setUnreadCount);
   const prevUserIdRef = useRef<string | null | undefined>(user?.id);
+  const [client, setClient] = useState<StreamChat | null>(null);
 
   // Bootstrap and connect on mount
   useEffect(() => {
@@ -60,13 +63,18 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
           await connectStreamUser(user);
         }
 
-        const client = getStreamClient();
-        const unread = await client.getUnreadCount();
+        const streamClient = getStreamClient();
+
+        if (isMounted) {
+          setClient(streamClient);
+        }
+
+        const unread = await streamClient.getUnreadCount();
         if (isMounted) {
           setUnreadCount(unread.total_unread_count || 0);
         }
 
-        unsubscribe = client.on((event) => {
+        unsubscribe = streamClient.on((event) => {
           if (!isMounted) return;
           if (event.total_unread_count !== undefined) {
             setUnreadCount(event.total_unread_count || 0);
@@ -108,6 +116,7 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
     if (prevUserIdRef.current && !user?.id) {
       // User was logged in and now is logged out
       console.log("User logged out, disconnecting Stream...");
+      setClient(null);
       void disconnectStreamUser();
     }
     prevUserIdRef.current = user?.id;
@@ -119,6 +128,11 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
       void Notification.requestPermission();
     }
   }, []);
+
+  // Wrap with Stream's <Chat> when client is ready
+  if (client) {
+    return <Chat client={client}>{children}</Chat>;
+  }
 
   return <>{children}</>;
 };

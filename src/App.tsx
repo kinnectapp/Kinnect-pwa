@@ -1,5 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import "./App.css";
+import "stream-chat-react/dist/css/v2/index.css";
+import "./styles/stream-chat-overrides.css";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import SplashRoutes from "./routes/SplashRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
