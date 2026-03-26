@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMessageContext, Attachment } from 'stream-chat-react';
+import { useMessageContext } from 'stream-chat-react';
 
 export const CustomQuotedMessage: React.FC = () => {
     const { message } = useMessageContext();

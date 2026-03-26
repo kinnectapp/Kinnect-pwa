@@ -23,7 +23,6 @@ import {
   Window,
   MessageList,
   MessageInput,
-  Thread,
   TypingIndicator,
 } from "stream-chat-react";
 
@@ -73,17 +72,25 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       setHasError(false);
 
       try {
-        const client = await ensureStreamConnected(user);
-        const channels = await client.queryChannels(
-          {
-            cid: { $eq: channelId },
-            members: { $in: [currentUserId] },
-          },
-          { last_message_at: -1 },
-          { watch: true, state: true, message_limit: 30 },
-        );
+        const currentUser = useAuthStore.getState().user;
+        const client = await ensureStreamConnected(currentUser);
+        
+        // Better way to grab cached channels:
+        const [type, id] = channelId.split(":");
+        let selected = client.channel(type, id);
 
-        const selected = channels[0];
+        if (!selected.initialized) {
+          const channels = await client.queryChannels(
+            {
+              cid: { $eq: channelId },
+              members: { $in: [currentUserId] },
+            },
+            { last_message_at: -1 },
+            { watch: true, state: true, message_limit: 30 },
+          );
+          selected = channels[0];
+        }
+
         if (!selected) {
           setErrorMessage("Chat not found.");
           setHasError(true);
@@ -92,8 +99,6 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         }
 
         if (!isMounted) return;
-
-        await selected.watch();
 
         const members = Object.values(selected.state.members || {});
         const otherMember = members.find(
@@ -125,7 +130,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       isMounted = false;
       setActiveChannelId(null);
     };
-  }, [channelId, currentUserId, navigate, user, setActiveChannelId]);
+  }, [channelId, currentUserId, navigate, setActiveChannelId]);
 
   // Fetch full user data when partner ID is set
   useEffect(() => {
@@ -294,15 +299,6 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     currentUserId,
   ]);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center bg-white">
-        <span className="loader" />
-      </div>
-    );
-  }
-
   // Compute partner age
   const partnerAgeDisplay = partnerAge
     ? Math.floor(
@@ -319,7 +315,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
-          <h2 className="font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px]">
+          <h2 onClick={() => navigate(`/app/match-profile/${partnerId}`)} className="font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px]">
             {title} <span className="w-1.5 h-1.5 rounded-full bg-[#F416C4]"></span>
           </h2>
           <button
@@ -441,6 +437,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
               </Window>
             </Channel>
           </div>
+        </div>
+      ) : isLoading ? (
+        <div className="flex-1 flex items-center justify-center bg-[#FAF8FB]">
+          <span className="loader" />
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-500">

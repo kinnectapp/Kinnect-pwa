@@ -49,7 +49,7 @@ const MessagesList: React.FC = () => {
   );
 
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,7 +57,7 @@ const MessagesList: React.FC = () => {
   const loadChannels = async () => {
     if (!user?.id) return;
 
-    setIsRefreshing(true);
+    // setIsRefreshing(true);
     setHasError(false);
 
     try {
@@ -66,7 +66,7 @@ const MessagesList: React.FC = () => {
       const queried = await client.queryChannels(
         { type: "messaging", members: { $in: [userId] } },
         { last_message_at: -1 },
-        { state: true, watch: true, limit: 30 },
+        { state: true, watch: true, limit: 30, message_limit: 30 },
       );
 
       setChannels(queried);
@@ -80,7 +80,7 @@ const MessagesList: React.FC = () => {
       setHasError(true);
       toast.error(errorMsg);
     } finally {
-      setIsRefreshing(false);
+      // setIsRefreshing(false);
     }
   };
 
@@ -143,6 +143,28 @@ const MessagesList: React.FC = () => {
     );
   }
 
+  // Extract online users from loaded channels
+  const onlineUsers = React.useMemo(() => {
+    if (!user?.id) return [];
+    
+    const uniqueUsers = new Map<string, any>();
+    
+    channels.forEach(channel => {
+      const members = Object.values(channel.state.members || {});
+      const otherMember = members.find(m => m.user_id !== String(user.id));
+      
+      // If the partner is marked as online
+      if (otherMember?.user?.online) {
+        uniqueUsers.set(otherMember.user.id, {
+          ...otherMember.user,
+          cid: channel.cid
+        });
+      }
+    });
+    
+    return Array.from(uniqueUsers.values());
+  }, [channels, user?.id]);
+
   const list: CachedChannelPreview[] =
     channels.length > 0 && user?.id
       ? channels.map((channel) => toPreview(channel, String(user.id)))
@@ -173,6 +195,31 @@ const MessagesList: React.FC = () => {
       {/* {isRefreshing && cachedChannels.length > 0 && (
         <p className="px-4 py-2 text-xs text-[#77707F]">Refreshing chats...</p>
       )} */}
+
+      {/* Online Users Horizontal List */}
+      {onlineUsers.length > 0 && !hasError && (
+        <div className="flex gap-4 overflow-x-auto px-4 py-4 border-b border-gray-100 [&::-webkit-scrollbar]:hidden">
+          {onlineUsers.map(u => (
+            <button 
+              key={u.id} 
+              onClick={() => navigate(`/app/chats/${encodeURIComponent(u.cid)}`)}
+              className="flex flex-col items-center gap-1 w-[56px] shrink-0 transition-opacity hover:opacity-80"
+            >
+              <div className="relative">
+                <img 
+                  src={u.image || '/pwa-192x192.png'} 
+                  alt={u.name || 'User'} 
+                  className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#55288D] p-[1.5px]" 
+                />
+                <span className="absolute bottom-[2px] right-[2px] w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+              </div>
+              <span className="text-[11px] text-center truncate w-full text-gray-700 font-medium">
+                {u.name?.split(' ')[0] || 'User'}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {list.length === 0 && hasError ? (
         <p className="p-4 text-sm text-[#77707F]">
