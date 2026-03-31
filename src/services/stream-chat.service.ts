@@ -88,8 +88,12 @@ export const connectStreamUser = async (user: User): Promise<StreamChat> => {
           user.email,
         image: user.incognito
           ? undefined
-          : safeString(user.profilePhoto || user.image || user.avatar) ||
-            undefined,
+          : safeString(
+              user.profilePhoto || 
+              user.image || 
+              user.avatar || 
+              (Array.isArray(user.profilePhotos) ? user.profilePhotos[0] : undefined)
+            ) || undefined,
       },
       token,
     );

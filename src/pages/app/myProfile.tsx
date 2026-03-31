@@ -164,8 +164,17 @@ const MyProfile = () => {
     try {
       const urls: string[] = [];
       for (const file of files) {
+        let fileToUpload = file;
+        try {
+          // Compress the image before uploading
+          const { compressImage } = await import("@/utils/imageCompression");
+          fileToUpload = await compressImage(file);
+        } catch (error) {
+          console.warn("Image compression failed, falling back to original file", error);
+        }
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", fileToUpload);
         const response = await uploadFile(formData);
         const url = response?.data?.url;
         if (url) urls.push(url);

@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import AppRoutes from "./routes/AppRoutes";
 import { useAuthStore } from "./store/auth.store";
 import { StreamChatProvider } from "./providers/StreamChatProvider";
+import { AppNotificationProvider } from "./providers/AppNotificationProvider";
 
 export const Fallback: React.FC = () => (
   <div className="flex min-h-[70vh] w-full flex-1 items-center justify-center bg-white">
@@ -67,9 +68,11 @@ const App: React.FC = () => {
           path="/app/*"
           element={
             <RequireAuth>
-              <StreamChatProvider>
-                <AppRoutes />
-              </StreamChatProvider>
+              <AppNotificationProvider>
+                <StreamChatProvider>
+                  <AppRoutes />
+                </StreamChatProvider>
+              </AppNotificationProvider>
             </RequireAuth>
           }
         />

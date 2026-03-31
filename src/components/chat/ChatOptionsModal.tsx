@@ -26,7 +26,7 @@ const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-      <div className="w-full bg-white rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="w-full relative bg-white rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}

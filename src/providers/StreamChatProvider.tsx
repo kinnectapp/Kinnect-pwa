@@ -28,19 +28,27 @@ const showNotification = async (
     const registration = await navigator.serviceWorker.ready;
     await registration.showNotification(title, {
       body,
-      data: { channelId },
+      data: {
+        channelId,
+        targetUrl: `/app/chats/${encodeURIComponent(channelId)}`,
+        type: "chat",
+      },
       tag: `chat-${channelId}`,
     });
     return;
   }
 
-  new Notification(title, { body });
+  const notification = new Notification(title, { body });
+  notification.onclick = () => {
+    window.focus();
+    window.location.href = `/app/chats/${encodeURIComponent(channelId)}`;
+  };
 };
 
 export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const setUnreadCount = useChatStore((state) => state.setUnreadCount);
-  const prevUserIdRef = useRef<string | null | undefined>(user?.id);
+  const prevUserIdRef = useRef<string | number | null | undefined>(user?.id);
   const [client, setClient] = useState<StreamChat | null>(null);
 
   // Bootstrap and connect on mount

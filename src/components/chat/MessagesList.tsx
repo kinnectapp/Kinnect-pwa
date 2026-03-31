@@ -9,6 +9,8 @@ import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
 import { useAuthStore } from "@/store/auth.store";
 
+import { chatService } from "@/services/chat.service";
+
 const formatDate = (value?: string | null) => {
   if (!value) return "";
 
@@ -27,17 +29,70 @@ const toPreview = (
   );
   const lastMessage = channel.state.messages[channel.state.messages.length - 1];
 
+  let previewText = "No messages yet";
+  
+  if (lastMessage) {
+    const hasText = lastMessage.text && lastMessage.text.trim().length > 0;
+    const hasAttachment = lastMessage.attachments && lastMessage.attachments.length > 0;
+
+    if (hasText) {
+      previewText = lastMessage.text!;
+    } else if (hasAttachment) {
+      const attachment = lastMessage.attachments![0];
+      if (attachment.type === 'image') previewText = '📷 Photo';
+      else if (attachment.type === 'video') previewText = '🎥 Video';
+      else if (attachment.type === 'voiceRecording' || attachment.type === 'audio') previewText = '🎤 Voice Note';
+      else previewText = '📎 Attachment';
+    }
+  }
+
   return {
     id: resolvedChannelId,
     cid: channel.cid,
     name: otherMember?.user?.name || "Direct Message",
-    image: otherMember?.user?.image || "/pwa-192x192.png",
-    lastMessageText: lastMessage?.text || "No messages yet",
+    image: otherMember?.user?.image || undefined, // undefined triggers our custom fallback logic
+    userId: otherMember?.user_id,
+    lastMessageText: previewText,
     lastMessageAt: lastMessage?.created_at
       ? String(lastMessage.created_at)
       : undefined,
     unreadCount: channel.countUnread(),
   };
+};
+
+// Custom avatar component that falls back to the backend API if stream image is missing
+const ChannelAvatar = ({ userId, initialImage, alt, className }: { userId: string, initialImage?: string, alt: string, className: string }) => {
+  const [image, setImage] = useState<string | undefined>(initialImage);
+  
+  useEffect(() => {
+    let isMounted = true;
+    // Only fetch if initial image is missing or is the generic pwa logo
+    if (!initialImage || initialImage === "/pwa-192x192.png") {
+      const fetchImage = async () => {
+        try {
+          // Fetch from Kinnect backend directly
+          const fullUserData = await chatService.getUserById(userId);
+          const profilePhotos = fullUserData?.data?.resp?.profilePhotos;
+          if (profilePhotos && Array.isArray(profilePhotos) && profilePhotos.length > 0 && isMounted) {
+            setImage(profilePhotos[0]);
+          }
+        } catch (error) {
+          console.warn("Could not fetch fallback avatar for user", userId);
+        }
+      };
+      void fetchImage();
+    }
+    
+    return () => { isMounted = false; };
+  }, [userId, initialImage]);
+
+  return (
+    <img
+      src={image || "/pwa-192x192.png"}
+      alt={alt}
+      className={className}
+    />
+  );
 };
 
 const MessagesList: React.FC = () => {
@@ -127,22 +182,6 @@ const MessagesList: React.FC = () => {
     };
   }, [user?.id]);
 
-  const shouldShowSkeleton =
-    !hasLoadedOnce && channels.length === 0 && cachedChannels.length === 0;
-
-  if (shouldShowSkeleton) {
-    return (
-      <div className="space-y-3 p-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-16 animate-pulse rounded-md bg-[#F3F3F6]"
-          />
-        ))}
-      </div>
-    );
-  }
-
   // Extract online users from loaded channels
   const onlineUsers = React.useMemo(() => {
     if (!user?.id) return [];
@@ -164,6 +203,22 @@ const MessagesList: React.FC = () => {
     
     return Array.from(uniqueUsers.values());
   }, [channels, user?.id]);
+
+  const shouldShowSkeleton =
+    !hasLoadedOnce && channels.length === 0 && cachedChannels.length === 0;
+
+  if (shouldShowSkeleton) {
+    return (
+      <div className="space-y-3 p-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-16 animate-pulse rounded-md bg-[#F3F3F6]"
+          />
+        ))}
+      </div>
+    );
+  }
 
   const list: CachedChannelPreview[] =
     channels.length > 0 && user?.id
@@ -206,8 +261,9 @@ const MessagesList: React.FC = () => {
               className="flex flex-col items-center gap-1 w-[56px] shrink-0 transition-opacity hover:opacity-80"
             >
               <div className="relative">
-                <img 
-                  src={u.image || '/pwa-192x192.png'} 
+                <ChannelAvatar 
+                  userId={u.id}
+                  initialImage={u.image}
                   alt={u.name || 'User'} 
                   className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#55288D] p-[1.5px]" 
                 />
@@ -232,8 +288,9 @@ const MessagesList: React.FC = () => {
             onClick={() => navigate(`/app/chats/${encodeURIComponent(item.cid)}`)}
             className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-100"
           >
-            <img
-              src={item.image || "/pwa-192x192.png"}
+            <ChannelAvatar
+              userId={item.userId || item.id}
+              initialImage={item.image}
               alt={item.name || "User"}
               className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
             />

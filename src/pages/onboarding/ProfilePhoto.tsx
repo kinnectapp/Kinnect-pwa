@@ -18,7 +18,7 @@ const ProfilePhoto = () => {
   const user = useAuthStore((state) => state.user);
   const { useFileUploadMutation, useUpdateProfileMutation, useGetUserMutation } =
     useAuth();
-  const { mutateAsync: uploadFile } = useFileUploadMutation();
+  const { mutateAsync: uploadFile, isPending: isUploading } = useFileUploadMutation();
   const { mutateAsync: updateProfile, isPending } = useUpdateProfileMutation();
   const { mutateAsync: getUserById } = useGetUserMutation();
 
@@ -60,8 +60,17 @@ const ProfilePhoto = () => {
       const uploadedUrls: string[] = [];
 
       for (const file of selectedPhotos) {
+        let fileToUpload = file;
+        try {
+          // Compress the image before uploading
+          const { compressImage } = await import("@/utils/imageCompression");
+          fileToUpload = await compressImage(file);
+        } catch (error) {
+          console.warn("Image compression failed, falling back to original file", error);
+        }
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", fileToUpload);
         const response = await uploadFile(formData);
         const url = response?.data?.url;
 
@@ -197,7 +206,7 @@ const ProfilePhoto = () => {
         disabled={selectedPhotos.length === 0 || isPending}
         className="w-full"
       >
-        {isPending ? "Uploading..." : "Submit"}
+        {isPending || isUploading ? "Uploading..." : "Submit"}
       </Button>
     </div>
   );
