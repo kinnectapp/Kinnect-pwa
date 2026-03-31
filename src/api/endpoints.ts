@@ -54,4 +54,13 @@ export const endpoints = {
   rating: {
     create: "/rating",
   },
+  notification: {
+    unread: "/notification/unread",
+    list: "/notification/user",
+    readAll: "/notification/user/readall",
+  },
+  date: {
+    accept: (dateId: string | number) => `/profile/date/accept/${dateId}`,
+    reject: (dateId: string | number) => `/profile/date/reject/${dateId}`,
+  },
 };

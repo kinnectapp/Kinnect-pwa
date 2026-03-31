@@ -10,6 +10,7 @@ import TermsPage from "@/pages/app/terms";
 import PrivacyPolicyPage from "@/pages/app/privacy-policy";
 import SubscriptionsPage from "@/pages/app/subscriptions";
 import ProfilePage from "@/pages/app/profile";
+import NotificationsPage from "@/pages/app/notifications";
 import MainComponent from "@/pages/main";
 import { Routes, Route } from "react-router-dom";
 
@@ -22,6 +23,10 @@ const AppRoutes = () => (
         element={<LazyRoute Component={CommunityPage} />}
       />
       <Route path="chats" element={<LazyRoute Component={ChatPage} />} />
+      <Route
+        path="notifications"
+        element={<LazyRoute Component={NotificationsPage} />}
+      />
       <Route path="profile" element={<LazyRoute Component={ProfilePage} />} />
     </Route>
     <Route

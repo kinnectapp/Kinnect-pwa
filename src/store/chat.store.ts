@@ -7,6 +7,7 @@ export interface CachedChannelPreview {
   cid: string;
   name: string;
   image?: string;
+  userId?: string;
   lastMessageText: string;
   lastMessageAt?: string;
   unreadCount: number;

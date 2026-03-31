@@ -537,7 +537,11 @@ const ProfilePage: React.FC = () => {
       label: "Book A Coaching Session",
       onClick: () => navigate("/onboarding/booksession"),
     },
-    { icon: NotificationIcon, label: "Notifications" },
+    {
+      icon: NotificationIcon,
+      label: "Notifications",
+      onClick: () => navigate("/app/notifications"),
+    },
     {
       icon: PasswordIcon,
       label: "Change Password",
