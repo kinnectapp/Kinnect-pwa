@@ -3,6 +3,7 @@ import ChatPage from "@/pages/app/chat";
 import ChatidPage from "@/pages/app/ChatIdPage";
 import CommunityPage from "@/pages/app/community";
 import HomePage from "@/pages/app/home";
+import KinnectAiPage from "@/pages/app/kinnect-ai";
 import MatchProfile from "@/pages/app/MatchProfile";
 import MyProfile from "@/pages/app/myProfile";
 import FAQPage from "@/pages/app/faq";
@@ -23,6 +24,7 @@ const AppRoutes = () => (
         element={<LazyRoute Component={CommunityPage} />}
       />
       <Route path="chats" element={<LazyRoute Component={ChatPage} />} />
+      <Route path="kinnect-ai" element={<LazyRoute Component={KinnectAiPage} />} />
       <Route
         path="notifications"
         element={<LazyRoute Component={NotificationsPage} />}
