@@ -168,7 +168,13 @@ const MyProfile = () => {
         try {
           // Compress the image before uploading
           const { compressImage } = await import("@/utils/imageCompression");
+          const { formatBytes } = await import("@/utils/utils");
           fileToUpload = await compressImage(file);
+          
+          console.log(
+            `[Image Upload] Original size: ${formatBytes(file.size)} | ` +
+            `Compressed size: ${formatBytes(fileToUpload.size)}`
+          );
         } catch (error) {
           console.warn("Image compression failed, falling back to original file", error);
         }
