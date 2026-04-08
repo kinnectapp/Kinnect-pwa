@@ -19,6 +19,7 @@ import {
   useGetProfileMatches,
 } from "@/services/profile.service";
 import MatchItemComponent from "@/components/MatchItem";
+import { getSubscriptionPermissions } from "@/lib/subscription";
 
 type Community = {
   id: number;
@@ -37,6 +38,7 @@ type CommunitiesResponse = {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const permissions = getSubscriptionPermissions(user);
   const displayName = user?.firstname || user?.username || "";
   const { useGetUserMutation } = useAuth();
 
@@ -187,8 +189,21 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Book A Coaching Session */}
-        <Link to="/onboarding/booksession">
-          {" "}
+        <button
+          type="button"
+          onClick={() => {
+            if (!permissions.canAccessLiveCoach) {
+              toast.error(
+                "Live coaching is available on VIP and Lifetime plans.",
+              );
+              navigate("/app/subscriptions");
+              return;
+            }
+
+            navigate("/onboarding/booksession");
+          }}
+          className="w-full text-left"
+        >
           <div className="flex p-4 mt-6 justify-between items-center bg-[#860B73] text-[#fff] w-full">
             <div className="flex items-center gap-4">
               <BookSessionIcon width="28" />
@@ -197,12 +212,16 @@ const HomePage: React.FC = () => {
                   Book A Coaching Session
                 </div>
 
-                <div className="text-[12px]">Book now to talk to an expert</div>
+                <div className="text-[12px]">
+                  {permissions.canAccessLiveCoach
+                    ? "Book now to talk to an expert"
+                    : "VIP and Lifetime members can book live coaching"}
+                </div>
               </div>
             </div>
             <MoveRight />
           </div>
-        </Link>
+        </button>
 
         {/* Kinnect Communities */}
         <section className="px-4">

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/api/auth";
 import { handleApiError } from "@/api/serviceUtils";
 import { useAuthStore } from "@/store/auth.store";
+import { getSubscriptionPermissions } from "@/lib/subscription";
 import ProfileIconImg from "../../assets/images/profileIcon.png"
 import {
   BookCoachingIcon,
@@ -503,6 +504,7 @@ const DeleteAccountModal: React.FC<{
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const permissions = getSubscriptionPermissions(user);
   const logout = useAuthStore((state) => state.logout);
   const { useAddRatingMutation, useDeleteAccountMutation } = useAuth();
   const { mutateAsync: addRating } = useAddRatingMutation();
@@ -535,7 +537,17 @@ const ProfilePage: React.FC = () => {
     {
       icon: BookCoachingIcon,
       label: "Book A Coaching Session",
-      onClick: () => navigate("/onboarding/booksession"),
+      onClick: () => {
+        if (!permissions.canAccessLiveCoach) {
+          toast.error(
+            "Live coaching is available on VIP and Lifetime plans.",
+          );
+          navigate("/app/subscriptions");
+          return;
+        }
+
+        navigate("/onboarding/booksession");
+      },
     },
     {
       icon: NotificationIcon,

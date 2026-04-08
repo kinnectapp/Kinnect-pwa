@@ -1,5 +1,6 @@
 import { STREAM_API_KEY } from "@/env";
 import type { User } from "@/lib/types/auth";
+import { getSubscriptionPermissions } from "@/lib/subscription";
 import { StreamChat } from "stream-chat";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -19,25 +20,7 @@ export const getStreamToken = (user: User | null): string => {
 };
 
 export const isPaidUser = (user: User | null): boolean => {
-  if (!user) return false;
-  if (typeof user.isPaid === "boolean") return user.isPaid;
-  if (typeof user.isPremium === "boolean") return user.isPremium;
-  if (typeof user.hasActiveSubscription === "boolean") {
-    return user.hasActiveSubscription;
-  }
-
-  const normalizedPlan = safeString(
-    user.plan || user.subscriptionPlan || user.subscriptionType,
-  )
-    .toLowerCase()
-    .trim();
-
-  if (!normalizedPlan) return false;
-  if (normalizedPlan.includes("free")) return false;
-
-  return ["paid", "premium", "plus", "pro", "gold"].some((plan) =>
-    normalizedPlan.includes(plan),
-  );
+  return getSubscriptionPermissions(user).isPaid;
 };
 
 export const getStreamClient = (): StreamChat => {

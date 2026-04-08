@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/api/auth";
 import { handleApiError } from "@/api/serviceUtils";
 import { useAuthStore } from "@/store/auth.store";
+import { getSubscriptionPermissions } from "@/lib/subscription";
 import {
   MyProfileModals,
   ProfileModalType,
@@ -65,6 +66,7 @@ const MyProfile = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
+  const permissions = getSubscriptionPermissions(user);
   const setUser = useAuthStore((state) => state.setUser);
   const {
     useUpdateProfileMutation,
@@ -343,6 +345,20 @@ const MyProfile = () => {
               <button
                 type="button"
                 onClick={async () => {
+                  if (!permissions.canToggleIncognito) {
+                    toast.error(
+                      "Incognito mode is always on for Freemium users.",
+                    );
+                    return;
+                  }
+
+                  if (!permissions.canToggleIncognitoToday) {
+                    toast.error(
+                      "Incognito control unlocks from day 4 on the Standard plan.",
+                    );
+                    return;
+                  }
+
                   const nextIncognito = !isIncognito;
                   const ok = await onUpdateProfile(
                     { incognito: nextIncognito },
@@ -361,7 +377,11 @@ const MyProfile = () => {
             </div>
           </div>
           <p className="mt-2 text-[14px] text-[#7B7683]">
-            Once on, everyone will be able to see your profile picture.
+            {permissions.incognitoControl === "locked-on"
+              ? "Freemium keeps incognito blur turned on by default."
+              : permissions.incognitoControl === "day-4"
+                ? "Standard members can control incognito from day 4 of their subscription."
+                : "VIP and Lifetime members have full incognito control and blur settings."}
           </p>
         </section>
 
