@@ -9,7 +9,7 @@ const KinnectAiPage: React.FC = () => {
   const location = useLocation();
   const provider =
     (location.state as { provider?: KinnectAiProvider } | null)?.provider ||
-    "openai";
+    "gemini";
 
   return (
     <div className="min-h-screen bg-white pb-6">
@@ -23,12 +23,12 @@ const KinnectAiPage: React.FC = () => {
             <ChevronLeft size={18} className="text-[#5A2B8D]" />
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-semibold text-[#55288D]">
-            Kinnect AI
+            Kiki
           </h1>
         </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className=" ">
         <KinnectAiChatView provider={provider} />
       </div>
     </div>

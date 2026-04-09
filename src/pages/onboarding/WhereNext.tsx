@@ -1,4 +1,4 @@
- import { Link } from "react-router-dom";
+ import { Link, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/logo.svg";
 import {
   BookSessionIcon,
@@ -10,6 +10,8 @@ import { ArrowRight } from "lucide-react";
 import BgPattern from "../../assets/images/onboarding-pattern.svg";
 
 const WhereNext = () => {
+const navigate = useNavigate();
+
   return (
     <div
       style={{
@@ -26,7 +28,10 @@ const WhereNext = () => {
         Choose one of the options below to direct your journey in the Kinnect
         app.
       </p>
-      <div className="flex p-4 justify-between items-center bg-[#600051] text-[#fff] w-full">
+      <div onClick={
+        //navigate to kiki 
+        ()=>navigate("/app/kinnect-ai", { state: { provider: "gemini" } })
+      } className="flex cursor-pointer p-4 justify-between items-center bg-[#600051] text-[#fff] w-full">
         <div className="flex items-center gap-4">
           <WhereNextCoinIcon />
           <div className="">

@@ -1,14 +1,17 @@
 import { GEMINI_API_KEY, OPENAI_API_KEY } from "@/env";
 
-export type KinnectAiProvider = "openai" | "gemini";
+export type KinnectAiProvider = "gemini" | "openai";
 
 export type KinnectAiMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
+const OPENAI_BROWSER_ERROR =
+  "OpenAI cannot be called directly from this browser app because of CORS. Use a backend proxy for OpenAI, or switch this page to Gemini for now.";
+
 const SYSTEM_PROMPT = `
-You are Kinnect AI, a warm relationship and community assistant inside the Kinnect app.
+You are Kiki, a warm relationship and community assistant inside the Kinnect app.
 Help with dating advice, first-message ideas, conversation coaching, profile improvement, community etiquette, and healthy relationship guidance.
 Keep replies practical, supportive, concise, and easy to act on.
 Do not claim to perform app actions you cannot actually perform.
@@ -79,6 +82,10 @@ const requestOpenAi = async (messages: KinnectAiMessage[]) => {
     );
   }
 
+  if (typeof window !== "undefined") {
+    throw new Error(OPENAI_BROWSER_ERROR);
+  }
+
   const response = await fetch(OPENAI_URL, {
     method: "POST",
     headers: {
@@ -130,6 +137,39 @@ const requestGemini = async (messages: KinnectAiMessage[]) => {
   }
 
   return readGeminiText(await response.json());
+};
+
+export const toKinnectAiErrorMessage = (
+  provider: KinnectAiProvider,
+  error: unknown,
+) => {
+  const fallback =
+    provider === "gemini"
+      ? "Gemini could not respond right now. Please try again."
+      : OPENAI_BROWSER_ERROR;
+
+  if (!(error instanceof Error)) {
+    return fallback;
+  }
+
+  const message = error.message?.trim() || fallback;
+
+  if (provider === "gemini" && message.includes("high demand")) {
+    return "Kiki is experiencing high demand right now. Please try again.";
+  }
+
+  if (provider === "openai" && message.toLowerCase().includes("cors")) {
+    return OPENAI_BROWSER_ERROR;
+  }
+
+  if (
+    provider === "openai" &&
+    message.toLowerCase().includes("failed to fetch")
+  ) {
+    return OPENAI_BROWSER_ERROR;
+  }
+
+  return message;
 };
 
 export const kinnectAiService = {

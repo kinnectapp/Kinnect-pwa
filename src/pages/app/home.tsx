@@ -200,7 +200,7 @@ const HomePage: React.FC = () => {
               return;
             }
 
-            navigate("/onboarding/booksession");
+            navigate("/onboarding/book-session");
           }}
           className="w-full text-left"
         >

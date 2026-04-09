@@ -7,6 +7,7 @@ import type { Channel } from "stream-chat";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
+import KinnectChatBtn from "../ai/KinnectChatBtn";
 
 const toPreview = (channel: Channel): CachedChannelPreview => {
   const resolvedChannelId = channel.id || channel.cid.split(":")[1];
@@ -83,7 +84,7 @@ const CommunityView: React.FC = () => {
             }
           }
         });
-        
+
         return () => {
           subscription.unsubscribe();
         };
@@ -158,29 +159,34 @@ const CommunityView: React.FC = () => {
           Unable to load communities. Try refreshing.
         </p>
       ) : (
-        list.map((item) => {
-          return (
-            <button
-              key={item.cid}
-              onClick={() => navigate(`/app/chats/${encodeURIComponent(item.cid)}`)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
-            >
-              <img
-                src={String(item.image || "/pwa-192x192.png")}
-                alt={String(item.name || "Community")}
-                className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">
-                  {String(item.name || "Community Channel")}
-                </h3>
-                <p className="text-sm text-gray-500 truncate">
-                  {item.lastMessageText || "No messages yet"}
-                </p>
-              </div>
-            </button>
-          );
-        })
+        <>
+          <KinnectChatBtn />
+          {list.map((item) => {
+            return (
+              <button
+                key={item.cid}
+                onClick={() =>
+                  navigate(`/app/chats/${encodeURIComponent(item.cid)}`)
+                }
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
+              >
+                <img
+                  src={String(item.image || "/pwa-192x192.png")}
+                  alt={String(item.name || "Community")}
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate">
+                    {String(item.name || "Community Channel")}
+                  </h3>
+                  <p className="text-sm text-gray-500 truncate">
+                    {item.lastMessageText || "No messages yet"}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </>
       )}
     </div>
   );

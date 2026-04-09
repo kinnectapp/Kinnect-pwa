@@ -17,6 +17,11 @@ import { Routes, Route } from "react-router-dom";
 
 const AppRoutes = () => (
   <Routes>
+    <Route
+      path="kinnect-ai"
+      element={<LazyRoute Component={KinnectAiPage} />}
+    />
+
     <Route element={<MainComponent />}>
       <Route index element={<LazyRoute Component={HomePage} />} />
       <Route
@@ -24,7 +29,6 @@ const AppRoutes = () => (
         element={<LazyRoute Component={CommunityPage} />}
       />
       <Route path="chats" element={<LazyRoute Component={ChatPage} />} />
-      <Route path="kinnect-ai" element={<LazyRoute Component={KinnectAiPage} />} />
       <Route
         path="notifications"
         element={<LazyRoute Component={NotificationsPage} />}
