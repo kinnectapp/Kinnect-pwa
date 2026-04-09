@@ -3,6 +3,7 @@ import ChatPage from "@/pages/app/chat";
 import ChatidPage from "@/pages/app/ChatIdPage";
 import CommunityPage from "@/pages/app/community";
 import HomePage from "@/pages/app/home";
+import KinnectAiPage from "@/pages/app/kinnect-ai";
 import MatchProfile from "@/pages/app/MatchProfile";
 import MyProfile from "@/pages/app/myProfile";
 import FAQPage from "@/pages/app/faq";
@@ -16,6 +17,11 @@ import { Routes, Route } from "react-router-dom";
 
 const AppRoutes = () => (
   <Routes>
+    <Route
+      path="kinnect-ai"
+      element={<LazyRoute Component={KinnectAiPage} />}
+    />
+
     <Route element={<MainComponent />}>
       <Route index element={<LazyRoute Component={HomePage} />} />
       <Route

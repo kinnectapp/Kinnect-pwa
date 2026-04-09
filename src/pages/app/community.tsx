@@ -4,6 +4,8 @@ import { chatService } from "@/services/chat.service";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/auth.store";
+import { getSubscriptionPermissions } from "@/lib/subscription";
 
 type Community = {
   id: string | number;
@@ -16,6 +18,8 @@ type Community = {
 
 const CommunityPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const permissions = getSubscriptionPermissions(user);
   const { data, isLoading } = useQuery({
     queryKey: ["community-list"],
     queryFn: async () => chatService.getCommunities(),
@@ -24,6 +28,13 @@ const CommunityPage: React.FC = () => {
   const communities: Community[] = data?.data?.data || data?.data?.resp || [];
 
   const handleJoinConversation = async (community: Community) => {
+    if (!permissions.canJoinCommunityConversation) {
+      toast.error(
+        "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
+      );
+      return;
+    }
+
     try {
       const channelId = await chatService.ensureCommunityChannel(community);
       navigate(`/app/chats/${channelId}`);
@@ -37,7 +48,9 @@ const CommunityPage: React.FC = () => {
       <div className="px-4 pt-4">
         <h1 className="text-xl font-semibold text-[#1C1C1C]">Communities</h1>
         <p className="text-sm text-[#77707F] mt-1">
-          Join the conversation in any Kinnect community.
+          {permissions.canJoinCommunityConversation
+            ? "Join the conversation in any Kinnect community."
+            : "Browse communities on Freemium. Upgrade to join conversations, host, and participate fully."}
         </p>
       </div>
 
@@ -66,9 +79,15 @@ const CommunityPage: React.FC = () => {
               </div>
               <button
                 onClick={() => handleJoinConversation(community)}
-                className="mt-4 w-full rounded-md bg-[#55288D] py-2 text-sm text-white"
+                className={`mt-4 w-full rounded-md py-2 text-sm text-white ${
+                  permissions.canJoinCommunityConversation
+                    ? "bg-[#55288D]"
+                    : "bg-[#C8BCD8]"
+                }`}
               >
-                Join the Conversation
+                {permissions.canJoinCommunityConversation
+                  ? "Join the Conversation"
+                  : "Upgrade to Join"}
               </button>
             </div>
           ))}

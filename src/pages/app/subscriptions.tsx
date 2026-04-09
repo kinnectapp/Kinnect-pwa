@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft  } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumIcon, StandardIcon, VipIcon } from "@/components/icons";
 
@@ -13,36 +13,45 @@ type Plan = {
 
 const plans: Plan[] = [
   {
-    name: "VIP",
-    price: "₦ 250,000",
-    period: "Lifetime",
+    name: "Lifetime",
+    price: "N150,000",
+    period: "one-time",
     features: [
-      "Custom Text Messaging",
-      "3 Weekly Matches",
-      "Free (Movie) Date Night",
-      "Ability to Sponsor up to 3 Fremium Users",
-      "Coaching and Mentoring",
-      "Only for 45 years and above",
+      "Smart and priority matching, 3 per week",
+      "Incognito, full profile and compatibility insights",
+      "Unlimited and personalized Kiki responses",
+      "Full access to personalized coaching and events",
+      "Guaranteed invitation and access",
+      "Cocktail vouchers for first date",
     ],
     icon: <VipIcon />,
   },
   {
-    name: "Premium",
-    price: "₦ 5,000",
+    name: "VIP",
+    price: "N50,000",
     period: "/ month",
     features: [
-      "1 Month Duration",
-      "Custom Text Messaging",
-      "3 Weekly Matches",
-      "Blind Date by Raffles",
+      "Smart and priority matching, 3 per week",
+      "Incognito, full profile and compatibility insights",
+      "Unlimited personalized responses with Kiki",
+      "Full access to personalized coaching and live coach support",
+      "Raffled sponsorship for first dates",
+      "Guaranteed invitation and access",
     ],
-    icon: <PremiumIcon/>,
+    icon: <PremiumIcon />,
   },
   {
     name: "Standard",
-    price: "₦ 3,000",
+    price: "N5,000",
     period: "/ month",
-    features: ["1 Month Duration", "Custom Text Messaging", "3 weekly Matches"],
+    features: [
+      "3 curated matches per week",
+      "Incognito with profile access, names and faces unseen",
+      "Limited Kiki access with guided responses",
+      "Full community access to post, host, and join events",
+      "Eligible to purchase event tickets, no guarantee",
+      "Incognito option available from day 4",
+    ],
     icon: <StandardIcon />,
   },
 ];
@@ -54,14 +63,16 @@ const SubscriptionCard: React.FC<{ plan: Plan }> = ({ plan }) => (
       <h3 className="text-[18px] font-semibold">{plan.name}</h3>
       <ul className="mt-3 space-y-2 text-[12px] text-[#C7C1CE]">
         {plan.features.map((feature) => (
-          <li key={feature}>• {feature}</li>
+          <li key={feature}>- {feature}</li>
         ))}
       </ul>
     </div>
-    <div className="border-y my-4  border-white/20 px-4 py-3">
+    <div className="my-4 border-y border-white/20 px-4 py-3">
       <p className="text-[22px] font-semibold leading-none">
         {plan.price}{" "}
-        <span className="text-[14px] font-normal text-white/80">{plan.period}</span>
+        <span className="text-[14px] font-normal text-white/80">
+          {plan.period}
+        </span>
       </p>
     </div>
     <div className="px-4 pb-4 pt-3">
@@ -69,7 +80,7 @@ const SubscriptionCard: React.FC<{ plan: Plan }> = ({ plan }) => (
         type="button"
         className="h-11 w-full rounded-full bg-white text-[12px] font-semibold text-[#55288D]"
       >
-        Get Started 
+        Get Started
       </button>
     </div>
   </div>
@@ -95,16 +106,20 @@ const SubscriptionsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-4 mt-6 px-4">
+      <div className="mt-6 space-y-4 px-4">
         <div className="rounded-[10px] border border-[#DECFEA] bg-[#FAF8FB] p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-[18px] font-semibold text-[#1C1C1C]">Fremium</h2>
-            <p className="text-[12px] font-semibold text-[#D400B3]">• Current Plan</p>
+            <h2 className="text-[18px] font-semibold text-[#1C1C1C]">
+              Fremium
+            </h2>
+            <p className="text-[12px] font-semibold text-[#D400B3]">
+              - Current Plan
+            </p>
           </div>
           <p className="mt-3 text-[12px] leading-[1.5] text-[#6E6A75]">
-            Users are matched but can only communicate once with their matches to ask
-            if they would like to engage. This engagement is by predefined messages,
-            not user-generated.
+            Enjoy 3 curated matches per week, incognito profile access with
+            names and faces unseen, read-only community access, and always-on
+            blur mode for incognito settings.
           </p>
         </div>
 

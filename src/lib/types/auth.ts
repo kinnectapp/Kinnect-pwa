@@ -67,6 +67,11 @@ export interface User {
   plan?: string;
   subscriptionPlan?: string;
   subscriptionType?: string;
+  currentSubId?: string | number | null;
+  currentSubName?: string | null;
+  subStartDate?: string | null;
+  subExpiryDate?: string | null;
+  subscriptionStatus?: string | null;
   isPaid?: boolean;
   isPremium?: boolean;
   hasActiveSubscription?: boolean;

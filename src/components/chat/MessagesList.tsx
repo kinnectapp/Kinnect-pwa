@@ -10,6 +10,7 @@ import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
 import { useAuthStore } from "@/store/auth.store";
 
 import { chatService } from "@/services/chat.service";
+import KinnectChatBtn from "../ai/KinnectChatBtn";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "";
@@ -276,6 +277,8 @@ const MessagesList: React.FC = () => {
           ))}
         </div>
       )}
+
+      <KinnectChatBtn />
 
       {list.length === 0 && hasError ? (
         <p className="p-4 text-sm text-[#77707F]">

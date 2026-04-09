@@ -303,7 +303,7 @@ const PersonalityTest: React.FC = () => {
             <Button
               variant={"secondary"}
               type="button"
-              onClick={() => navigate("/app/chat-expert")}
+              onClick={() => navigate("/onboarding/book-session")}
               className="w-full"
             >
               Chat with an expert

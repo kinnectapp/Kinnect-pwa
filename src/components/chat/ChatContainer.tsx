@@ -42,9 +42,10 @@ const ChatContainer: React.FC = () => {
           </button>
         </div>
       </div>
-
+ 
       {/* Tab Content */}
       <div className="flex-1 mt-16 overflow-hidden">
+ 
         {activeTab === "messages" && <MessagesList />}
         {activeTab === "community" && <CommunityView />}
       </div>
