@@ -3,102 +3,64 @@ import { useLocation, useNavigate } from "react-router-dom"; // Use react-router
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SuccessIcon } from "@/components/icons";
+import { dealBreakerQuestions } from "@/lib/utils/constants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import useAuth from "@/api/auth";
+import { useAuthStore } from "@/store/auth.store";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
+import { DealBreakerPayload } from "@/lib/types/auth";
+import { useGetProfile } from "@/services/profile.service";
 
 interface DealBreakerQuestion {
   id: string;
   title: string;
-  options: string[];
+  options: Array<{ item: string; mainKey: string }>;
 }
 
-const dealBreakerQuestions: DealBreakerQuestion[] = [
-  {
-    id: "religion",
-    title: "Religion",
-    options: [
-      "Catholic",
-      "Protestant",
-      "Pentecostal",
-      "Islam",
-      "Agnostic",
-      "Others",
-    ],
-  },
-  {
-    id: "religion2",
-    title: "Religion",
-    options: [
-      "Catholic",
-      "Protestant",
-      "Pentecostal",
-      "Islam",
-      "Agnostic",
-      "Others",
-    ],
-  },
-  {
-    id: "education",
-    title: "Education",
-    options: ["SSCE", "OND", "HND", "B.Sc.", "M.Sc.", "Ph.D"],
-  },
-  {
-    id: "smoking-habit",
-    title: "Smoking Habit",
-    options: [
-      "Smoker",
-      "Smoke Sometimes",
-      "Rarely Smokes",
-      "Don't Smoke",
-      "Trying To Quit",
-      "Neutral",
-    ],
-  },
-  {
-    id: "completion",
-    title: "Completion",
-    options: [
-      "Dark Melanin",
-      "Chocolate",
-      "Fair Melanin",
-      "Mixed Race",
-      "Asian",
-      "Caucasian",
-    ],
-  },
-  {
-    id: "body-type",
-    title: "Body Type",
-    options: [
-      "Athletic",
-      "Chubby",
-      "Average Build",
-      "Slim",
-      "Small Stature",
-      "Neutral",
-    ],
-  },
-  {
-    id: "age",
-    title: "Age",
-    options: [
-      "Age 19 - 24",
-      "Age 25 - 29",
-      "Age 30 - 34",
-      "Age 35 - 39",
-      "Age 40 - 49",
-      "Age 50+",
-    ],
-  },
+const dealBreakerQuestionList: DealBreakerQuestion[] = [
+  ...dealBreakerQuestions.map((question) => ({
+    id: question.key,
+    title: question.question.replace(/^Your Preferred /, "").replace(/\?$/, ""),
+    options: question.options.map((option) => ({
+      item: option.item,
+      mainKey: option.mainKey,
+    })),
+  })),
 ];
 
 export default function DealBreakers() {
   const location = useLocation(); // Get search params from location
   const navigate = useNavigate(); // For navigation
+  const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+  const { useAddDealBreakerMutation, useGetUserMutation } = useAuth();
+  const { mutateAsync: addDealBreaker } = useAddDealBreakerMutation();
+  const { mutateAsync: getUserById } = useGetUserMutation();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [rankings, setRankings] = useState<
     Record<string, Record<string, number>>
   >({});
   const [isComplete, setIsComplete] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getInitialRankings = () => {
+    const initialRankings: Record<string, Record<string, number>> = {};
+    dealBreakerQuestionList.forEach((question) => {
+      initialRankings[question.id] = {};
+      question.options.forEach((_, index) => {
+        initialRankings[question.id][index] = 0;
+      });
+    });
+    return initialRankings;
+  };
 
   // Initialize rankings from URL or localStorage
   useEffect(() => {
@@ -107,7 +69,10 @@ export default function DealBreakers() {
     const questionParam = params.get("question");
     if (questionParam) {
       const questionIndex = parseInt(questionParam);
-      if (questionIndex >= 0 && questionIndex < dealBreakerQuestions.length) {
+      if (
+        questionIndex >= 0 &&
+        questionIndex < dealBreakerQuestionList.length
+      ) {
         setCurrentQuestion(questionIndex);
       }
     }
@@ -115,28 +80,33 @@ export default function DealBreakers() {
     // Initialize rankings from localStorage
     const savedRankings = localStorage.getItem("dealBreakerRankings");
     if (savedRankings) {
-      setRankings(JSON.parse(savedRankings));
-    } else {
-      const initialRankings: Record<string, Record<string, number>> = {};
-      dealBreakerQuestions.forEach((question) => {
-        initialRankings[question.id] = {};
+      const parsedRankings = JSON.parse(savedRankings) as Record<
+        string,
+        Record<string, number>
+      >;
+      const mergedRankings = getInitialRankings();
+
+      dealBreakerQuestionList.forEach((question) => {
         question.options.forEach((_, index) => {
-          initialRankings[question.id][index] =
-            index === 0
-              ? 4
-              : index === 1
-                ? 1
-                : index === question.options.length - 1
-                  ? 2
-                  : 0;
+          const value = parsedRankings?.[question.id]?.[index];
+          mergedRankings[question.id][index] =
+            typeof value === "number" ? value : 0;
         });
       });
+
+      setRankings(mergedRankings);
+    } else {
+      const initialRankings = getInitialRankings();
       setRankings(initialRankings);
+      localStorage.setItem(
+        "dealBreakerRankings",
+        JSON.stringify(initialRankings),
+      );
     }
   }, [location.search]);
 
   const handleRankChange = (optionIndex: number, rank: number) => {
-    const currentQ = dealBreakerQuestions[currentQuestion];
+    const currentQ = dealBreakerQuestionList[currentQuestion];
     setRankings((prev) => ({
       ...prev,
       [currentQ.id]: {
@@ -156,13 +126,62 @@ export default function DealBreakers() {
     localStorage.setItem("dealBreakerRankings", JSON.stringify(newRankings));
   };
 
-  const handleContinue = () => {
-    if (currentQuestion < dealBreakerQuestions.length - 1) {
+  const buildPayload = (): DealBreakerPayload => {
+    const payload = {
+      preferredReligion: {},
+      smokingRate: {},
+      bodyType: {},
+      complexion: {},
+      education: {},
+    } as DealBreakerPayload;
+
+    dealBreakerQuestionList.forEach((question) => {
+      question.options.forEach((option, index) => {
+        const rank = rankings?.[question.id]?.[index] ?? 0;
+        const normalizedMainKey =
+          question.id === "preferredReligion" && option.mainKey === "islman"
+            ? "islam"
+            : option.mainKey;
+        (
+          payload[question.id as keyof DealBreakerPayload] as Record<
+            string,
+            number
+          >
+        )[normalizedMainKey] = rank;
+      });
+    });
+
+    return payload;
+  };
+
+  const handleContinue = async () => {
+    if (isSubmitting) return;
+
+    if (currentQuestion < dealBreakerQuestionList.length - 1) {
       const nextQuestion = currentQuestion + 1;
       setCurrentQuestion(nextQuestion);
       navigate(`?question=${nextQuestion}`); // Update the URL with the next question
     } else {
-      setIsComplete(true);
+      try {
+        setIsSubmitting(true);
+        const payload = buildPayload();
+        await addDealBreaker(payload);
+
+        if (user?.id) {
+          const userResponse = await getUserById(String(user.id));
+          const fetchedUser = userResponse?.data?.resp;
+          if (fetchedUser && typeof fetchedUser === "object") {
+            await setUser(fetchedUser as any);
+          }
+        }
+
+        toast.success("Deal breakers saved successfully.");
+        setIsComplete(true);
+      } catch (error) {
+        toast.error(handleApiError(error));
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -178,7 +197,7 @@ export default function DealBreakers() {
     return <CompletionScreen />;
   }
 
-  const question = dealBreakerQuestions[currentQuestion];
+  const question = dealBreakerQuestionList[currentQuestion];
   const questionRankings = rankings[question.id] || {};
 
   return (
@@ -202,7 +221,7 @@ export default function DealBreakers() {
       {/* Progress */}
       <div className="relative z-10 text-center mb-2">
         <p className="text-sm  text-gray-300">
-          {currentQuestion + 1} / {dealBreakerQuestions.length}
+          {currentQuestion + 1} / {dealBreakerQuestionList.length}
         </p>
       </div>
 
@@ -224,7 +243,7 @@ export default function DealBreakers() {
             <div className="flex items-center gap-3 py-2 px-4">
               <div className="w-2 h-2 bg-pink-500 rounded-full flex-shrink-0"></div>
               <span className="text-[14px] font-medium text-white">
-                {option}
+                {option.item}
               </span>
             </div>
 
@@ -236,48 +255,61 @@ export default function DealBreakers() {
               <span className="text-gray-300 font-light text-[12px]">
                 Rank:
               </span>
-              <select
-                value={questionRankings[index] ?? ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value !== "") {
-                    handleRankChange(index, parseInt(value));
-                  }
-                }}
-                className="bg-transparent  border-0 flex-1 text-white font-medium cursor-pointer focus:outline-none focus:ring-0 appearance-none text-right pr-6"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right center",
-                  paddingRight: "24px",
-                }}
+              <Select
+                value={String(questionRankings[index] ?? 0)}
+                onValueChange={(value) =>
+                  handleRankChange(index, Number(value))
+                }
               >
-                <option value="" className="bg-gray-900 text-gray-300">
-                  --select option--
-                </option>
-                {[0, 1, 2, 3, 4, 5].map((rank) => (
-                  <option
-                    key={rank}
-                    value={rank}
-                    className="bg-gray-900 text-white"
-                  >
-                    {rank}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-full border-0 bg-transparent px-0 text-right text-white shadow-none focus:ring-0">
+                  <SelectValue placeholder="--select option--" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[0, 1, 2, 3, 4, 5].map((rank) => (
+                    <SelectItem key={rank} value={String(rank)}>
+                      {rank}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         ))}
       </div>
 
       {/* Continue Button */}
-      <Button onClick={handleContinue}>Continue</Button>
+      <Button onClick={handleContinue} disabled={isSubmitting}>
+        {isSubmitting ? "Saving..." : "Continue"}
+      </Button>
     </div>
   );
 }
 
 function CompletionScreen() {
   const navigate = useNavigate();
+  const { data: profileData, isLoading: isLoadingProfile } = useGetProfile();
+
+  const handleFindMatch = () => {
+    // Check if personality test is completed
+    if (!profileData?.personalityId) {
+      navigate("/onboarding/takepersonalitytest");
+      return;
+    }
+
+    // Check if required profile fields are set
+    const requiredFields = ["religion", "education", "bodyType", "gender"];
+    const missingFields = requiredFields.filter(
+      (field) => !profileData?.[field as keyof typeof profileData],
+    );
+
+    if (missingFields.length > 0) {
+      navigate("/onboarding/profile");
+      return;
+    }
+
+    // All done, navigate to matches
+    navigate("/app");
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -312,8 +344,12 @@ function CompletionScreen() {
         </p>
 
         {/* Find A Match Button */}
-        <Button onClick={() => navigate("/onboarding/communities")} className="w-full">
-          Find A Match
+        <Button
+          onClick={handleFindMatch}
+          disabled={isLoadingProfile}
+          className="w-full"
+        >
+          {isLoadingProfile ? "Loading..." : "Find A Match"}
         </Button>
       </div>
     </div>

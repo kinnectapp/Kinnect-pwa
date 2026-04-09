@@ -7,10 +7,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "prompt",
       devOptions: {
         enabled: true,
+        type: "module",
       },
       includeAssets: ["favicon.ico", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {

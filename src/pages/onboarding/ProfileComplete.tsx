@@ -33,7 +33,7 @@ const ProfileComplete = () => {
             <div className="">60% Completed</div>
           </div>
           <div className="p-4 ">
-            <Button className="flex w-full bg-white text-[#55288D] text-[12px] items-center justify-center gap-2">
+            <Button onClick={() => navigate("/onboarding/dealbreaker")} className="flex w-full bg-white text-[#55288D] text-[12px] items-center justify-center gap-2">
               Select Deal Breakers{" "}
               <span className="p-[2px] rounded-full flex justify-center items-center bg-[#55288D] text-white">
                 <ArrowRight className="w-3 h-3 " />

@@ -8,7 +8,7 @@ export const PWAUpdatePrompt: React.FC = () => {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r: any) {
-      // console.log("SW registered", r);
+      console.log("SW registered", r);
     },
     onRegisterError(error: any) {
       console.error("SW registration error", error);
@@ -40,7 +40,7 @@ export const PWAUpdatePrompt: React.FC = () => {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
-      <div className="flex max-w-[360px] items-center gap-3 rounded-full bg-[#2A0040] px-4 py-2 text-white shadow-lg">
+      <div className="flex max-w-[400px] items-center gap-3 rounded-full bg-[#2A0040] px-4 py-2 text-white shadow-lg">
         <span className="text-[13px]">
           {isUpdate
             ? "A new version of Kinnect is available."

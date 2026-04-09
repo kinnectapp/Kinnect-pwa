@@ -35,7 +35,7 @@ const SessionConfirmation = () => {
           <Button
             variant={"secondary"}
             type="button"
-            //  onClick={() => navigate("/app/chat-expert")}
+             onClick={() => navigate("/app")}
             className="w-full"
           >
             Go To Dashboard

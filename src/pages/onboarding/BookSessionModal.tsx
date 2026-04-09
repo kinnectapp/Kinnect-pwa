@@ -2,11 +2,12 @@ import { ChevronLeft } from "lucide-react";
 import sessionImg from "../../assets/images/session.svg";
 import { ProfilesetupIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 const BookSessionModal = () => {
+  const navigate = useNavigate();
   return (
     <div className="  gap-4 p-4 flex h-[100dvh] flex-col">
-      <div className="flex iitems-center gap-2">
+      <div onClick={()=>navigate(-1)} className="flex iitems-center gap-2">
         <ChevronLeft /> Back
       </div>
       <div className="flex-1   h-full">

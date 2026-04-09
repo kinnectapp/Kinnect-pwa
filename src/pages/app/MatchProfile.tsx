@@ -1,124 +1,277 @@
-"use client";
 
-import React, { useState } from "react";
+
+import React, { useState, useMemo } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import MoreOptionsModal from "@/components/MoreOptionsModal";
+import ReportModal from "@/components/chat/ReportModal";
+import ConfirmationModal from "@/components/chat/ConfirmationModal";
+import SponsorModal from "@/components/chat/SponsorModal";
+import { useNavigate, useParams } from "react-router-dom";
+import { chatService } from "@/services/chat.service";
+import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
+import { useGetProfileMatches } from "@/services/profile.service";
+import { Loader } from "lucide-react";
+import UserImage from "../../assets/images/user-profile.png";
+
+interface ProfileEssentials {
+  dob?: string;
+  education?: string;
+  occupation?: string;
+  religion?: string;
+  drinkRate?: string;
+  smokeRate?: string;
+}
 
 interface Profile {
   id: string;
   name: string;
   location: string;
-  age: number;
-  compatibility: number;
+  dob: string;
+  personalityPercentage: string;
   image: string;
+  images: string[];
   about: string;
   personalityResult: string;
   flags: string[];
-  essentials: string[];
+  essentials: ProfileEssentials;
   interests: string[];
 }
 
-const mockProfiles: Profile = {
-  id: "1",
-  name: "Charlotte Caser",
-  location: "Cairo, Egypt",
-  age: 24,
-  compatibility: 92,
-  image:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=500&fit=crop",
-  about:
-    "Creative soul with a passion for art and literature. Always up for an adventure. Looking for a genuine connection and someone to share laughter and late-night conversations with.",
-  personalityResult:
-    "Their reliability is a strength, but empathy and emotional stability are areas for improvement, and developing these skills will help them navigate challenging situations.",
-  flags: ["🇵🇰", "🇮🇳", "🇧🇩"],
-  essentials: [
-    "24 years",
-    "Bachelor of Science (B.Sc.)",
-    "Medical Doctor",
-    "Islam",
-    "Often Drinker",
-    "Not a smoker",
-  ],
-  interests: [
-    "Cooking",
-    "Swimming",
-    "Dance",
-    "Reading",
-    "Shopping",
-    "Pets",
-    "Painting",
-  ],
-};
-
 export const MatchProfile: React.FC = () => {
-   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
-  const currentProfile = mockProfiles;
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showJiltModal, setShowJiltModal] = useState(false);
+  const [showSponsorModal, setShowSponsorModal] = useState(false);
+  const [isPerformingAction, setIsPerformingAction] = useState(false);
 
-  const handleMessage = () => {
-    console.log("[v0] Message clicked for:", currentProfile.name);
-    alert(`Opening message chat with ${currentProfile.name}`);
+  const { data: matchesData, isLoading } = useGetProfileMatches();
+
+  const currentMatchItem = useMemo(() => {
+    if (!matchesData || !id) return null;
+    return matchesData.find((item: any) => item.profile.id === Number(id));
+  }, [matchesData, id]);
+
+  const currentProfile: Profile | null = useMemo(() => {
+    if (!currentMatchItem) return null;
+    console.log("currentMatchItem", currentMatchItem);
+    const { profile,
+      //  value 
+    } = currentMatchItem;
+
+    const images: string[] =
+      profile.profilePhotos && profile.profilePhotos.length > 0
+        ? profile.profilePhotos
+        : [UserImage];
+
+    let age = profile.age || 0;
+    if (!age && profile.dob) {
+      age = Math.floor(
+        (Date.now() - new Date(profile.dob).getTime()) /
+        (1000 * 60 * 60 * 24 * 365.25)
+      );
+    }
+
+    return {
+      id: String(profile.id),
+      name:
+        profile.firstname && profile.lastname
+          ? `${profile.firstname} ${profile.lastname}`
+          : profile.username || "Unknown User",
+      location: [profile.city, profile.state, profile.country]
+        .filter(Boolean)
+        .join(", "),
+      dob: String(age),
+      // personalityPercentage: String(value || 0),
+      personalityPercentage: String(Number(profile.personalityPercentage).toFixed() || 0),
+
+      image: images[0],
+      images,
+      about: profile.bio || "No bio available",
+      personalityResult: profile.personalitySummary || "",
+      flags: [],
+      essentials: {
+        dob: String(age),
+        education: profile.education,
+        occupation: profile.occupation,
+        religion: profile.religion,
+        drinkRate: profile.drinkRate,
+        smokeRate: profile.smokeRate,
+      },
+      interests: profile.interests || [],
+    };
+  }, [currentMatchItem]);
+
+  const handleMessage = async () => {
+    if (!currentProfile) return;
+    try {
+      const channelId = await chatService.ensurePersonalChannel(currentProfile.id);
+      // console.log("currentProfile", channelId);
+      navigate(`/app/chats/${channelId}`);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    }
   };
 
-  const handleMore = () => {
-    console.log("[v0] More options opened for:", currentProfile.name);
-    setShowMoreOptions(true);
+  const handleProceedToDate = async () => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.proceedToDate(currentProfile.id);
+      toast.success(`Date request sent to ${currentProfile.name}`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
   };
 
-  const handleProceedToDate = () => {
-    console.log("[v0] Proceed to date:", currentProfile.name);
-    alert(`Proceeding to schedule a date with ${currentProfile.name}`);
-    setShowMoreOptions(false);
+  const handleConfirmSponsor = async () => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.sponsorUser(currentProfile.id);
+      toast.success(`Sponsor request sent for ${currentProfile.name}`);
+      setShowSponsorModal(false);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
   };
 
-  const handleSponsorPlan = () => {
-    console.log("[v0] Sponsor plan clicked:", currentProfile.name);
-    alert(`Opening sponsor plan for ${currentProfile.name}`);
-    setShowMoreOptions(false);
+  const handleConfirmBlock = async () => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.blockUser(currentProfile.id);
+      toast.success(`${currentProfile.name} has been blocked`);
+      setShowBlockModal(false);
+      setShowMoreOptions(false);
+      setTimeout(() => navigate("/app"), 500);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
   };
 
-  const handleBlock = () => {
-    console.log("[v0] Block user:", currentProfile.name);
-    alert(`${currentProfile.name} has been blocked`);
-    setShowMoreOptions(false);
+  const handleConfirmReport = async (reason: string) => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.reportUser({ reportedUserId: currentProfile.id, reason });
+      toast.success(`Report submitted for ${currentProfile.name}`);
+      setShowReportModal(false);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
   };
 
-  const handleReport = () => {
-    console.log("[v0] Report user:", currentProfile.name);
-    alert(`Report submitted for ${currentProfile.name} (anonymous)`);
-    setShowMoreOptions(false);
+  const handleConfirmJilt = async () => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.jiltUser(currentProfile.id);
+      toast.success(`${currentProfile.name} removed from matches`);
+      setShowJiltModal(false);
+      setShowMoreOptions(false);
+      setTimeout(() => navigate("/app"), 500);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
   };
 
-  const handleJilt = () => {
-    console.log("[v0] Jilt user:", currentProfile.name);
-    alert(`${currentProfile.name} removed from matches`);
-    setShowMoreOptions(false);
-  };
+  if (isLoading || !currentProfile) {
+    return (
+      <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-600">
+          <Loader className="animate-spin w-5 h-5" />
+          <span>Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+   
 
   return (
-    <div className="min-h-screen  p-4 profile-match-gradient flex items-center justify-center  ">
-      {/* Cards Container */}
+    <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
       <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-        {/* Current Card */}
         <div className="w-full max-w-sm transform transition-all duration-300">
           <ProfileCard
             profile={currentProfile}
-             onMessage={handleMessage}
-            onMore={handleMore}
+            onMessage={handleMessage}
+            onMore={() => setShowMoreOptions(true)}
           />
         </div>
       </div>
 
-      {/* More Options Modal */}
       <MoreOptionsModal
         isOpen={showMoreOptions}
-        profile={mockProfiles}
+        profile={currentProfile}
         onClose={() => setShowMoreOptions(false)}
         onProceedToDate={handleProceedToDate}
-        onSponsorPlan={handleSponsorPlan}
-        onBlock={handleBlock}
-        onReport={handleReport}
-        onJilt={handleJilt}
+        onSponsorPlan={() => setShowSponsorModal(true)}
+        onBlock={() => setShowBlockModal(true)}
+        onReport={() => setShowReportModal(true)}
+        onJilt={() => setShowJiltModal(true)}
+      />
+
+      <ReportModal
+        isOpen={showReportModal}
+        userName={currentProfile?.name}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleConfirmReport}
+        isLoading={isPerformingAction}
+      />
+
+      <ConfirmationModal
+        isOpen={showBlockModal}
+        title="Block Match"
+        message={`Are you sure you want to block ${currentProfile?.name}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
+        confirmText="Block"
+        isDangerous
+        onClose={() => setShowBlockModal(false)}
+        onConfirm={handleConfirmBlock}
+        isLoading={isPerformingAction}
+      />
+
+      <ConfirmationModal
+        isOpen={showJiltModal}
+        title="Jilt Match"
+        message={`Are you sure you want to jilt this match? By jilting this match, it means you are no longer interested and want to put off this conversation.`}
+        userImage={currentProfile?.image}
+        userLocation={currentProfile?.location}
+        confirmText="Jilt"
+        isDangerous
+        onClose={() => setShowJiltModal(false)}
+        onConfirm={handleConfirmJilt}
+        isLoading={isPerformingAction}
+      />
+
+      <SponsorModal
+        isOpen={showSponsorModal}
+        userName={currentProfile?.name}
+        userImage={currentProfile?.image}
+        onClose={() => setShowSponsorModal(false)}
+        onConfirm={handleConfirmSponsor}
+        isLoading={isPerformingAction}
       />
     </div>
   );

@@ -1,0 +1,213 @@
+/* 
+ * Stream Chat React theme overrides 
+ * Matches the Kinnect app purple theme (#55288D)
+ */
+
+/* Primary color overrides */
+.str-chat {
+  --str-chat__primary-color: #55288D;
+  --str-chat__active-primary-color: #45227d;
+  --str-chat__primary-color-low-emphasis: #EEEAF4;
+  --str-chat__surface-color: #ffffff;
+  --str-chat__secondary-surface-color: #FAF8FB;
+  --str-chat__border-radius-circle: 9999px;
+  --str-chat__own-message-bubble-color: #55288D;
+  --str-chat__primary-surface-color: #55288D;
+  --str-chat__primary-surface-color-low-emphasis: #ef9a9a;
+}
+
+/* Message bubble styling - own messages are red */
+.str-chat__message--me .str-chat__message-bubble,
+.str-chat__message-simple--me .str-chat__message-bubble,
+.str-chat .str-chat__message--me .str-chat__message-bubble,
+.str-chat .str-chat__message-simple--me .str-chat__message-bubble {
+  background-color: #55288D !important;
+  background: #55288D !important;
+  color: #ffffff !important;
+  border-radius: 16px;
+}
+
+.str-chat__message--me .str-chat__message-text p,
+.str-chat__message-simple--me .str-chat__message-text p,
+.str-chat .str-chat__message--me .str-chat__message-text p {
+  color: #ffffff !important;
+}
+
+.str-chat__message--me .str-chat__message-timestamp,
+.str-chat__message-simple--me .str-chat__message-timestamp {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Receiver messages - light grey */
+.str-chat__message-bubble {
+  border-radius: 16px;
+}
+
+/* Input styling */
+.str-chat__message-input {
+  border-top: 1px solid #f0edf3;
+  background-color: #ffffff;
+}
+
+.str-chat__input-flat {
+  border-radius: 24px;
+  border: 1px solid #e6e3ea;
+}
+
+/* Send button */
+.str-chat__send-button {
+  color: #55288D;
+}
+
+.str-chat__send-button:hover {
+  color: #45227d;
+}
+
+/* Header area — hide Stream's default, we use our own */
+.str-chat__header-livestream,
+.str-chat__channel-header {
+  display: none;
+}
+
+/* Reaction styling */
+.str-chat__reaction-list--mine .str-chat__message-reaction {
+  background-color: #EEEAF4;
+}
+
+/* Thread styling */
+.str-chat__thread {
+  background-color: #FAF8FB;
+}
+
+.str-chat__thread-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0edf3;
+}
+
+/* Typing indicator */
+.str-chat__typing-indicator {
+  color: #77707F;
+  font-size: 12px;
+}
+
+/* URL enrichment / link previews */
+.str-chat__message-url-preview {
+  border-radius: 12px;
+  border: 1px solid #e6e3ea;
+}
+
+/* File attachment cards */
+.str-chat__message-attachment-card {
+  border-radius: 12px;
+}
+
+/* Audio recording button theming */
+.str-chat__audio_recorder__mic-button {
+  color: #55288D;
+}
+
+/* Read receipt indicator */
+.str-chat__message-status .str-chat__tooltip {
+  background-color: #55288D;
+}
+
+/* Scrollbar thin styling */
+.str-chat__list {
+  scrollbar-width: thin;
+}
+
+/* Make the chat window fill its container */
+.str-chat {
+  height: 100% !important;
+}
+
+.str-chat__container {
+  height: 100% !important;
+}
+
+.str-chat__main-panel {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.str-chat.str-chat-channel {
+  height: 100% !important;
+}
+
+.str-chat__channel {
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.str-chat__main-panel-inner {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.str-chat-channel .str-chat__container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* Ensure message list takes remaining space */
+.str-chat__list {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+/* Ensure message input stays at the bottom */
+.str-chat__message-input {
+  flex: 0 0 auto !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .str-chat__thread {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+  }
+}
+
+/* ============================================
+   TIMESTAMP: Show time only, hide name & date
+   ============================================ */
+
+/* Hide ALL sender name variants across Stream v2 */
+.str-chat__message-sender-name,
+.str-chat__message-simple-name,
+.str-chat__message-author,
+.str-chat__message-simple--name,
+[class*="message-sender-name"],
+[class*="message-simple-name"],
+[class*="MessageSimple-name"],
+[data-testid="message-sender-name"],
+.str-chat__message-name {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide the date part from timestamp, show only time */
+.str-chat__message-metadata > time {
+  font-size: 10px;
+}
+
+/* ============================================
+   CUSTOM READ RECEIPT: positioned inline
+   ============================================ */
+
+.str-chat__message-status {
+  display: inline-flex !important;
+  align-items: center !important;
+}

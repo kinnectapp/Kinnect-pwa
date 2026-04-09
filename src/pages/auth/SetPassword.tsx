@@ -1,18 +1,23 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import useAuth from "@/api/auth";
 import {
   areAllPasswordRulesValid,
   getPasswordRuleState,
 } from "@/lib/password-rules";
 import { PasswordRules } from "@/components/auth/PasswordRules";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { RegisterPayload } from "@/lib/types/auth";
+import { toast } from "sonner";
 
 const SetPassword: React.FC = () => {
   const navigate = useNavigate();
+  const { useRegisterMutation } = useAuth();
+  const { mutate: register, isPending } = useRegisterMutation();
 
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -20,30 +25,81 @@ const SetPassword: React.FC = () => {
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [touched, setTouched] = React.useState(false);
 
+  // Retrieve registration data from sessionStorage
+  const [registrationData, setRegistrationData] =
+    React.useState<RegisterPayload | null>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("registrationData");
+    if (!stored) {
+      toast.error("Registration data not found. Please start over.");
+      navigate("/auth/register");
+      return;
+    }
+    try {
+      const data = JSON.parse(stored) as RegisterPayload;
+      setRegistrationData(data);
+    } catch {
+      toast.error("Invalid registration data. Please start over.");
+      navigate("/auth/register");
+    }
+  }, [navigate]);
+
   const ruleState = getPasswordRuleState(password);
   const allValid = areAllPasswordRulesValid(ruleState);
-  const passwordsMatch = confirmPassword.length > 0 && confirmPassword === password;
+  const passwordsMatch =
+    confirmPassword.length > 0 && confirmPassword === password;
 
-  const canSubmit = allValid && passwordsMatch;
+  const canSubmit = allValid && passwordsMatch && !isPending;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || !registrationData) return;
+
+    // Combine registration data with password
+    const payload: RegisterPayload = {
+      ...registrationData,
+      password,
+      confirmPassword,
+    };
+
+    register(payload, {
+      onSuccess: (response: any) => {
+        const registerData = response?.data;
+        if (registerData?.id && registerData?.email) {
+          sessionStorage.setItem(
+            "pendingUser",
+            JSON.stringify({
+              id: registerData.id,
+              email: registerData.email,
+            }),
+          );
+        }
+
+        // Store email for verification page
+        sessionStorage.setItem(
+          "verificationEmail",
+          registerData?.email || registrationData.email,
+        );
+        // Clear registration data
+        sessionStorage.removeItem("registrationData");
+        navigate("/auth/register/verify");
+      },
+    });
+  };
 
   return (
     <AuthLayout
       title="Set Password"
       description="Input and confirm your password below"
     >
-      <form
-        className="flex h-full flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!canSubmit) return;
-          // send to API then move to verify-email or home
-          navigate("/auth/register/verify");
-        }}
-      >
+      <form className="flex h-full flex-col gap-4" onSubmit={handleSubmit}>
         <div className="space-y-4">
           {/* password */}
           <div className="space-y-1.5">
-            <Label className="text-[14px] font-[500] text-[#1C1C1C]">Password</Label>
+            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
+              Password
+            </Label>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
@@ -98,12 +154,8 @@ const SetPassword: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <Button
-            type="submit"
-             className="w-full"
-            disabled={!canSubmit}
-          >
-            Submit
+          <Button type="submit" className="w-full" disabled={!canSubmit}>
+            {isPending ? "Creating account..." : "Submit"}
           </Button>
         </div>
       </form>
