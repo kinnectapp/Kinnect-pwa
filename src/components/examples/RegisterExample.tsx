@@ -52,7 +52,7 @@ const RegisterExample: React.FC = () => {
         const { user, accessToken, refreshToken } = response.data;
 
         // Store in Zustand
-        await login(user, accessToken, refreshToken);
+        await login(user, accessToken || "", refreshToken || "");
 
         toast.success("Registration successful!");
         navigate("/onboarding/interests");

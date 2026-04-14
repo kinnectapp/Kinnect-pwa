@@ -1,12 +1,11 @@
-
 export const compressImage = async (
   file: File,
   quality = 0.7,
   maxWidth = 1080,
-  maxHeight = 1080
+  maxHeight = 1080,
 ): Promise<File> => {
   return new Promise((resolve, reject) => {
-     if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/")) {
       return resolve(file);
     }
 
@@ -36,7 +35,7 @@ export const compressImage = async (
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
-        
+
         if (!ctx) {
           return resolve(file); // Fallback to original
         }
@@ -57,22 +56,23 @@ export const compressImage = async (
               resolve(file);
             } else {
               const newFile = new File(
-                [blob], 
-                file.name.replace(/\.[^/.]+$/, "") + ".jpeg", 
+                [blob],
+                file.name.replace(/\.[^/.]+$/, "") + ".jpeg",
                 {
                   type: "image/jpeg",
                   lastModified: Date.now(),
-                }
+                },
               );
               resolve(newFile);
             }
           },
           "image/jpeg",
-          quality
+          quality,
         );
       };
-      img.onerror = (error) => reject(new Error("Failed to load image for compression"));
+      img.onerror = () =>
+        reject(new Error("Failed to load image for compression"));
     };
-    reader.onerror = (error) => reject(new Error("Failed to read image file"));
+    reader.onerror = () => reject(new Error("Failed to read image file"));
   });
 };

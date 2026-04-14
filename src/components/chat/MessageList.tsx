@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Message as MessageType } from "@/lib/types/chat";
- import TextMessage from "./messagges/TextMessage";
+import TextMessage from "./messagges/TextMessage";
 import AudioMessage from "./messagges/AudioMessage";
 import TypingIndicator from "./TypingIndicator";
 
@@ -11,13 +11,10 @@ interface MessageListProps {
   isTyping?: boolean;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isTyping = false }) => {
-  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
-
-  const handlePlayAudio = (messageId: string) => {
-    setPlayingMessageId(playingMessageId === messageId ? null : messageId);
-  };
-
+const MessageList: React.FC<MessageListProps> = ({
+  messages,
+  isTyping = false,
+}) => {
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
       {/* Time separator */}
@@ -35,9 +32,10 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isTyping = false })
             <TextMessage message={message} />
           ) : (
             <AudioMessage
-              message={message}
-              isPlaying={playingMessageId === message.id}
-              onPlayToggle={() => handlePlayAudio(message.id)}
+              audioUrl={message.content || ""}
+              duration={message.duration}
+              isUser={message.sender === "user"}
+              timestamp={message.timestamp?.toString()}
             />
           )}
         </div>
