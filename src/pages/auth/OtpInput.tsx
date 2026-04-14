@@ -1,9 +1,9 @@
 import React from "react";
 
 type OtpInputProps = {
-  length?: number;               // total digits, default 6
+  length?: number; // total digits, default 6
   onChange?: (value: string) => void;
-  splitAfter?: number;           // index after which to show the "-" separator (e.g. 3)
+  splitAfter?: number; // index after which to show the "-" separator (e.g. 3)
 };
 
 export const OtpInput: React.FC<OtpInputProps> = ({
@@ -11,8 +11,8 @@ export const OtpInput: React.FC<OtpInputProps> = ({
   onChange,
   splitAfter = 3,
 }) => {
-  const [values, setValues] = React.useState<string[]>(
-    () => Array.from({ length }, () => "")
+  const [values, setValues] = React.useState<string[]>(() =>
+    Array.from({ length }, () => ""),
   );
 
   const refs = React.useRef<Array<HTMLInputElement | null>>([]);
@@ -29,7 +29,10 @@ export const OtpInput: React.FC<OtpInputProps> = ({
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Backspace" && !values[index] && index > 0) {
       refs.current[index - 1]?.focus();
       return;
@@ -59,7 +62,9 @@ export const OtpInput: React.FC<OtpInputProps> = ({
           )}
 
           <input
-            ref={(el) => (refs.current[index] = el)}
+            ref={(el) => {
+              if (el) refs.current[index] = el;
+            }}
             value={values[index]}
             maxLength={1}
             inputMode="numeric"

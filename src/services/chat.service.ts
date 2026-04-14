@@ -102,12 +102,11 @@ export const chatService = {
 
     try {
       await channel.watch();
-       console.log("channelIdchannelId", channelId);
-      
-      
+      console.log("channelIdchannelId", channelId);
+
       return channel.cid || channelId;
     } catch (error: any) {
-       const errorMsg =
+      const errorMsg =
         error?.message ||
         (typeof error === "string" ? error : JSON.stringify(error));
       if (typeof errorMsg === "string" && errorMsg.includes("deleted user")) {
@@ -129,12 +128,13 @@ export const chatService = {
     const client = await ensureStreamClient();
 
     const channel = client.channel("groupmessaging", channelId, {
-      name: community.name,
       members: [currentUserId],
       created_by_id: currentUserId,
-      image: community.image,
-      description: community.description,
-    });
+    } as any);
+    // Set custom data after channel creation
+    (channel.data as any).name = community.name;
+    (channel.data as any).image = community.image;
+    (channel.data as any).description = community.description;
 
     await channel.watch();
 
