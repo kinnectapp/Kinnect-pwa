@@ -16,6 +16,7 @@ const normalizeUser = (user: AuthUserInput): User => {
   const now = new Date().toISOString();
 
   return {
+    ...user,
     id: user.id,
     email: user.email,
     firstname: typeof user.firstname === "string" ? user.firstname : "",
@@ -26,7 +27,6 @@ const normalizeUser = (user: AuthUserInput): User => {
     phone: typeof user.phone === "string" ? user.phone : "",
     createdAt: typeof user.createdAt === "string" ? user.createdAt : now,
     updatedAt: typeof user.updatedAt === "string" ? user.updatedAt : now,
-    ...user,
   };
 };
 

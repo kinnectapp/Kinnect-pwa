@@ -12,11 +12,12 @@ import KinnectChatBtn from "../ai/KinnectChatBtn";
 const toPreview = (channel: Channel): CachedChannelPreview => {
   const resolvedChannelId = channel.id || channel.cid.split(":")[1];
   const lastMessage = channel.state.messages[channel.state.messages.length - 1];
+  const channelData = (channel.data as Record<string, any>) || {};
   return {
     id: resolvedChannelId,
     cid: channel.cid,
-    name: String(channel.data?.name || "Community Channel"),
-    image: String(channel.data?.image || "/pwa-192x192.png"),
+    name: String(channelData.name || "Community Channel"),
+    image: String(channelData.image || "/pwa-192x192.png"),
     lastMessageText: lastMessage?.text || "No messages yet",
     lastMessageAt: lastMessage?.created_at
       ? String(lastMessage.created_at)

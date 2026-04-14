@@ -5,12 +5,10 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/api/auth";
-import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 
 const CompleteProfileExample: React.FC = () => {
-  const { user, setUser } = useAuthStore();
   const { useCompleteProfileMutation, useFileUploadMutation } = useAuth();
   const { mutate: completeProfile, isPending } = useCompleteProfileMutation();
   const { mutateAsync: uploadFile, isPending: isUploading } =
@@ -84,9 +82,9 @@ const CompleteProfileExample: React.FC = () => {
           ...(avatarUrl && { avatar: avatarUrl }),
         },
         {
-          onSuccess: async (response) => {
+          onSuccess: async () => {
             // Update user in store
-            await setUser(response.data);
+            // Profile completed successfully
 
             toast.success("Profile completed successfully!");
           },
