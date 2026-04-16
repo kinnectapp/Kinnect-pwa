@@ -1,14 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>kinnect-pwa</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Kinnect - Intentional Relationships</title>
+
+    <!-- PWA & Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Theme Colors -->
     <meta
       name="theme-color"
       content="#FFFFFF"
@@ -19,6 +26,25 @@
       content="#000000"
       media="(prefers-color-scheme: dark)"
     />
+
+    <!-- iOS App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Kinnect" />
+
+    <!-- PWA Meta Tags -->
+    <meta
+      name="description"
+      content="Kinnect - Relationship-focused. Intentional. Safe. Find meaningful connections."
+    />
+    <meta name="application-name" content="Kinnect" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Status Bar Style -->
+    <meta name="viewport-fit" content="cover" />
   </head>
   <body>
     <div id="root"></div>
