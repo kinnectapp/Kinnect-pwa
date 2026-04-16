@@ -104,7 +104,7 @@ const SetPassword: React.FC = () => {
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter password"
-                className="h-11 border-[#E4E4F0] pr-10 text-[14px]"
+                className="h-11 border-[#E4E4F0] pr-10 text-[14px] [-webkit-text-size-adjust:100%]"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -133,7 +133,7 @@ const SetPassword: React.FC = () => {
               <Input
                 type={showConfirm ? "text" : "password"}
                 placeholder="Confirm password"
-                className="h-11 border-[#E4E4F0] pr-10 text-[14px]"
+                className="h-11 border-[#E4E4F0] pr-10 text-[14px] [-webkit-text-size-adjust:100%]"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />

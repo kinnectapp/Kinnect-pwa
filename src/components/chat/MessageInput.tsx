@@ -154,7 +154,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           }}
           placeholder="Type a message..."
           disabled={isRecording || isUploading}
-          className="flex-1 rounded-full border px-4 py-2 text-sm disabled:bg-gray-100 resize-none"
+          className="flex-1 rounded-full border px-4 py-2 text-sm disabled:bg-gray-100 resize-none [-webkit-text-size-adjust:100%]"
           rows={1}
           onKeyDown={handleKeyPress}
         />

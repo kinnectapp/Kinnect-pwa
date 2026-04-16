@@ -66,7 +66,7 @@ const FAQPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-8">
+    <div className="min-h-[100dvh] bg-[#F5F5F7] pb-8">
       <div className="bg-white px-4 py-4">
         <div className=" flex justify-between items-center">
           <button
@@ -76,9 +76,9 @@ const FAQPage: React.FC = () => {
           >
             <ChevronLeft size={18} className="text-[#5A2B8D]" />
           </button>
-             
-            <Logo />
-          
+
+          <Logo />
+
           <div className="w-9" />
         </div>
       </div>

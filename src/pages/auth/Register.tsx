@@ -212,9 +212,7 @@ const iso2ToFlag = (iso2: string): string => {
   if (!iso2 || iso2.length !== 2) return "🏳";
   return iso2
     .toUpperCase()
-    .replace(/./g, (char) =>
-      String.fromCodePoint(127397 + char.charCodeAt(0)),
-    );
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
 };
 
 const COUNTRIES = (countryList as CountryItem[])
@@ -340,7 +338,7 @@ const Register: React.FC = () => {
                 placeholder="First name"
                 value={formData.firstname}
                 onChange={handleChange}
-                className={`h-11 border-[#E4E4F0] text-[14px] ${
+                className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${
                   errors.firstname ? "border-red-500" : ""
                 }`}
               />
@@ -357,7 +355,7 @@ const Register: React.FC = () => {
                 placeholder="Last name"
                 value={formData.lastname}
                 onChange={handleChange}
-                className={`h-11 border-[#E4E4F0] text-[14px] ${
+                className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${
                   errors.lastname ? "border-red-500" : ""
                 }`}
               />
@@ -376,7 +374,7 @@ const Register: React.FC = () => {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className={`h-11 border-[#E4E4F0] text-[14px] ${
+              className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${
                 errors.username ? "border-red-500" : ""
               }`}
             />
@@ -395,7 +393,7 @@ const Register: React.FC = () => {
               placeholder="sampleemail@kinnect.com"
               value={formData.email}
               onChange={handleChange}
-              className={`h-11 border-[#E4E4F0] text-[14px] ${
+              className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${
                 errors.email ? "border-red-500" : ""
               }`}
             />
@@ -432,7 +430,7 @@ const Register: React.FC = () => {
                 placeholder="812 3456 790"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`h-11 flex-1 border-[#E4E4F0] text-[14px] ${
+                className={`h-11 flex-1 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${
                   errors.phone ? "border-red-500" : ""
                 }`}
               />

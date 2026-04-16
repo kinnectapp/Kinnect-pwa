@@ -1,13 +1,13 @@
 import React from "react";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
- import { Logo } from "@/components/layout/logo";
+import { Logo } from "@/components/layout/logo";
 
 const PrivacyPolicyPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-8">
+    <div className="min-h-[100dvh] bg-[#F5F5F7] pb-8">
       <div className="bg-white px-4 py-4">
         <div className=" flex justify-between items-center">
           <button
