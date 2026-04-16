@@ -292,7 +292,7 @@ export const KinnectAiChatView: React.FC<KinnectAiChatViewProps> = ({
             }}
             rows={1}
             placeholder="Ask Kiki anything..."
-            className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent text-sm text-[#1C1C1C] outline-none placeholder:text-[#8C8298]"
+            className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent text-sm text-[#1C1C1C] outline-none placeholder:text-[#8C8298] [-webkit-text-size-adjust:100%]"
           />
           <button
             type="button"

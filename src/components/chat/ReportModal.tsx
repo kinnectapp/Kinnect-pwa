@@ -158,7 +158,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="Please describe the issue in detail..."
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#D400B3] focus:ring-1 focus:ring-[#D400B3]"
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#D400B3] focus:ring-1 focus:ring-[#D400B3] [-webkit-text-size-adjust:100%]"
                     rows={4}
                     disabled={isLoading}
                   />

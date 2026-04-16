@@ -90,7 +90,7 @@ const SubscriptionsPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#fff] pb-8">
+    <div className="min-h-[100dvh] bg-[#fff] pb-8">
       <div className="sticky top-0 z-10 bg-[#fff] px-4 py-3">
         <div className="relative flex items-center">
           <button

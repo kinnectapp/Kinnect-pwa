@@ -63,7 +63,7 @@ const ForgotPassword: React.FC = () => {
             <Input
               type="email"
               placeholder="example@kinnect.com"
-              className={`h-11 border-[#E4E4F0] text-[14px] ${errors.email ? "border-red-500" : ""}`}
+              className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${errors.email ? "border-red-500" : ""}`}
               {...register("email")}
             />
             {errors.email && (

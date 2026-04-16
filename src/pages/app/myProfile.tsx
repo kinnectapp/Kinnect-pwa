@@ -172,13 +172,16 @@ const MyProfile = () => {
           const { compressImage } = await import("@/utils/imageCompression");
           const { formatBytes } = await import("@/utils/utils");
           fileToUpload = await compressImage(file);
-          
+
           console.log(
             `[Image Upload] Original size: ${formatBytes(file.size)} | ` +
-            `Compressed size: ${formatBytes(fileToUpload.size)}`
+              `Compressed size: ${formatBytes(fileToUpload.size)}`,
           );
         } catch (error) {
-          console.warn("Image compression failed, falling back to original file", error);
+          console.warn(
+            "Image compression failed, falling back to original file",
+            error,
+          );
         }
 
         const formData = new FormData();
@@ -210,7 +213,7 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-10">
+    <div className="min-h-[100dvh] bg-[#F5F5F5] pb-10">
       <div className=" sticky top-0  flex items-center gap-3 border-b  bg-[#fff] px-4 py-3">
         <button
           type="button"

@@ -208,7 +208,7 @@ const Login: React.FC = () => {
               id="identifier"
               type="text"
               placeholder="Enter email or username"
-              className={`h-11 border-[#E4E4F0] text-[14px] ${errors.email ? "border-red-500" : ""}`}
+              className={`h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%] ${errors.email ? "border-red-500" : ""}`}
               {...register("email")}
             />
             {errors.email && (
@@ -228,7 +228,7 @@ const Login: React.FC = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter password"
-                className={`h-11 border-[#E4E4F0] pr-10 text-[14px] ${errors.password ? "border-red-500" : ""}`}
+                className={`h-11 border-[#E4E4F0] pr-10 text-[14px] [-webkit-text-size-adjust:100%] ${errors.password ? "border-red-500" : ""}`}
                 {...register("password")}
               />
               <button

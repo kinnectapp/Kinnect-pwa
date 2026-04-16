@@ -16,9 +16,13 @@ const ProfilePhoto = () => {
   const navigate = useNavigate();
   const setUser = useAuthStore((state) => state.setUser);
   const user = useAuthStore((state) => state.user);
-  const { useFileUploadMutation, useUpdateProfileMutation, useGetUserMutation } =
-    useAuth();
-  const { mutateAsync: uploadFile, isPending: isUploading } = useFileUploadMutation();
+  const {
+    useFileUploadMutation,
+    useUpdateProfileMutation,
+    useGetUserMutation,
+  } = useAuth();
+  const { mutateAsync: uploadFile, isPending: isUploading } =
+    useFileUploadMutation();
   const { mutateAsync: updateProfile, isPending } = useUpdateProfileMutation();
   const { mutateAsync: getUserById } = useGetUserMutation();
 
@@ -66,13 +70,16 @@ const ProfilePhoto = () => {
           const { compressImage } = await import("@/utils/imageCompression");
           const { formatBytes } = await import("@/utils/utils");
           fileToUpload = await compressImage(file);
-          
+
           console.log(
             `[Image Upload] Original size: ${formatBytes(file.size)} | ` +
-            `Compressed size: ${formatBytes(fileToUpload.size)}`
+              `Compressed size: ${formatBytes(fileToUpload.size)}`,
           );
         } catch (error) {
-          console.warn("Image compression failed, falling back to original file", error);
+          console.warn(
+            "Image compression failed, falling back to original file",
+            error,
+          );
         }
 
         const formData = new FormData();
@@ -110,7 +117,7 @@ const ProfilePhoto = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-6 flex flex-col">
+    <div className="min-h-[100dvh] bg-white p-6 flex flex-col">
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
@@ -120,7 +127,9 @@ const ProfilePhoto = () => {
           <span className="text-lg font-medium">Back</span>
         </button>
 
-        <h2 className="text-2xl text-[#55288D] font-semibold ">Profile Photo(s)</h2>
+        <h2 className="text-2xl text-[#55288D] font-semibold ">
+          Profile Photo(s)
+        </h2>
 
         <div className="flex gap-4 mt-3 mb-4 justify-center items-center">
           <div className="flex-1 h-[2px] bg-[#850070]"></div>
@@ -152,7 +161,9 @@ const ProfilePhoto = () => {
             <div className="w-16 h-16 bg-[#E8E3F0] rounded-full flex items-center justify-center">
               <ImageIcon size={32} className="text-[#55288D]" />
             </div>
-            <p className="text-[#D400B3] underline text-xs">Click to add photo(s)</p>
+            <p className="text-[#D400B3] underline text-xs">
+              Click to add photo(s)
+            </p>
           </button>
         </div>
       ) : (
@@ -191,7 +202,9 @@ const ProfilePhoto = () => {
                 className="flex-shrink-0 w-24 h-24 rounded-xl border-2 border-dashed border-[#D3D0D8] flex flex-col items-center justify-center gap-2 hover:bg-[#F9F7FB] transition"
               >
                 <Plus size={24} className="text-[#55288D]" />
-                <span className="text-[#55288D] font-semibold text-sm">Add</span>
+                <span className="text-[#55288D] font-semibold text-sm">
+                  Add
+                </span>
               </button>
             )}
           </div>
