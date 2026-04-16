@@ -79,12 +79,16 @@ export default defineConfig({
             },
             includeAssets: ["favicon.ico", "pwa-192x192.png", "pwa-512x512.png"],
             manifest: {
-                name: "Kinnect PWA App",
-                short_name: "KinnectPWA",
-                description: "A complete Kinnect PWA application",
+                name: "Kinnect - Intentional Relationships",
+                short_name: "Kinnect",
+                description: "Relationship-focused. Intentional. Safe. Find meaningful connections powered by AI.",
                 theme_color: "#ffffff",
                 background_color: "#ffffff",
                 display: "standalone",
+                scope: "/",
+                start_url: "/",
+                orientation: "portrait-primary",
+                categories: ["lifestyle", "social"],
                 icons: [
                     {
                         src: "/pwa-192x192.png",
