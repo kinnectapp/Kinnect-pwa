@@ -12,7 +12,7 @@ const KinnectAiPage: React.FC = () => {
     "gemini";
 
   return (
-    <div className="min-h-screen bg-white pb-6">
+    <div className="min-h-[100dvh] bg-white pb-6">
       <div className="sticky top-0 z-10 bg-white px-4 py-3">
         <div className="relative flex items-center">
           <button

@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import MoreOptionsModal from "@/components/MoreOptionsModal";
@@ -59,8 +57,9 @@ export const MatchProfile: React.FC = () => {
   const currentProfile: Profile | null = useMemo(() => {
     if (!currentMatchItem) return null;
     console.log("currentMatchItem", currentMatchItem);
-    const { profile,
-      //  value 
+    const {
+      profile,
+      //  value
     } = currentMatchItem;
 
     const images: string[] =
@@ -72,7 +71,7 @@ export const MatchProfile: React.FC = () => {
     if (!age && profile.dob) {
       age = Math.floor(
         (Date.now() - new Date(profile.dob).getTime()) /
-        (1000 * 60 * 60 * 24 * 365.25)
+          (1000 * 60 * 60 * 24 * 365.25),
       );
     }
 
@@ -87,7 +86,9 @@ export const MatchProfile: React.FC = () => {
         .join(", "),
       dob: String(age),
       // personalityPercentage: String(value || 0),
-      personalityPercentage: String(Number(profile.personalityPercentage).toFixed() || 0),
+      personalityPercentage: String(
+        Number(profile.personalityPercentage).toFixed() || 0,
+      ),
 
       image: images[0],
       images,
@@ -109,7 +110,9 @@ export const MatchProfile: React.FC = () => {
   const handleMessage = async () => {
     if (!currentProfile) return;
     try {
-      const channelId = await chatService.ensurePersonalChannel(currentProfile.id);
+      const channelId = await chatService.ensurePersonalChannel(
+        currentProfile.id,
+      );
       // console.log("currentProfile", channelId);
       navigate(`/app/chats/${channelId}`);
     } catch (error) {
@@ -166,7 +169,10 @@ export const MatchProfile: React.FC = () => {
     if (!currentProfile) return;
     try {
       setIsPerformingAction(true);
-      await chatService.reportUser({ reportedUserId: currentProfile.id, reason });
+      await chatService.reportUser({
+        reportedUserId: currentProfile.id,
+        reason,
+      });
       toast.success(`Report submitted for ${currentProfile.name}`);
       setShowReportModal(false);
       setShowMoreOptions(false);
@@ -195,7 +201,7 @@ export const MatchProfile: React.FC = () => {
 
   if (isLoading || !currentProfile) {
     return (
-      <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
+      <div className="min-h-[100dvh] p-4 profile-match-gradient flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-600">
           <Loader className="animate-spin w-5 h-5" />
           <span>Loading profile...</span>
@@ -204,10 +210,8 @@ export const MatchProfile: React.FC = () => {
     );
   }
 
-   
-
   return (
-    <div className="min-h-screen p-4 profile-match-gradient flex items-center justify-center">
+    <div className="min-h-[100dvh] p-4 profile-match-gradient flex items-center justify-center">
       <div className="flex flex-col md:flex-row items-center justify-center gap-8">
         <div className="w-full max-w-sm transform transition-all duration-300">
           <ProfileCard

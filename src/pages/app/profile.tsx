@@ -6,7 +6,7 @@ import { useAuth } from "@/api/auth";
 import { handleApiError } from "@/api/serviceUtils";
 import { useAuthStore } from "@/store/auth.store";
 import { getSubscriptionPermissions } from "@/lib/subscription";
-import ProfileIconImg from "../../assets/images/profileIcon.png"
+import ProfileIconImg from "../../assets/images/profileIcon.png";
 import {
   BookCoachingIcon,
   DeleteIcon,
@@ -539,9 +539,7 @@ const ProfilePage: React.FC = () => {
       label: "Book A Coaching Session",
       onClick: () => {
         if (!permissions.canAccessLiveCoach) {
-          toast.error(
-            "Live coaching is available on VIP and Lifetime plans.",
-          );
+          toast.error("Live coaching is available on VIP and Lifetime plans.");
           navigate("/app/subscriptions");
           return;
         }
@@ -587,7 +585,7 @@ const ProfilePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFF] pb-24">
+    <div className="min-h-[100dvh] bg-[#FFF] pb-24">
       <div className="h-[92px] bg-gradient-to-r from-[#450f77] via-[#65195c70] to-[#7e016b]" />
 
       <div className="px-4 -mt-12">
@@ -619,11 +617,11 @@ const ProfilePage: React.FC = () => {
               <img src={ProfileIconImg} className="w-8 h-8" alt="" />
               <div className="">
                 <p className="text-[12px] font-medium text-[#D7CBE6]">
-                Profile Strength
-              </p>
-              <p className="text-[18px] font-semibold leading-none">
-                60% Completed
-              </p>
+                  Profile Strength
+                </p>
+                <p className="text-[18px] font-semibold leading-none">
+                  60% Completed
+                </p>
               </div>
             </div>
             <ChevronRight size={20} className="text-[#D7CBE6]" />

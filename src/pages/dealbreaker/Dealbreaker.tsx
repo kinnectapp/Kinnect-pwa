@@ -201,7 +201,7 @@ export default function DealBreakers() {
   const questionRankings = rankings[question.id] || {};
 
   return (
-    <div className="min-h-screen bg-[#1E073A] text-white p-6 flex flex-col">
+    <div className="min-h-[100dvh] bg-[#1E073A] text-white p-6 flex flex-col">
       {/* Decorative elements */}
 
       {/* Header */}
@@ -312,7 +312,7 @@ function CompletionScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-16 left-20 w-2 h-6 bg-yellow-400 transform -rotate-45"></div>

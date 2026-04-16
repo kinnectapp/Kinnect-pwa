@@ -6,7 +6,7 @@ import { KinnectAiWidget } from "@/components/ai/KinnectAiWidget";
 
 const MainComponent: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white pb-[75px] ">
+    <div className="min-h-[100dvh] bg-white pb-[75px] ">
       <Header />
       <main className="  space-y-6">
         <Outlet />

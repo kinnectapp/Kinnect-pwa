@@ -44,7 +44,7 @@ const CommunityPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-[100dvh] bg-white pb-24">
       <div className="px-4 pt-4">
         <h1 className="text-xl font-semibold text-[#1C1C1C]">Communities</h1>
         <p className="text-sm text-[#77707F] mt-1">
@@ -57,13 +57,19 @@ const CommunityPage: React.FC = () => {
       {isLoading ? (
         <div className="p-4 grid gap-3">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-36 rounded-lg bg-[#F3F3F6] animate-pulse" />
+            <div
+              key={index}
+              className="h-36 rounded-lg bg-[#F3F3F6] animate-pulse"
+            />
           ))}
         </div>
       ) : (
         <div className="p-4 grid gap-3">
           {communities.map((community) => (
-            <div key={community.id} className="rounded-lg border border-[#E8E3EE] p-4">
+            <div
+              key={community.id}
+              className="rounded-lg border border-[#E8E3EE] p-4"
+            >
               <div className="flex items-center gap-3">
                 <img
                   src={community.image || "/pwa-192x192.png"}
@@ -71,7 +77,9 @@ const CommunityPage: React.FC = () => {
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div>
-                  <h2 className="font-semibold text-[#1C1C1C]">{community.name}</h2>
+                  <h2 className="font-semibold text-[#1C1C1C]">
+                    {community.name}
+                  </h2>
                   <p className="text-xs text-[#77707F] line-clamp-2">
                     {community.description || "Join this community channel"}
                   </p>
@@ -92,7 +100,9 @@ const CommunityPage: React.FC = () => {
             </div>
           ))}
           {!communities.length && (
-            <p className="text-sm text-[#77707F]">No communities available right now.</p>
+            <p className="text-sm text-[#77707F]">
+              No communities available right now.
+            </p>
           )}
         </div>
       )}
