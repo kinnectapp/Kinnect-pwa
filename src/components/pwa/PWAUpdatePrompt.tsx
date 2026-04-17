@@ -1,5 +1,4 @@
 import React from "react";
-import { Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
