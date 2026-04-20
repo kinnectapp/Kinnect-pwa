@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronLeft,
+  ChevronRight,
   Heart,
   MoreVertical,
   MessageCircleMore,
@@ -38,6 +39,7 @@ interface ProfileCardProps {
   profile: Profile;
   onMessage: () => void;
   onMore: () => void;
+  shouldBlurImages?: boolean;
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   profile,
   onMessage,
   onMore,
+  shouldBlurImages = true,
 }) => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -81,10 +84,35 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       ? profile?.images
       : [profile?.image];
 
+  useEffect(() => {
+    if (currentImageIndex < images.length) return;
+    setCurrentImageIndex(0);
+  }, [currentImageIndex, images.length]);
+
+  useEffect(() => {
+    if (!shouldBlurImages || images.length < 2) return;
+
+    const intervalId = window.setInterval(() => {
+      setCurrentImageIndex((current) => (current + 1) % images.length);
+    }, 4000);
+
+    return () => window.clearInterval(intervalId);
+  }, [images.length, shouldBlurImages]);
+
+  const showBlurCarouselControls = shouldBlurImages && images.length > 1;
+
+  const showPreviousImage = () => {
+    setCurrentImageIndex((current) =>
+      current === 0 ? images.length - 1 : current - 1,
+    );
+  };
+
+  const showNextImage = () => {
+    setCurrentImageIndex((current) => (current + 1) % images.length);
+  };
 
   const { essentials, interests } = profile;
-  console.log("essentials", essentials);
-
+ 
 
 
   return (
@@ -97,7 +125,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           <img
             src={images[currentImageIndex] || "/placeholder.svg"}
             alt={profile.name}
-            className="w-full h-full object-cover blur"
+            className={`w-full h-full object-cover ${
+              shouldBlurImages ? "blur" : ""
+            }`}
           />
         </div>
 
@@ -108,6 +138,27 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         >
           <ChevronLeft size={24} />
         </button>
+
+        {showBlurCarouselControls && (
+          <>
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              aria-label="Show previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white transition-colors hover:bg-black/60"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={showNextImage}
+              aria-label="Show next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/45 p-2 text-white transition-colors hover:bg-black/60"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </>
+        )}
 
         {/* Image dot indicators */}
         {images.length > 1 && (

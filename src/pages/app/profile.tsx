@@ -25,6 +25,7 @@ import {
 import UserImage from "../../assets/images/user-profile.png";
 import confettiImage from "@/assets/images/confetti.svg";
 import { Logo } from "@/components/layout/logo";
+import ConfirmationModal from "@/components/chat/ConfirmationModal";
 
 const RatingReviewModal: React.FC<{
   open: boolean;
@@ -511,6 +512,8 @@ const ProfilePage: React.FC = () => {
   const { mutateAsync: deleteAccount } = useDeleteAccountMutation();
   const [isRatingModalOpen, setIsRatingModalOpen] = React.useState(false);
   const [isNeedHelpModalOpen, setIsNeedHelpModalOpen] = React.useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] =
     React.useState(false);
 
@@ -522,6 +525,19 @@ const ProfilePage: React.FC = () => {
   const profilePhoto =
     (Array.isArray(user?.profilePhotos) ? user?.profilePhotos[0] : null) ||
     UserImage;
+
+  const handleConfirmLogout = React.useCallback(async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+      navigate("/auth/login", { replace: true });
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsLoggingOut(false);
+      setIsLogoutModalOpen(false);
+    }
+  }, [logout, navigate]);
 
   const menuItems = [
     {
@@ -651,10 +667,7 @@ const ProfilePage: React.FC = () => {
 
           <button
             type="button"
-            onClick={async () => {
-              await logout();
-              navigate("/auth/login", { replace: true });
-            }}
+            onClick={() => setIsLogoutModalOpen(true)}
             className="flex w-full items-center justify-between py-3 text-left"
           >
             <div className="flex items-center gap-3">
@@ -706,6 +719,20 @@ const ProfilePage: React.FC = () => {
       <NeedHelpModal
         open={isNeedHelpModalOpen}
         onClose={() => setIsNeedHelpModalOpen(false)}
+      />
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        title="Logout"
+        message="Are you sure you want to logout of your Kinnect account?"
+        cancelText="Stay"
+        confirmText="Logout"
+        onClose={() => {
+          if (!isLoggingOut) {
+            setIsLogoutModalOpen(false);
+          }
+        }}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
       />
       <DeleteAccountModal
         open={isDeleteAccountModalOpen}
