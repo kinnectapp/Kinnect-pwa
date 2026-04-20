@@ -92,7 +92,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <Button
               onClick={onConfirm}
               disabled={isLoading}
-              className={`px-4 py-3 rounded-full text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors `}
+              className={`px-4 py-3 rounded-full text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                isDangerous
+                  ? "bg-[#E60B69] hover:bg-[#d10558]"
+                  : "bg-[#55288D] hover:bg-[#45227d]"
+              }`}
             >
               {isLoading ? "Processing..." : confirmText}
             </Button>

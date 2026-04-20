@@ -1,50 +1,80 @@
-import React from 'react';
-import { useMessageContext } from 'stream-chat-react';
+import React from "react";
+import {
+  Attachment,
+  useChannelActionContext,
+  useMessageContext,
+} from "stream-chat-react";
+
+const getQuotedPreviewText = (quotedMessage: any) => {
+  if (quotedMessage?.deleted_at || quotedMessage?.type === "deleted") {
+    return "This message was deleted";
+  }
+
+  if (quotedMessage?.text?.trim()) {
+    return quotedMessage.text;
+  }
+
+  const attachment = quotedMessage?.attachments?.[0];
+  if (!attachment) return "";
+
+  if (attachment.type === "image") return "Photo";
+  if (attachment.type === "video") return "Video";
+  if (attachment.type === "voiceRecording" || attachment.type === "audio") {
+    return "Voice note";
+  }
+
+  return "Attachment";
+};
 
 export const CustomQuotedMessage: React.FC = () => {
-    const { message } = useMessageContext();
-    const quotedMessage = message.quoted_message;
+  const { jumpToMessage } = useChannelActionContext("CustomQuotedMessage");
+  const { handleAction, isMyMessage, message } = useMessageContext("CustomQuotedMessage");
+  const quotedMessage = message.quoted_message;
 
-    if (!quotedMessage) return null;
+  if (!quotedMessage) return null;
 
-    // Check if the quoted message has text or is just an attachment
-    const hasText = quotedMessage.text && quotedMessage.text.trim().length > 0;
-    const hasAttachment = quotedMessage.attachments && quotedMessage.attachments.length > 0;
+  const isMine = isMyMessage?.() ?? false;
+  const previewText = getQuotedPreviewText(quotedMessage);
+  const senderName = quotedMessage.user?.name || quotedMessage.user?.id || "User";
 
-    // Determine the preview text to show
-    let previewText = quotedMessage.text;
-    if (!hasText && hasAttachment) {
-        const attachment = quotedMessage.attachments![0];
-        if (attachment.type === 'image') previewText = '📷 Photo';
-        else if (attachment.type === 'video') previewText = '🎥 Video';
-        else if (attachment.type === 'voiceRecording' || attachment.type === 'audio') previewText = '🎤 Voice Note';
-        else previewText = '📎 Attachment';
-    }
-
-    return (
-        <div 
-            className="flex flex-col bg-black/5 rounded-lg border  p-2 mb-1 cursor-pointer overflow-hidden max-w-full hover:bg-black/10 transition-colors"
-            onClick={() => {
-                // Find the original message element and scroll to it
-                const element = document.getElementById(`msg-${quotedMessage.id}`);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Optional: add a brief highlight effect
-                    element.classList.add('bg-black/5', 'transition-colors', 'duration-1000');
-                    setTimeout(() => {
-                        element.classList.remove('bg-black/5');
-                    }, 2000);
-                }
+  return (
+    <>
+      <button
+        type="button"
+        className={`mb-2 flex w-full items-start overflow-hidden rounded-[12px] border-l-4 px-3 py-2 text-left transition-colors ${
+          isMine
+            ? "border-white/80 bg-white/10 text-white hover:bg-white/15"
+            : "border-[#D2D6E2] bg-[#F5F5F7] text-[#6F7184] hover:bg-[#EEF0F4]"
+        }`}
+        onClick={() => jumpToMessage(quotedMessage.id)}
+      >
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-[12px] font-semibold leading-5 ${
+              isMine ? "text-white" : "text-[#8A8EA2]"
+            }`}
+          >
+            {senderName}
+          </p>
+          <p
+            className={`mt-1 text-[13px] leading-6 ${
+              isMine ? "text-white/85" : "text-[#6F7184]"
+            }`}
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 3,
+              overflow: "hidden",
             }}
-        >
-            <div className="flex justify-between items-center mb-0.5">
-                <span className="text-[11px] font-semibold  ">
-                    {quotedMessage.user?.name || quotedMessage.user?.id || 'User'}
-                </span>
-            </div>
-            <p className="text-[12px] text-gray-600 truncate whitespace-nowrap overflow-hidden">
-                {previewText}
-            </p>
+          >
+            {previewText}
+          </p>
         </div>
-    );
+      </button>
+
+      {message.attachments?.length ? (
+        <Attachment actionHandler={handleAction} attachments={message.attachments} />
+      ) : null}
+    </>
+  );
 };

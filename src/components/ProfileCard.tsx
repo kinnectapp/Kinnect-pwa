@@ -99,7 +99,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     return () => window.clearInterval(intervalId);
   }, [images.length, shouldBlurImages]);
 
-  const showBlurCarouselControls = shouldBlurImages && images.length > 1;
 
   const showPreviousImage = () => {
     setCurrentImageIndex((current) =>
@@ -139,8 +138,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           <ChevronLeft size={24} />
         </button>
 
-        {showBlurCarouselControls && (
-          <>
+           <>
             <button
               type="button"
               onClick={showPreviousImage}
@@ -158,8 +156,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               <ChevronRight size={16} />
             </button>
           </>
-        )}
-
+ 
         {/* Image dot indicators */}
         {images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
