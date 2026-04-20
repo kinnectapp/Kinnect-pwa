@@ -23,6 +23,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const UNVERIFIED_ACCOUNT_PATTERN = /has not been verified/i;
+const EMAIL_IN_TEXT_PATTERN =
+  /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i;
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
@@ -89,6 +93,43 @@ const Login: React.FC = () => {
     navigate("/app");
   };
 
+  const extractVerificationEmail = (
+    message: string,
+    fallbackValue?: string,
+  ) => {
+    const matchedEmail = message.match(EMAIL_IN_TEXT_PATTERN)?.[1];
+    if (matchedEmail) {
+      return matchedEmail;
+    }
+
+    if (fallbackValue && fallbackValue.includes("@")) {
+      return fallbackValue;
+    }
+
+    return "";
+  };
+
+  const handleUnverifiedAccount = async (
+    verificationEmail: string,
+    message = "Account is not verified. Please verify your email.",
+  ) => {
+    if (!verificationEmail) {
+      toast.error(message);
+      return;
+    }
+
+    sessionStorage.setItem("verificationEmail", verificationEmail);
+
+    try {
+      await resendOtp({ email: verificationEmail });
+    } catch (error: unknown) {
+      toast.error(handleApiError(error));
+    }
+
+    toast.error(message);
+    navigate("/auth/register/verify");
+  };
+
   const onSubmit = (data: LoginFormValues) => {
     login(
       {
@@ -108,28 +149,30 @@ const Login: React.FC = () => {
           if (!isVerified) {
             const verificationEmail = user.email || data.email;
 
-            if (verificationEmail) {
-              sessionStorage.setItem("verificationEmail", verificationEmail);
-              try {
-                await resendOtp({ email: verificationEmail });
-              } catch (error: any) {
-                toast.error(handleApiError(error));
-              }
-            }
-
-            toast.error("Account is not verified. Please verify your email.");
-            navigate("/auth/register/verify");
+            await handleUnverifiedAccount(verificationEmail);
             return;
           }
 
           try {
             await finalizeAuth(response);
-          } catch (error: any) {
+          } catch (error: unknown) {
             toast.error(handleApiError(error));
           }
         },
-        onError: (error: any) => {
-          toast.error(handleApiError(error), {
+        onError: async (error: unknown) => {
+          const errorMessage = handleApiError(error);
+
+          if (UNVERIFIED_ACCOUNT_PATTERN.test(errorMessage)) {
+            const verificationEmail = extractVerificationEmail(
+              errorMessage,
+              data.email,
+            );
+
+            await handleUnverifiedAccount(verificationEmail, errorMessage);
+            return;
+          }
+
+          toast.error(errorMessage, {
             duration: 4000,
             style: { borderRadius: "8px", background: "#333", color: "red" },
           });
@@ -163,7 +206,7 @@ const Login: React.FC = () => {
           // Backend contract:
           // POST /v1/auth/google { token: <google_id_token> }
           const response = await googleAuth({ token: credential });
-          const dataNode = response?.data ?? (response as any);
+          const dataNode = response.data;
           const user = dataNode?.user;
           const token = dataNode?.token || dataNode?.accessToken;
           const refreshToken = dataNode?.refreshToken;
@@ -178,7 +221,7 @@ const Login: React.FC = () => {
             token,
             refreshToken,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           toast.error(handleApiError(error));
         }
       },
