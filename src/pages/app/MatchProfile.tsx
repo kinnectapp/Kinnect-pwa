@@ -9,6 +9,7 @@ import { chatService } from "@/services/chat.service";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { useGetProfileMatches } from "@/services/profile.service";
+import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
 import { Loader } from "lucide-react";
 import UserImage from "../../assets/images/user-profile.png";
 
@@ -106,6 +107,8 @@ export const MatchProfile: React.FC = () => {
       interests: profile.interests || [],
     };
   }, [currentMatchItem]);
+
+  const personalChatAccess = usePersonalChatAccess(currentProfile?.id);
 
   const handleMessage = async () => {
     if (!currentProfile) return;
@@ -218,6 +221,7 @@ export const MatchProfile: React.FC = () => {
             profile={currentProfile}
             onMessage={handleMessage}
             onMore={() => setShowMoreOptions(true)}
+            shouldBlurImages={!personalChatAccess.canShareMedia}
           />
         </div>
       </div>

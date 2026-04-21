@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, MoreVertical, AlertCircle } from "lucide-react";
+import { ChevronLeft, MoreVertical, AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import UserImg from "../../assets/images/user-profile.png";
 import { useChatStore } from "@/store/chat.store";
+import {
+  CHAT_MEDIA_UNLOCK_DAYS,
+  usePersonalChatAccess,
+} from "@/hooks/usePersonalChatAccess";
 import {
   ensureStreamConnected,
 } from "@/services/stream-chat.service";
@@ -17,7 +21,12 @@ import SponsorModal from "./SponsorModal";
 import CustomDateSeparator from "./CustomDateSeparator";
 import CustomMessageStatus from "./CustomMessageStatus";
 import { CustomQuotedMessage } from "./CustomQuotedMessage";
-import type { Channel as ChannelType } from "stream-chat";
+import type {
+  Channel as ChannelType,
+  LocalMessage,
+  Message as StreamMessage,
+  SendMessageOptions,
+} from "stream-chat";
 import {
   Channel,
   Window,
@@ -29,6 +38,8 @@ import {
 type Props = {
   channelId: string;
 };
+
+const DisabledAttachmentSelector = () => null;
 
 const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const channelId = decodeURIComponent(rawChannelId);
@@ -61,6 +72,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [isPerformingAction, setIsPerformingAction] = useState(false);
 
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
+  const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
 
   // Load and watch channel
   useEffect(() => {
@@ -307,6 +319,39 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     )
     : null;
 
+  const isPersonalChat = channel?.type === "messaging";
+  const shouldRestrictMediaSharing =
+    isPersonalChat &&
+    (!partnerId || personalChatAccess.isLoading || !personalChatAccess.canShareMedia);
+  const lockedMediaMessage = personalChatAccess.hasChatHistory
+    ? `Keep chatting for ${personalChatAccess.daysUntilUnlock} more day${
+        personalChatAccess.daysUntilUnlock === 1 ? "" : "s"
+      } to unlock images, voice notes, and files.`
+    : `Images, voice notes, and files unlock after ${CHAT_MEDIA_UNLOCK_DAYS} days of chatting.`;
+
+  const handleMessageSubmit = useCallback(
+    async ({
+      message,
+      sendOptions,
+    }: {
+      cid: string;
+      localMessage: LocalMessage;
+      message: StreamMessage;
+      sendOptions: SendMessageOptions;
+    }) => {
+      if (!channel) return;
+
+      const hasAttachments = (message.attachments?.length || 0) > 0;
+      if (shouldRestrictMediaSharing && hasAttachments) {
+        toast.error(lockedMediaMessage);
+        return;
+      }
+
+      await channel.sendMessage(message, sendOptions);
+    },
+    [channel, lockedMediaMessage, shouldRestrictMediaSharing],
+  );
+
   return (
     <div className="flex flex-col h-[100dvh] bg-[#FAF8FB]">
       {/* Custom Header */}
@@ -410,6 +455,9 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
           <div className="flex-1 min-h-0">
             <Channel
               channel={channel}
+              AttachmentSelector={
+                shouldRestrictMediaSharing ? DisabledAttachmentSelector : undefined
+              }
               DateSeparator={CustomDateSeparator}
               MessageStatus={CustomMessageStatus as any}
               QuotedMessage={CustomQuotedMessage as any}
@@ -433,7 +481,18 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   }
                 />
                 <TypingIndicator />
-                <MessageInput audioRecordingEnabled />
+                {!personalChatAccess.isLoading && isPersonalChat && !personalChatAccess.canShareMedia && (
+                  <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
+                    <div className="flex items-start gap-2">
+                      <Lock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
+                      <p>{lockedMediaMessage}</p>
+                    </div>
+                  </div>
+                )}
+                <MessageInput
+                  audioRecordingEnabled={!shouldRestrictMediaSharing}
+                  overrideSubmitHandler={handleMessageSubmit}
+                />
               </Window>
             </Channel>
           </div>
