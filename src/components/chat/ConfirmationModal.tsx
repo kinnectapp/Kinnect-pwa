@@ -1,5 +1,7 @@
 import React from "react";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -30,9 +32,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const shouldShowProfileInfo = Boolean(userImage || userLocation);
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-      <div className="w-full bg-white rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-end z-[999999]">
+      <div className="w-full relative bg-white rounded-t-3xl min-h-[300px] p-6 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -44,12 +48,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
         <div className="pt-2">
           {/* Title */}
-          <h2 className="text-lg font-bold text-blue-600 text-center mb-6">
+          <h2 className="text-lg font-bold text-[#D400B3] text-center mb-6">
             {title}
           </h2>
 
           {/* User Profile Info */}
-          {(userImage || title) && (
+          {shouldShowProfileInfo && (
             <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
               {userImage && (
                 <img
@@ -85,17 +89,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             >
               {cancelText}
             </button>
-            <button
+            <Button
               onClick={onConfirm}
               disabled={isLoading}
               className={`px-4 py-3 rounded-full text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
                 isDangerous
                   ? "bg-[#E60B69] hover:bg-[#d10558]"
-                  : "bg-[#E60B69] hover:bg-[#d10558]"
+                  : "bg-[#55288D] hover:bg-[#45227d]"
               }`}
             >
               {isLoading ? "Processing..." : confirmText}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
