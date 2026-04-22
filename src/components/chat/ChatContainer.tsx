@@ -16,7 +16,7 @@ const ChatContainer: React.FC = () => {
   useUnreadBadgeCount();
 
   return (
-    <div className="flex min-h-[80dvh] flex-col bg-white">
+    <div className="flex min-h-[100dvh] flex-col bg-white">
       {/* Tab Navigation */}
       <div className="bg-white mt-2 ">
         <div className=" mx-3 flex rounded-[4px] bg-[#e6e3ea] p-1.5  ">
