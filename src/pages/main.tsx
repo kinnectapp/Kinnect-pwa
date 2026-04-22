@@ -11,7 +11,7 @@ const MainComponent: React.FC = () => {
       <main className="  space-y-6">
         <Outlet />
       </main>
-      <KinnectAiWidget provider="openai" />
+      <KinnectAiWidget />
       <BottomNav />
     </div>
   );

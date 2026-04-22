@@ -30,7 +30,7 @@ const navigate = useNavigate();
       </p>
       <div onClick={
         //navigate to kiki 
-        ()=>navigate("/app/kinnect-ai", { state: { provider: "gemini" } })
+        ()=>navigate("/app/kinnect-ai")
       } className="flex cursor-pointer p-4 justify-between items-center bg-[#600051] text-[#fff] w-full">
         <div className="flex items-center gap-4">
           <WhereNextCoinIcon />

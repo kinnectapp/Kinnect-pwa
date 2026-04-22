@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
-import { KinnectAiProvider } from "@/services/kinnect-ai.service";
 import { Logo } from "../layout/logo";
 
 const STORAGE_KEY = "kinnect-ai-chat-history";
@@ -10,10 +9,6 @@ type StoredKinnectAiMessage = {
   role: "user" | "assistant";
   content: string;
   failed?: boolean;
-};
-
-type KinnectChatBtnProps = {
-  provider?: KinnectAiProvider;
 };
 
 const truncate = (value: string, maxLength = 48) => {
@@ -46,9 +41,7 @@ const getPreviewText = (messages: StoredKinnectAiMessage[]) => {
   return truncate(lastMessage.content);
 };
 
-const KinnectChatBtn: React.FC<KinnectChatBtnProps> = ({
-  provider = "gemini",
-}) => {
+const KinnectChatBtn: React.FC = () => {
   const navigate = useNavigate();
   const [previewText, setPreviewText] = useState(
     "Ask Kiki for dating advice, message ideas, or profile help.",
@@ -75,7 +68,7 @@ const KinnectChatBtn: React.FC<KinnectChatBtnProps> = ({
   return (
     <button
       type="button"
-      onClick={() => navigate("/app/kinnect-ai", { state: { provider } })}
+      onClick={() => navigate("/app/kinnect-ai")}
       className="mx-3 flex w-[calc(100%-24px)] items-center gap-4 border-b px-1 py-3 text-left transition-colors hover:bg-[#FAF8FB]"
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E7DFF0] bg-white">
