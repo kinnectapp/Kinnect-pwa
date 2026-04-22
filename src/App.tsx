@@ -1,8 +1,14 @@
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useLayoutEffect } from "react";
 import "./App.css";
 import "stream-chat-react/dist/css/v2/index.css";
 import "./styles/stream-chat-overrides.css";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import SplashRoutes from "./routes/SplashRoutes";
 import AuthRoutes from "./routes/AuthRoutes";
 import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
@@ -29,6 +35,24 @@ export const LazyRoute: React.FC<LazyRouteProps> = ({ Component }) => (
   </Suspense>
 );
 
+const ScrollToTop: React.FC = () => {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname, search]);
+
+  return null;
+};
+
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -53,6 +77,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/*" element={<SplashRoutes />} />
         <Route path="/auth/*" element={<AuthRoutes />} />

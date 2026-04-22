@@ -16,10 +16,10 @@ const ChatContainer: React.FC = () => {
   useUnreadBadgeCount();
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white">
+    <div className="flex min-h-[80dvh] flex-col bg-white">
       {/* Tab Navigation */}
-      <div className="bg-white ">
-        <div className="fixed left-0 right-0 z-10 m-3 flex rounded-[4px] bg-[#e6e3ea] p-1.5 top-[calc(env(safe-area-inset-top)+56px)]">
+      <div className="bg-white mt-2 ">
+        <div className=" mx-3 flex rounded-[4px] bg-[#e6e3ea] p-1.5  ">
           <button
             onClick={() => setActiveTab("messages")}
             className={`flex-1 py-2 px-4 text-center rounded-[4px] text-[14px] transition-colors ${
@@ -44,7 +44,7 @@ const ChatContainer: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="mt-16 flex-1 overflow-hidden">
+      <div className="mt-6 flex-1  overflow-hidden">
         {activeTab === "messages" && <MessagesList />}
         {activeTab === "community" && <CommunityView />}
       </div>
