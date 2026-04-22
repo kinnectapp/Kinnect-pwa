@@ -1,10 +1,8 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { KinnectAiProvider } from "@/services/kinnect-ai.service";
 import { Logo } from "../layout/logo";
 
 type KinnectAiWidgetProps = {
-  provider?: KinnectAiProvider;
   visibleRoutes?: string[];
 };
 
@@ -14,7 +12,6 @@ const routeMatches = (pathname: string, visibleRoutes: string[]) =>
   );
 
 export const KinnectAiWidget: React.FC<KinnectAiWidgetProps> = ({
-  provider = "openai",
   visibleRoutes = ["/app", "/app/community"],
 }) => {
   const location = useLocation();
@@ -33,7 +30,7 @@ export const KinnectAiWidget: React.FC<KinnectAiWidgetProps> = ({
     <>
       <button
         type="button"
-        onClick={() => navigate("/app/kinnect-ai", { state: { provider } })}
+        onClick={() => navigate("/app/kinnect-ai")}
         className="fixed border bottom-24 right-4 z-[1000] flex h-14 w-14 items-center justify-center rounded-full  shadow-[0_14px_30px_rgba(85,40,141,0.35)]"
         aria-label="Open Kiki"
       >

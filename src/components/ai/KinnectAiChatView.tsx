@@ -3,14 +3,9 @@ import { RotateCcw, SendHorizontal } from "lucide-react";
 import {
   kinnectAiService,
   KinnectAiMessage,
-  KinnectAiProvider,
   toKinnectAiErrorMessage,
 } from "@/services/kinnect-ai.service";
 import TypingIndicator from "./TypingIndicator";
-
-type KinnectAiChatViewProps = {
-  provider?: KinnectAiProvider;
-};
 
 const STORAGE_KEY = "kinnect-ai-chat-history";
 
@@ -32,9 +27,7 @@ const starterMessages: StoredKinnectAiMessage[] = [
   },
 ];
 
-export const KinnectAiChatView: React.FC<KinnectAiChatViewProps> = ({
-  provider = "gemini",
-}) => {
+export const KinnectAiChatView: React.FC = () => {
   const [input, setInput] = useState("");
   const [hasHydratedHistory, setHasHydratedHistory] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -140,7 +133,6 @@ export const KinnectAiChatView: React.FC<KinnectAiChatViewProps> = ({
 
     try {
       const reply = await kinnectAiService.sendMessage(
-        provider,
         buildConversationPayload(nextMessages),
       );
       setMessages((current) => {
@@ -171,7 +163,7 @@ export const KinnectAiChatView: React.FC<KinnectAiChatViewProps> = ({
         ];
       });
     } catch (error) {
-      const message = toKinnectAiErrorMessage(provider, error);
+      const message = toKinnectAiErrorMessage(error);
 
       setMessages((current) => {
         if (failedMessageId) {

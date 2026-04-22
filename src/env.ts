@@ -6,8 +6,6 @@ export const {
   VITE_GOOGLE_WEB_CLIENT_ID,
   VITE_GOOGLE_IOS_CLIENT_ID,
   VITE_STREAM_API_KEY,
-  VITE_OPENAI_API_KEY,
-  VITE_GPT_API_KEY,
   VITE_GEMINI_API_KEY,
 } = (import.meta as any).env;
 
@@ -21,5 +19,4 @@ export const GOOGLE_AUTH_API =
 export const GOOGLE_WEB_CLIENT_ID = VITE_GOOGLE_WEB_CLIENT_ID || "";
 export const GOOGLE_IOS_CLIENT_ID = VITE_GOOGLE_IOS_CLIENT_ID || "";
 export const STREAM_API_KEY = VITE_STREAM_API_KEY || "";
-export const OPENAI_API_KEY = VITE_GPT_API_KEY || "";
 export const GEMINI_API_KEY = VITE_GEMINI_API_KEY || "";
