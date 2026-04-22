@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 const BookSessionModal = () => {
   const navigate = useNavigate();
   return (
-    <div className="  gap-4 p-4 flex h-[100dvh] flex-col">
+    <div className="flex min-h-[100dvh] flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div onClick={()=>navigate(-1)} className="flex iitems-center gap-2">
         <ChevronLeft /> Back
       </div>
