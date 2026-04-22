@@ -1,15 +1,10 @@
 import React from "react";
 import { ChevronLeft } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { KinnectAiChatView } from "@/components/ai/KinnectAiChatView";
-import { KinnectAiProvider } from "@/services/kinnect-ai.service";
 
 const KinnectAiPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const provider =
-    (location.state as { provider?: KinnectAiProvider } | null)?.provider ||
-    "gemini";
 
   return (
     <div className="min-h-[100dvh] bg-white pb-6">
@@ -29,7 +24,7 @@ const KinnectAiPage: React.FC = () => {
       </div>
 
       <div className=" ">
-        <KinnectAiChatView provider={provider} />
+        <KinnectAiChatView />
       </div>
     </div>
   );

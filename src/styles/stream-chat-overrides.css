@@ -49,6 +49,11 @@
   background-color: #ffffff;
 }
 
+.str-chat__message-input,
+.str-chat__message-input-flat {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
 .str-chat__input-flat {
   border-radius: 24px;
   border: 1px solid #e6e3ea;
@@ -144,12 +149,50 @@
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
+  min-height: 0 !important;
 }
 
 .str-chat-channel .str-chat__container {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
+  min-height: 0 !important;
+}
+
+.stream-chat-shell {
+  min-height: 0;
+}
+
+.stream-chat-shell > .str-chat,
+.stream-chat-shell .str-chat__container,
+.stream-chat-shell .str-chat__channel,
+.stream-chat-shell .str-chat__main-panel,
+.stream-chat-shell .str-chat__main-panel-inner,
+.stream-chat-shell [data-str-chat-channel],
+.stream-chat-shell [data-str-chat-message-list],
+.stream-chat-shell .str-chat__message-list,
+.stream-chat-shell .stream-chat__message-list,
+.stream-chat-shell .stream-chat__message-list-scroll,
+.stream-chat-shell .stream-chat__message-input {
+  min-height: 0 !important;
+}
+
+.stream-chat-shell .str-chat__main-panel,
+.stream-chat-shell .str-chat__main-panel-inner,
+.stream-chat-shell [data-str-chat-channel] {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+}
+
+.stream-chat-shell .str-chat__message-list,
+.stream-chat-shell .stream-chat__message-list,
+.stream-chat-shell .stream-chat__message-list-scroll,
+.stream-chat-shell .str-chat__list,
+.stream-chat-shell .stream-chat__paginated-list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
 }
 
 /* Ensure message list takes remaining space */

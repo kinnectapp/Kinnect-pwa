@@ -1,14 +1,9 @@
-import { GEMINI_API_KEY, OPENAI_API_KEY } from "@/env";
-
-export type KinnectAiProvider = "gemini" | "openai";
+import { GEMINI_API_KEY } from "@/env";
 
 export type KinnectAiMessage = {
   role: "user" | "assistant";
   content: string;
 };
-
-const OPENAI_BROWSER_ERROR =
-  "OpenAI cannot be called directly from this browser app because of CORS. Use a backend proxy for OpenAI, or switch this page to Gemini for now.";
 
 const SYSTEM_PROMPT = `
 You are Kiki, a warm relationship and community assistant inside the Kinnect app.
@@ -18,29 +13,8 @@ Do not claim to perform app actions you cannot actually perform.
 If a situation sounds unsafe, manipulative, abusive, or coercive, encourage the user to prioritize safety and boundaries.
 `;
 
-const OPENAI_URL = "https://api.openai.com/v1/responses";
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-const readOpenAiText = (payload: any): string => {
-  if (typeof payload?.output_text === "string" && payload.output_text.trim()) {
-    return payload.output_text.trim();
-  }
-
-  const output = Array.isArray(payload?.output) ? payload.output : [];
-  const text = output
-    .flatMap((item: any) => item?.content || [])
-    .map((item: any) => item?.text)
-    .filter((value: unknown): value is string => typeof value === "string")
-    .join("\n")
-    .trim();
-
-  if (text) {
-    return text;
-  }
-
-  throw new Error("OpenAI returned an empty response.");
-};
 
 const readGeminiText = (payload: any): string => {
   const parts = payload?.candidates?.[0]?.content?.parts || [];
@@ -75,40 +49,6 @@ const normalizeError = async (response: Response) => {
   }
 };
 
-const requestOpenAi = async (messages: KinnectAiMessage[]) => {
-  if (!OPENAI_API_KEY) {
-    throw new Error(
-      "Missing OpenAI key. Add VITE_OPENAI_API_KEY or VITE_GPT_API_KEY to your .env file.",
-    );
-  }
-
-  if (typeof window !== "undefined") {
-    throw new Error(OPENAI_BROWSER_ERROR);
-  }
-
-  const response = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4.1-mini",
-      instructions: SYSTEM_PROMPT.trim(),
-      input: messages.map((message) => ({
-        role: message.role,
-        content: message.content,
-      })),
-    }),
-  });
-
-  if (!response.ok) {
-    await normalizeError(response);
-  }
-
-  return readOpenAiText(await response.json());
-};
-
 const requestGemini = async (messages: KinnectAiMessage[]) => {
   if (!GEMINI_API_KEY) {
     throw new Error(
@@ -139,14 +79,20 @@ const requestGemini = async (messages: KinnectAiMessage[]) => {
   return readGeminiText(await response.json());
 };
 
-export const toKinnectAiErrorMessage = (
-  provider: KinnectAiProvider,
-  error: unknown,
-) => {
-  const fallback =
-    provider === "gemini"
-      ? "Gemini could not respond right now. Please try again."
-      : OPENAI_BROWSER_ERROR;
+const delay = (ms: number) =>
+  new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const shouldRetryKinnectAiError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return true;
+  }
+
+  const message = error.message.toLowerCase();
+  return !message.includes("missing gemini key");
+};
+
+export const toKinnectAiErrorMessage = (error: unknown) => {
+  const fallback = "Kiki could not respond right now. Please try again.";
 
   if (!(error instanceof Error)) {
     return fallback;
@@ -154,33 +100,24 @@ export const toKinnectAiErrorMessage = (
 
   const message = error.message?.trim() || fallback;
 
-  if (provider === "gemini" && message.includes("high demand")) {
+  if (message.toLowerCase().includes("high demand")) {
     return "Kiki is experiencing high demand right now. Please try again.";
-  }
-
-  if (provider === "openai" && message.toLowerCase().includes("cors")) {
-    return OPENAI_BROWSER_ERROR;
-  }
-
-  if (
-    provider === "openai" &&
-    message.toLowerCase().includes("failed to fetch")
-  ) {
-    return OPENAI_BROWSER_ERROR;
   }
 
   return message;
 };
 
 export const kinnectAiService = {
-  async sendMessage(
-    provider: KinnectAiProvider,
-    messages: KinnectAiMessage[],
-  ): Promise<string> {
-    if (provider === "gemini") {
+  async sendMessage(messages: KinnectAiMessage[]): Promise<string> {
+    try {
+      return await requestGemini(messages);
+    } catch (error) {
+      if (!shouldRetryKinnectAiError(error)) {
+        throw error;
+      }
+
+      await delay(800);
       return requestGemini(messages);
     }
-
-    return requestOpenAi(messages);
   },
 };
