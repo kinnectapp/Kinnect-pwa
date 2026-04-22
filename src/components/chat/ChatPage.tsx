@@ -353,9 +353,9 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   );
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#FAF8FB]">
+    <div className="flex h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-[#FAF8FB]">
       {/* Custom Header */}
-      <div className="sticky top-0 z-10 bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+      <div className="sticky top-0 z-10 shrink-0 bg-white px-4 pb-4 pt-4">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -451,8 +451,8 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
       {/* Stream Chat UI */}
       {channel ? (
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="flex-1 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <Channel
               channel={channel}
               AttachmentSelector={
@@ -462,6 +462,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
               MessageStatus={CustomMessageStatus as any}
               QuotedMessage={CustomQuotedMessage as any}
             >
+              <div className="stream-chat-shell flex min-h-0 flex-1 flex-col overflow-hidden">
               <Window>
                 <MessageList
                   messageActions={['react', 'quote', 'delete']}
@@ -494,6 +495,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   overrideSubmitHandler={handleMessageSubmit}
                 />
               </Window>
+              </div>
             </Channel>
           </div>
         </div>

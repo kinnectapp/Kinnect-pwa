@@ -11,36 +11,36 @@ export const Header: React.FC = () => {
   const displayCount = unreadCount > 99 ? "99+" : unreadCount;
 
   return (
-    <header className="sticky top-0 z-[9999] flex items-center justify-between bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
-      <div className="" onClick={() => navigate("/app")}>
-        <Logo />
-      </div>
-
-      <div className="flex items-center gap-3">
-        {/* User avatar */}
-        <div className="relative">
-          <div
-            onClick={() => navigate("/app/profile")}
-            className="h-9 w-9 rounded-full bg-[#F2EAFC] flex items-center justify-center overflow-hidden"
-          >
-            <UserProfiileIcon />
-          </div>
+    <header className="fixed inset-x-0 top-0 z-[9999] bg-white">
+      <div className="mx-auto flex w-full max-w-[1025px] items-center justify-between px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <div onClick={() => navigate("/app")}>
+          <Logo />
         </div>
 
-        {/* Notification bell */}
-        <div className="relative">
-          <div
-            onClick={() => navigate("/app/notifications")}
-            className="h-9 w-9 rounded-full bg-[#F6EFF5] flex items-center justify-center overflow-hidden"
-          >
-            <BellIcon />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div
+              onClick={() => navigate("/app/profile")}
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#F2EAFC]"
+            >
+              <UserProfiileIcon />
+            </div>
           </div>
 
-          {showBadge && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#920874] text-white text-[8px] font-medium rounded-full flex items-center justify-center">
-              {displayCount}
-            </span>
-          )}
+          <div className="relative">
+            <div
+              onClick={() => navigate("/app/notifications")}
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#F6EFF5]"
+            >
+              <BellIcon />
+            </div>
+
+            {showBadge && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#920874] px-1 text-[8px] font-medium text-white">
+                {displayCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </header>
