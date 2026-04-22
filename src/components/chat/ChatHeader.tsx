@@ -18,7 +18,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white fixed top-0 left-0 right-0 border-b border-gray-200 p-4 z-10">
+    <div className="fixed left-0 right-0 top-0 z-10 border-b border-gray-200 bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div className="flex items-center justify-between max-w-full">
         <div onClick={() => navigate(-1)} className="flex items-center gap-3">
           <ChevronLeft className="w-5 h-5 text-gray-700" />

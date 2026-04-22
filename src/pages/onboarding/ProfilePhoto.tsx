@@ -117,7 +117,7 @@ const ProfilePhoto = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-white p-6 flex flex-col">
+    <div className="flex min-h-[100dvh] flex-col bg-white px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}

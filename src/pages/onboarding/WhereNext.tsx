@@ -19,7 +19,7 @@ const navigate = useNavigate();
 
         backgroundSize: "contain",
       }}
-      className="flex h-full items-center flex-col  pt-10 pb-8 bg-[#FFFFFF]"
+      className="flex min-h-[100dvh] flex-col items-center bg-[#FFFFFF] pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+2.5rem)]"
     >
       <img src={Logo} alt="Kinnect" className="h-12 w-12" />
 

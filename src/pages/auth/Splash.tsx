@@ -42,9 +42,9 @@ const Splash: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-[100dvh]">
+    <div className="min-h-[100dvh] bg-white">
       {screen === 0 && (
-        <div className="flex h-[100dvh] w-full items-center justify-center bg-[#150024]">
+        <div className="flex min-h-[100dvh] w-full items-center justify-center bg-[#150024] px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)]">
           <div className="flex flex-col items-center gap-4">
             {/* logo mark */}
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#150024]">
@@ -60,14 +60,14 @@ const Splash: React.FC = () => {
 
       {screen === 1 && (
         <div
-          className="relative flex h-[100dvh] w-full bg-cover bg-center"
+          className="relative flex min-h-[100dvh] w-full bg-cover bg-center"
           style={{ backgroundImage: `url(${Splash2Img})` }}
         >
           <div className="absolute inset-0 " />
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#00000088]  via-[#20f21500] to-[#fff0]" />
 
-          <div className="relative flex flex-col justify-center items-center mt-auto w-full px-6 pb-10">
+          <div className="relative mt-auto flex w-full flex-col items-center justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
             <p className="mb-1 text-[32px] font-semibold leading-tight text-white">
               Kinnect - Where new
             </p>
@@ -86,7 +86,7 @@ const Splash: React.FC = () => {
       )}
 
       {screen === 2 && (
-        <div className=" flex flex-col  h-[100dvh] w-full bg-cover bg-center">
+        <div className="flex min-h-[100dvh] w-full flex-col bg-cover bg-center pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
           <div
             style={{
               backgroundImage: `url(${Personaldev})`,
@@ -130,7 +130,7 @@ const Splash: React.FC = () => {
       {screen === 3 && (
         <div
           style={{ backgroundImage: `url(${PatternBg})` }}
-          className=" flex flex-col  h-[100dvh] w-full bg-cover bg-center"
+          className="flex min-h-[100dvh] w-full flex-col bg-cover bg-center pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1rem)]"
         >
           <div className="flex-[2] h-[60%]">
             <img className=" w-full h-full" src={GalleryImgs} alt="" />
@@ -173,14 +173,14 @@ const Splash: React.FC = () => {
 
       {screen === 4 && (
         <div
-          className="relative flex h-[100dvh] w-full bg-cover bg-center"
+          className="relative flex min-h-[100dvh] w-full bg-cover bg-center"
           style={{ backgroundImage: `url(${Step4Img})` }}
         >
           <div className="absolute inset-0 " />
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#000000af]  via-[#20f21500] to-[#fff0]" />
 
-          <div className="relative gap-4 flex flex-col justify-center items-center mt-auto w-full px-6 pb-16">
+          <div className="relative mt-auto flex w-full flex-col items-center justify-center gap-4 px-6 pb-[calc(env(safe-area-inset-bottom)+4rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
             <img
               src={Logo}
               className="

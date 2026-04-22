@@ -276,7 +276,7 @@ const PersonalityTest: React.FC = () => {
           backgroundImage: `url(${Confetti})`,
           backgroundSize: "contain",
         }}
-        className="h-[100dvh]  flex  px-6 pt-8 pb-6 "
+        className="flex min-h-[100dvh] px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)]"
       >
         <div className="flex flex-1 gap-3 justify-center flex-col items-center">
           <SuccessIcon />
@@ -316,7 +316,7 @@ const PersonalityTest: React.FC = () => {
 
   // main question UI
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#1B0030] px-6 pt-6 pb-8">
+    <div className="flex min-h-[100dvh] flex-col bg-[#1B0030] px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       {/* header */}
       <div className="flex items-center justify-between text-white">
         <button

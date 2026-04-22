@@ -12,7 +12,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
   description,
 }) => {
   return (
-    <div className="flex flex-col px-6 pt-8 pb-6  min-h-[100dvh]   bg-white">
+    <div className="flex min-h-[100dvh] flex-col bg-white px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)]">
       {/* logo */}
       <div className="mb-6 flex items-center gap-2">
         <img src={Logo} alt="Kinnect" className="h-8 w-8" />

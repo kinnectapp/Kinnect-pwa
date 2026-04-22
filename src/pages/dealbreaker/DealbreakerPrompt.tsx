@@ -11,7 +11,7 @@ const DealbreakerPrompt = () => {
       style={{
         backgroundSize: "contain",
       }}
-      className="h-[100dvh]  flex  px-6 pt-8 pb-6 "
+      className="flex min-h-[100dvh] px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)]"
     >
       <div className="flex flex-1 gap-3 justify-center flex-col items-center">
         <img src={Logo} className="mb-6" alt="" />

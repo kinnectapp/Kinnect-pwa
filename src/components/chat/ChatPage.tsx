@@ -353,9 +353,9 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   );
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#FAF8FB]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#FAF8FB]">
       {/* Custom Header */}
-      <div className="bg-white p-4 sticky top-0 z-10">
+      <div className="sticky top-0 z-10 bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />

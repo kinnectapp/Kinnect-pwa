@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
   const displayCount = unreadCount > 99 ? "99+" : unreadCount;
 
   return (
-    <header className="flex z-[9999] items-center justify-between sticky top-0 bg-white px-4 py-4">
+    <header className="sticky top-0 z-[9999] flex items-center justify-between bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div className="" onClick={() => navigate("/app")}>
         <Logo />
       </div>
