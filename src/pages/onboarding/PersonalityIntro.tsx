@@ -7,7 +7,7 @@ const PersonalityIntro: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#F9F9F9] px-6 pt-10 pb-8">
+    <div className="flex min-h-[100dvh] flex-col bg-[#F9F9F9] px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+2.5rem)]">
       <div className="flex justify-center">
         <img
           src={PersonalityBanner} // swap with your asset

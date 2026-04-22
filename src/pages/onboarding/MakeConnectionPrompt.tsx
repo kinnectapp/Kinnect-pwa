@@ -15,7 +15,7 @@ const MakeConnectionPrompt: React.FC = () => {
 
         backgroundSize: "contain",
       }}
-      className="flex h-[100dvh] flex-col px-6 pt-10 pb-8 bg-[#FFF7FF] bg-[length:220px_220px] bg-[radial-gradient(circle_at_1px_1px,#E9E0FF_1px,transparent_0)]"
+      className="flex min-h-[100dvh] flex-col bg-[#FFF7FF] bg-[length:220px_220px] bg-[radial-gradient(circle_at_1px_1px,#E9E0FF_1px,transparent_0)] px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-[calc(env(safe-area-inset-top)+2.5rem)]"
     >
       {/* top logo */}
       <div className="flex justify-center">

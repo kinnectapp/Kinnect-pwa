@@ -116,7 +116,7 @@ const Location = () => {
   };
 
   return (
-    <div className="gap-4 p-4 flex min-h-[100dvh] flex-col">
+    <div className="flex min-h-[100dvh] flex-col gap-4 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div>
         <button
           type="button"
