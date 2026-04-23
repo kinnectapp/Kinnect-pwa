@@ -32,6 +32,7 @@ import {
   RatingPayload,
   RatingResponse,
 } from "@/lib/types/auth";
+import { encodeBase64 } from "@/lib/base64";
 
 export const useAuth = () => {
   const { http } = useHttp();
@@ -45,9 +46,13 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: LoginPayload) => {
+        const encodedPayload: LoginPayload = {
+          ...payload,
+          password: encodeBase64(payload.password),
+        };
         const response = await http.post<AuthResponse>(
           endpoints.auth.login,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
@@ -62,9 +67,14 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: RegisterPayload) => {
+        const encodedPayload: RegisterPayload = {
+          ...payload,
+          password: encodeBase64(payload.password),
+          confirmPassword: encodeBase64(payload.confirmPassword),
+        };
         const response = await http.post<AuthResponse>(
           endpoints.auth.register,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
@@ -95,9 +105,13 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: VerifyOtpPayload) => {
+        const encodedPayload: VerifyOtpPayload = {
+          ...payload,
+          otp: encodeBase64(payload.otp),
+        };
         const response = await http.post<VerifyOtpResponse>(
           endpoints.auth.verifyOtp,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
@@ -129,9 +143,15 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: ResetPasswordPayload) => {
+        const encodedPayload: ResetPasswordPayload = {
+          ...payload,
+          token: encodeBase64(payload.token),
+          password: encodeBase64(payload.password),
+          confirmPassword: encodeBase64(payload.confirmPassword),
+        };
         const response = await http.post<ResetPasswordResponse>(
           endpoints.auth.resetPassword,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
@@ -224,9 +244,15 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: ChangePasswordPayload) => {
+        const encodedPayload: ChangePasswordPayload = {
+          ...payload,
+          oldPassword: encodeBase64(payload.oldPassword),
+          newPassword: encodeBase64(payload.newPassword),
+          confirmNewPassword: encodeBase64(payload.confirmNewPassword),
+        };
         const response = await http.put(
           endpoints.users.changePassword,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
@@ -361,9 +387,13 @@ export const useAuth = () => {
   > => {
     return useMutation({
       mutationFn: async (payload: VerifyOtpPayload) => {
+        const encodedPayload: VerifyOtpPayload = {
+          ...payload,
+          otp: encodeBase64(payload.otp),
+        };
         const response = await http.post<VerifyEmailResponse>(
           endpoints.auth.verifyEmail,
-          payload,
+          encodedPayload,
         );
         return response.data;
       },
