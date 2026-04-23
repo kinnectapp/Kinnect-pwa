@@ -8,10 +8,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { chatService } from "@/services/chat.service";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
-import { useGetProfileMatches } from "@/services/profile.service";
 import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
 import { Loader } from "lucide-react";
 import UserImage from "../../assets/images/user-profile.png";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProfileEssentials {
   dob?: string;
@@ -37,6 +37,31 @@ interface Profile {
   interests: string[];
 }
 
+type UserByIdResponse = {
+  data?: {
+    resp?: {
+      id: number | string;
+      firstname?: string;
+      lastname?: string;
+      username?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      dob?: string;
+      personalityPercentage?: number | string;
+      profilePhotos?: string[];
+      bio?: string;
+      personalitySummary?: string;
+      education?: string;
+      occupation?: string;
+      religion?: string;
+      drinkRate?: string;
+      smokeRate?: string;
+      interests?: string[];
+    };
+  };
+};
+
 export const MatchProfile: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -48,65 +73,67 @@ export const MatchProfile: React.FC = () => {
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
 
-  const { data: matchesData, isLoading } = useGetProfileMatches();
+  const {
+    data: userByIdResponse,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["match-profile", id],
+    queryFn: async () => chatService.getUserById(id!),
+    enabled: Boolean(id),
+  });
 
-  const currentMatchItem = useMemo(() => {
-    if (!matchesData || !id) return null;
-    return matchesData.find((item: any) => item.profile.id === Number(id));
-  }, [matchesData, id]);
+  const fetchedProfile = useMemo(
+    () => (userByIdResponse as UserByIdResponse | undefined)?.data?.resp ?? null,
+    [userByIdResponse],
+  );
 
   const currentProfile: Profile | null = useMemo(() => {
-    if (!currentMatchItem) return null;
-    console.log("currentMatchItem", currentMatchItem);
-    const {
-      profile,
-      //  value
-    } = currentMatchItem;
+    if (!fetchedProfile) return null;
 
     const images: string[] =
-      profile.profilePhotos && profile.profilePhotos.length > 0
-        ? profile.profilePhotos
+      fetchedProfile.profilePhotos && fetchedProfile.profilePhotos.length > 0
+        ? fetchedProfile.profilePhotos
         : [UserImage];
 
-    let age = profile.age || 0;
-    if (!age && profile.dob) {
+    let age = 0;
+    if (fetchedProfile.dob) {
       age = Math.floor(
-        (Date.now() - new Date(profile.dob).getTime()) /
+        (Date.now() - new Date(fetchedProfile.dob).getTime()) /
           (1000 * 60 * 60 * 24 * 365.25),
       );
     }
 
     return {
-      id: String(profile.id),
+      id: String(fetchedProfile.id),
       name:
-        profile.firstname && profile.lastname
-          ? `${profile.firstname} ${profile.lastname}`
-          : profile.username || "Unknown User",
-      location: [profile.city, profile.state, profile.country]
+        fetchedProfile.firstname && fetchedProfile.lastname
+          ? `${fetchedProfile.firstname} ${fetchedProfile.lastname}`.trim()
+          : fetchedProfile.username || "Unknown User",
+      location: [fetchedProfile.city, fetchedProfile.state, fetchedProfile.country]
         .filter(Boolean)
         .join(", "),
       dob: String(age),
-      // personalityPercentage: String(value || 0),
       personalityPercentage: String(
-        Number(profile.personalityPercentage).toFixed() || 0,
+        Number(fetchedProfile.personalityPercentage || 0).toFixed() || 0,
       ),
-
       image: images[0],
       images,
-      about: profile.bio || "No bio available",
-      personalityResult: profile.personalitySummary || "",
+      about: fetchedProfile.bio || "No bio available",
+      personalityResult: fetchedProfile.personalitySummary || "",
       flags: [],
       essentials: {
         dob: String(age),
-        education: profile.education,
-        occupation: profile.occupation,
-        religion: profile.religion,
-        drinkRate: profile.drinkRate,
-        smokeRate: profile.smokeRate,
+        education: fetchedProfile.education,
+        occupation: fetchedProfile.occupation,
+        religion: fetchedProfile.religion,
+        drinkRate: fetchedProfile.drinkRate,
+        smokeRate: fetchedProfile.smokeRate,
       },
-      interests: profile.interests || [],
+      interests: fetchedProfile.interests || [],
     };
-  }, [currentMatchItem]);
+  }, [fetchedProfile]);
 
   const personalChatAccess = usePersonalChatAccess(currentProfile?.id);
 
@@ -202,12 +229,34 @@ export const MatchProfile: React.FC = () => {
     }
   };
 
-  if (isLoading || !currentProfile) {
+  if (isLoading) {
     return (
       <div className="min-h-[100dvh] p-4 profile-match-gradient flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-600">
           <Loader className="animate-spin w-5 h-5" />
           <span>Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !currentProfile) {
+    return (
+      <div className="min-h-[100dvh] p-4 profile-match-gradient flex items-center justify-center">
+        <div className="max-w-sm rounded-[12px] bg-white p-5 text-center shadow-sm">
+          <p className="text-[16px] font-semibold text-[#1C1C1C]">
+            Unable to load profile
+          </p>
+          <p className="mt-2 text-sm text-[#77707F]">
+            {isError ? handleApiError(error) : "This profile is not available right now."}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-4 rounded-full bg-[#55288D] px-4 py-2 text-sm font-semibold text-white"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     );
