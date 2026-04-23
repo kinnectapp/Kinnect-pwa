@@ -213,8 +213,8 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#F5F5F5] pb-10">
-      <div className=" sticky top-0  flex items-center gap-3 border-b  bg-[#fff] px-4 py-3">
+    <div className="min-h-[100dvh] bg-[#F5F5F5]  pb-[calc(env(safe-area-inset-bottom)+50px)]">
+      <div className=" sticky top-0  flex items-center gap-3 border-b  bg-[#fff] px-4 pb-3 pt-[calc(env(safe-area-inset-top)+20px)]">
         <button
           type="button"
           onClick={() => navigate(-1)}

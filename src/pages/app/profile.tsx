@@ -26,6 +26,7 @@ import UserImage from "../../assets/images/user-profile.png";
 import confettiImage from "@/assets/images/confetti.svg";
 import { Logo } from "@/components/layout/logo";
 import ConfirmationModal from "@/components/chat/ConfirmationModal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 
 const RatingReviewModal: React.FC<{
   open: boolean;
@@ -516,6 +517,7 @@ const ProfilePage: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] =
     React.useState(false);
+  const [isProfileImageOpen, setIsProfileImageOpen] = React.useState(false);
 
   const displayName =
     `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim() ||
@@ -605,13 +607,18 @@ const ProfilePage: React.FC = () => {
       <div className="h-[92px] bg-gradient-to-r from-[#450f77] via-[#65195c70] to-[#7e016b]" />
 
       <div className="px-4 -mt-12">
-        <div className="mx-auto h-[88px] w-[88px] rounded-full border-2 border-[#D400B3] bg-white p-[2px]">
+        <button
+          type="button"
+          onClick={() => setIsProfileImageOpen(true)}
+          className="mx-auto block h-[88px] w-[88px] rounded-full border-2 border-[#D400B3] bg-white p-[2px]"
+          aria-label="View profile photo"
+        >
           <img
             src={profilePhoto}
             alt="Profile"
             className="h-full w-full rounded-full object-cover"
           />
-        </div>
+        </button>
 
         <div className="mt-3 text-center">
           <h1 className="text-[20px] !capitalize font-semibold text-[#1C1C1C]">
@@ -750,6 +757,11 @@ const ProfilePage: React.FC = () => {
         onDone={async () => {
           await logout();
         }}
+      />
+      <ImageLightbox
+        images={[profilePhoto]}
+        isOpen={isProfileImageOpen}
+        onClose={() => setIsProfileImageOpen(false)}
       />
     </div>
   );

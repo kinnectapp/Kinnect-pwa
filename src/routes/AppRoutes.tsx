@@ -35,6 +35,7 @@ const AppRoutes = () => (
       />
       <Route path="profile" element={<LazyRoute Component={ProfilePage} />} />
     </Route>
+    
     <Route
       path="chats/:channelId"
       element={<LazyRoute Component={ChatidPage} />}
