@@ -7,9 +7,10 @@ const KinnectAiPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[100dvh] bg-white pb-6">
-      <div className="sticky top-0 z-10 bg-white px-4 py-3">
-        <div className="relative flex items-center">
+    <div className="min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+10px)]">
+      <div className="fixed inset-x-0 top-0 z-10 bg-white">
+        <div className="mx-auto w-full max-w-[1025px] px-4 py-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
+          <div className="relative flex items-center">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -20,12 +21,11 @@ const KinnectAiPage: React.FC = () => {
           <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-semibold text-[#55288D]">
             Kiki
           </h1>
+          </div>
         </div>
       </div>
 
-      <div className=" ">
-        <KinnectAiChatView />
-      </div>
+      <KinnectAiChatView />
     </div>
   );
 };
