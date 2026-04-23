@@ -6,9 +6,9 @@ import { KinnectAiWidget } from "@/components/ai/KinnectAiWidget";
 
 const MainComponent: React.FC = () => {
   return (
-    <div className="min-h-[100dvh] bg-white pt-[calc(env(safe-area-inset-top)+5px)] ">
+    <div className="min-h-[100dvh] bg-white pt-[calc(env(safe-area-inset-top))]   ">
       <Header />
-      <main className="space-y-6 pt-[calc(env(safe-area-inset-top)+4.75rem)]">
+      <main className="space-y-6 pt-[calc(env(safe-area-inset-top)+50px)]">
         <Outlet />
       </main>
       <KinnectAiWidget />
