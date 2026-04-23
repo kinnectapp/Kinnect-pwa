@@ -76,7 +76,7 @@ export const ImageLightbox: React.FC<Props> = ({
         type="button"
         aria-label="Close image viewer"
         onClick={onClose}
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm"
+        className="absolute right-4 top-[calc(env(safe-area-inset-top)+10px)] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm"
       >
         <X size={20} />
       </button>
@@ -113,7 +113,7 @@ export const ImageLightbox: React.FC<Props> = ({
         <img
           src={images[activeIndex]}
           alt={`Preview ${activeIndex + 1}`}
-          className="relative z-[1] max-h-full max-w-full rounded-[20px] object-contain shadow-2xl"
+          className="relative z-[1] max-h-[70vh] max-w-full rounded-[20px] object-contain shadow-2xl"
         />
       </div>
 
