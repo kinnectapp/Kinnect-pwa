@@ -18,7 +18,7 @@ const ChatContainer: React.FC = () => {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-white">
       {/* Tab Navigation */}
-      <div className="bg-white mt-2 ">
+      <div className="bg-white mt-6 ">
         <div className=" mx-3 flex rounded-[4px] bg-[#e6e3ea] p-1.5  ">
           <button
             onClick={() => setActiveTab("messages")}

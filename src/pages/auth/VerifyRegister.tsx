@@ -32,18 +32,19 @@ const VerifyRegister: React.FC = () => {
   };
 
   useEffect(() => {
-    // Get email from sessionStorage
     const storedEmail = sessionStorage.getItem("verificationEmail");
     if (!storedEmail) {
       toast.error("Email not found. Please start over.");
       navigate("/auth/register");
       return;
     }
+
     setEmail(storedEmail);
   }, [navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!email) {
       toast.error("Email not found. Please start over.");
       return;
@@ -53,11 +54,9 @@ const VerifyRegister: React.FC = () => {
       toast.error("Please enter a valid 6-digit code");
       return;
     }
-      // ✅ Encode OTP to base64
-  const encodedOtp = btoa(code);
 
     verifyEmail(
-     { email, otp: encodedOtp },
+      { email, otp: code },
       {
         onSuccess: async (response) => {
           const accessToken = response.data?.accessToken || response.data?.token;
@@ -79,7 +78,6 @@ const VerifyRegister: React.FC = () => {
             }
           }
 
-          // Clear sessionStorage
           sessionStorage.removeItem("verificationEmail");
           sessionStorage.removeItem("pendingUser");
           toast.success("Email verified successfully!");
@@ -127,7 +125,7 @@ const VerifyRegister: React.FC = () => {
         </div>
 
         <p className="mt-10 text-center text-[14px] text-[#6C6C80]">
-          Didn’t get a code?{" "}
+          Didn't get a code?{" "}
           <button
             type="button"
             onClick={handleResendOtp}
