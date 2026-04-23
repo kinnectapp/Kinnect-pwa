@@ -227,8 +227,8 @@ export const KinnectAiChatView: React.FC = () => {
   };
 
   return (
-    <div className="flex  flex-col overflow-hidden  border border-[#E6DDF0] bg-white shadow-[0_20px_60px_rgba(43,16,77,0.08)]">
-      <div className="flex-1 space-y-3 overflow-y-auto bg-[#FCFAFE] px-4 py-4">
+    <div className="flex flex-1 pt-[60px]  flex-col overflow-hidden  border border-[#E6DDF0] bg-white shadow-[0_20px_60px_rgba(43,16,77,0.08)]">
+      <div className="flex-1 min-h-[90dvh] space-y-3 overflow-y-auto bg-[#FCFAFE] px-4 py-4 pb-[110px]">
         {messages.map((message, index) => {
           const isAssistant = message.role === "assistant";
           const isRetrying = retryingMessageId === message.id;
@@ -269,9 +269,10 @@ export const KinnectAiChatView: React.FC = () => {
         })}
 
         {isSending ? <TypingIndicator /> : null}
+
       </div>
 
-      <div className="border-t border-[#EFE8F5] bg-white p-3">
+      <div className="border-t fixed border-b inset-x-0 bottom-0 z-10 border-[#EFE8F5] bg-white p-3">
         <div className="flex items-end gap-2 rounded-[20px] mb-4 border border-[#DED2EB] px-3 py-2">
           <textarea
             value={input}
