@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="fixed inset-x-0 top-0 z-[9999] bg-white">
-      <div className="mx-auto flex w-full max-w-[1025px] items-center justify-between px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+      <div className="mx-auto flex w-full max-w-[1025px] items-center justify-between px-4 pb-4 pt-[calc(env(safe-area-inset-top)+10px)]">
         <div onClick={() => navigate("/app")}>
           <Logo />
         </div>

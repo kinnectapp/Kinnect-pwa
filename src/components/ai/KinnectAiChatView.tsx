@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RotateCcw, SendHorizontal } from "lucide-react";
 import {
   kinnectAiService,
@@ -36,6 +36,8 @@ export const KinnectAiChatView: React.FC = () => {
   );
   const [messages, setMessages] =
     useState<StoredKinnectAiMessage[]>(starterMessages);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   function parseBold(text: string) {
     return text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
@@ -102,6 +104,27 @@ export const KinnectAiChatView: React.FC = () => {
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [hasHydratedHistory, messages]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    const end = messagesEndRef.current;
+
+    if (!container || !end) {
+      return;
+    }
+
+    const scrollToLatestMessage = () => {
+      end.scrollIntoView({
+        behavior: hasHydratedHistory ? "smooth" : "auto",
+        block: "end",
+      });
+    };
+
+    scrollToLatestMessage();
+
+    const frameId = window.requestAnimationFrame(scrollToLatestMessage);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [hasHydratedHistory, isSending, messages]);
 
   const buildConversationPayload = (chatMessages: StoredKinnectAiMessage[]) =>
     chatMessages
@@ -228,7 +251,10 @@ export const KinnectAiChatView: React.FC = () => {
 
   return (
     <div className="flex flex-1 pt-[60px]  flex-col overflow-hidden  border border-[#E6DDF0] bg-white shadow-[0_20px_60px_rgba(43,16,77,0.08)]">
-      <div className="flex-1 min-h-[90dvh] space-y-3 overflow-y-auto bg-[#FCFAFE] px-4 py-4 pb-[110px]">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 min-h-[90dvh] space-y-3 overflow-y-auto bg-[#FCFAFE] px-4 py-4 pb-[110px]"
+      >
         {messages.map((message, index) => {
           const isAssistant = message.role === "assistant";
           const isRetrying = retryingMessageId === message.id;
@@ -269,7 +295,7 @@ export const KinnectAiChatView: React.FC = () => {
         })}
 
         {isSending ? <TypingIndicator /> : null}
-
+        <div ref={messagesEndRef} aria-hidden="true" />
       </div>
 
       <div className="border-t fixed border-b inset-x-0 bottom-0 z-10 border-[#EFE8F5] bg-white p-3">
