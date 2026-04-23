@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { OtpInput } from "@/pages/auth/OtpInput";
 import countryList from "@/data/countryList";
 import { UpdateProfilePayload } from "@/lib/types/auth";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import {
   dealBreakerQuestions,
   drinkOptions,
@@ -1085,6 +1086,7 @@ const PhotosModal: React.FC<{
   const [previews, setPreviews] = React.useState<string[]>([]);
   const fileRef = React.useRef<HTMLInputElement | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [viewerIndex, setViewerIndex] = React.useState<number | null>(null);
 
   const handleSelect = (list: FileList | null) => {
     if (!list) return;
@@ -1124,13 +1126,20 @@ const PhotosModal: React.FC<{
 
       {existingPhotos.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {existingPhotos.slice(0, 5).map((url) => (
-            <img
+          {existingPhotos.slice(0, 5).map((url, index) => (
+            <button
               key={url}
-              src={url}
-              alt="profile"
-              className="h-16 w-16 rounded-[8px] object-cover"
-            />
+              type="button"
+              onClick={() => setViewerIndex(index)}
+              className="overflow-hidden rounded-[8px]"
+              aria-label={`View profile photo ${index + 1}`}
+            >
+              <img
+                src={url}
+                alt="profile"
+                className="h-16 w-16 rounded-[8px] object-cover"
+              />
+            </button>
           ))}
         </div>
       )}
@@ -1155,11 +1164,18 @@ const PhotosModal: React.FC<{
           <div className="mt-4 grid grid-cols-4 gap-2">
             {previews.map((url, index) => (
               <div key={url} className="relative">
-                <img
-                  src={url}
-                  alt={`preview-${index}`}
-                  className="h-16 w-16 rounded-[8px] object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setViewerIndex(existingPhotos.length + index)}
+                  className="overflow-hidden rounded-[8px]"
+                  aria-label={`View selected photo ${index + 1}`}
+                >
+                  <img
+                    src={url}
+                    alt={`preview-${index}`}
+                    className="h-16 w-16 rounded-[8px] object-cover"
+                  />
+                </button>
                 <button
                   type="button"
                   onClick={() => removePreview(index)}
@@ -1194,6 +1210,12 @@ const PhotosModal: React.FC<{
           {isSaving ? "Uploading..." : "Update Photos"}
         </PrimaryButton>
       </div>
+      <ImageLightbox
+        images={[...existingPhotos.slice(0, 5), ...previews]}
+        initialIndex={viewerIndex ?? 0}
+        isOpen={viewerIndex !== null}
+        onClose={() => setViewerIndex(null)}
+      />
     </DrawerShell>
   );
 };

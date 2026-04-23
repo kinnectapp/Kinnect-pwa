@@ -214,7 +214,7 @@ export const MatchProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] p-4 profile-match-gradient flex items-center justify-center">
+    <div className="min-h-[100dvh] px-4 pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+5px)] profile-match-gradient flex items-center justify-center">
       <div className="flex flex-col md:flex-row items-center justify-center gap-8">
         <div className="w-full max-w-sm transform transition-all duration-300">
           <ProfileCard

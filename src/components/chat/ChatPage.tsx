@@ -353,9 +353,9 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   );
 
   return (
-    <div className="flex h-[100dvh] pb-2  flex-col overflow-hidden bg-[#FAF8FB]">
+    <div className="flex h-[100dvh] pb-[calc(env(safe-area-inset-bottom))] flex-col overflow-hidden bg-[#FAF8FB]">
       {/* Custom Header */}
-      <div className="sticky top-0 z-10 shrink-0 bg-white px-4 pb-4 pt-[40px]">
+      <div className="sticky top-0 z-10 shrink-0 bg-white px-4 pb-4 pt-[calc(env(safe-area-inset-top)+15px)]">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -490,10 +490,13 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     </div>
                   </div>
                 )}
-                <MessageInput
+                <div className="border">
+                     <MessageInput
                   audioRecordingEnabled={!shouldRestrictMediaSharing}
                   overrideSubmitHandler={handleMessageSubmit}
                 />
+                </div>
+             
               </Window>
               </div>
             </Channel>

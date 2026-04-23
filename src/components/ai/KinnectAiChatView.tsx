@@ -227,7 +227,7 @@ export const KinnectAiChatView: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100dvh-60px)] flex-col overflow-hidden rounded-t-[24px] border border-[#E6DDF0] bg-white shadow-[0_20px_60px_rgba(43,16,77,0.08)]">
+    <div className="flex  flex-col overflow-hidden  border border-[#E6DDF0] bg-white shadow-[0_20px_60px_rgba(43,16,77,0.08)]">
       <div className="flex-1 space-y-3 overflow-y-auto bg-[#FCFAFE] px-4 py-4">
         {messages.map((message, index) => {
           const isAssistant = message.role === "assistant";
@@ -272,7 +272,7 @@ export const KinnectAiChatView: React.FC = () => {
       </div>
 
       <div className="border-t border-[#EFE8F5] bg-white p-3">
-        <div className="flex items-end gap-2 rounded-[20px] border border-[#DED2EB] px-3 py-2">
+        <div className="flex items-end gap-2 rounded-[20px] mb-4 border border-[#DED2EB] px-3 py-2">
           <textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
