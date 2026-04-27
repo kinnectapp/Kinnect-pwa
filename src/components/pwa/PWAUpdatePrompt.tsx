@@ -15,7 +15,6 @@ const INSTALL_MODAL_DISMISSED_KEY = "kinnect-install-modal-dismissed";
 const getNavigator = () =>
   window.navigator as Navigator & {
     standalone?: boolean;
-    share?: (data?: ShareData) => Promise<void>;
   };
 
 const isRunningStandalone = () =>
@@ -57,7 +56,6 @@ export const PWAUpdatePrompt: React.FC = () => {
     React.useState<InstallPromptType>(null);
   const [showInstallModal, setShowInstallModal] = React.useState(false);
   const [isInstalling, setIsInstalling] = React.useState(false);
-  const [isOpeningShareSheet, setIsOpeningShareSheet] = React.useState(false);
 
   React.useEffect(() => {
     if (needRefresh) {
@@ -147,27 +145,6 @@ export const PWAUpdatePrompt: React.FC = () => {
     setNeedRefresh(false);
   };
 
-  const openIosShareSheet = async () => {
-    const navigator = getNavigator();
-    if (!navigator.share) {
-      return;
-    }
-
-    setIsOpeningShareSheet(true);
-
-    try {
-      await navigator.share({
-        title: "Kinnect",
-        text: "Add Kinnect to your Home Screen or save it as a bookmark.",
-        url: window.location.href,
-      });
-    } catch {
-      // Ignore cancelled shares.
-    } finally {
-      setIsOpeningShareSheet(false);
-    }
-  };
-
   const refreshApp = () => {
     updateServiceWorker(true);
   };
@@ -205,33 +182,53 @@ export const PWAUpdatePrompt: React.FC = () => {
       )}
 
       {showInstallModal && installPromptType === "ios" && (
-        <div className="fixed inset-x-0 z-50 flex justify-center px-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)]">
-          <div className="max-w-[420px] rounded-3xl bg-[#2A0040] px-5 py-4 text-white shadow-lg">
-            <p className="text-sm font-semibold">Install Kinnect on your iPhone</p>
-            <p className="mt-2 text-[13px] leading-5 text-white/85">
-              In Safari, open the Share menu, then choose Add to Home Screen or
-              Add Bookmark.
-            </p>
-
-            <div className="mt-4 flex justify-end items-center gap-8">
-              <Button
-                size="sm"
-                variant="default"
-                className="h-8 px-4 text-[13px]"
-                onClick={() => void openIosShareSheet()}
-                disabled={isOpeningShareSheet}
-              >
-                {isOpeningShareSheet ? "Opening..." : "Open"}
-              </Button>
-             
+        <div className="fixed inset-x-0 z-50 px-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+          <div className="mx-auto max-w-[420px] rounded-3xl bg-[#2A0040] px-5 py-4 text-white shadow-lg">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">Add Kinnect to Home Screen</p>
+                <p className="mt-1 text-[13px] leading-5 text-white/80">
+                  Tap the{" "}
+                  <span className="inline-flex items-center gap-0.5 align-middle">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="inline h-4 w-4 text-white"
+                    >
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                  </span>{" "}
+                  <span className="font-semibold text-white">Share</span> button at the bottom of
+                  your screen, then choose{" "}
+                  <span className="font-semibold text-white">"Add to Home Screen"</span>.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={dismissInstallModal}
-                className="text-[11px] font-medium text-[#F973D1]"
+                className="mt-0.5 shrink-0 text-[11px] font-medium text-[#F973D1]"
               >
-                Got it
+                Dismiss
               </button>
             </div>
+          </div>
+          {/* Arrow pointing down toward Safari's toolbar share button */}
+          <div className="flex justify-center mt-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="#2A0040"
+              className="h-5 w-5 drop-shadow"
+            >
+              <path d="M12 20L2 6h20L12 20z" />
+            </svg>
           </div>
         </div>
       )}
