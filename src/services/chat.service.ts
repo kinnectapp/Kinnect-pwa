@@ -122,27 +122,25 @@ export const chatService = {
       throw new Error("User not found.");
     }
 
-    const currentUserId = toId(user.id);
-    const externalId = community.externalId || community.externalID || "";
-    const channelId = externalId || `community-${toId(community.id)}`;
-    const client = await ensureStreamClient();
+    // Ask the backend to add us as a member server-side (Stream requires this
+    // for groupmessaging channels — client-side watch fails with 403 otherwise).
+    const joinResponse = await http.post(
+      endpoints.community.join(community.id),
+      {},
+    );
+    const backendChannelId =
+      joinResponse?.data?.data?.channelId ||
+      joinResponse?.data?.channelId ||
+      joinResponse?.data?.resp?.channelId;
 
-    const channel = client.channel("groupmessaging", channelId, {
-      members: [currentUserId],
-      created_by_id: currentUserId,
-    } as any);
-    // Set custom data after channel creation
-    (channel.data as any).name = community.name;
-    (channel.data as any).image = community.image;
-    (channel.data as any).description = community.description;
+    const externalId = community.externalId || community.externalID || "";
+    const channelId =
+      backendChannelId || externalId || `community-${toId(community.id)}`;
+
+    const client = await ensureStreamClient();
+    const channel = client.channel("groupmessaging", channelId);
 
     await channel.watch();
-
-    try {
-      await channel.addMembers([currentUserId]);
-    } catch {
-      // Already a member.
-    }
 
     return channel.id || channelId;
   },

@@ -246,7 +246,7 @@ const HomePage: React.FC = () => {
           ) : (
             <div className="grid overflow-clip grid-cols-2 gap-3">
               {communities.map((community) => (
-                <Link key={community.id} to="/app/community">
+                <Link key={community.id} to={`/app/community/${community.id}`}>
                   <div
                     style={{
                       backgroundImage: `url(${community.image || WhiteImg})`,
