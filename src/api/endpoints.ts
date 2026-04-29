@@ -31,6 +31,7 @@ export const endpoints = {
   },
   community: {
     list: "/community",
+    join: (id: string | number) => `/community/${id}/join`,
   },
   report: {
     add: "/report/add",
