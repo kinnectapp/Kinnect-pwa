@@ -8,7 +8,7 @@ const MainComponent: React.FC = () => {
   return (
     <div className="min-h-[100dvh] bg-white pt-[calc(env(safe-area-inset-top))]   ">
       <Header />
-      <main className="space-y-6 pt-[calc(env(safe-area-inset-top)+40px)]">
+      <main className="space-y-6 pb-20 min-h-[100dvh]   pt-[calc(env(safe-area-inset-top)+40px)]">
         <Outlet />
       </main>
       <KinnectAiWidget />

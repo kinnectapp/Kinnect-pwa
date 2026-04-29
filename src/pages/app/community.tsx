@@ -1,8 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { chatService } from "@/services/chat.service";
-import { toast } from "sonner";
-import { handleApiError } from "@/api/serviceUtils";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
 import { getSubscriptionPermissions } from "@/lib/subscription";
@@ -27,22 +25,6 @@ const CommunityPage: React.FC = () => {
 
   const communities: Community[] = data?.data?.data || data?.data?.resp || [];
 
-  const handleJoinConversation = async (community: Community) => {
-    if (!permissions.canJoinCommunityConversation) {
-      toast.error(
-        "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
-      );
-      return;
-    }
-
-    try {
-      const channelId = await chatService.ensureCommunityChannel(community);
-      navigate(`/app/chats/${channelId}`);
-    } catch (error) {
-      toast.error(handleApiError(error));
-    }
-  };
-
   return (
     <div className="min-h-[100dvh] bg-white pb-24">
       <div className="px-4 pt-4">
@@ -66,9 +48,10 @@ const CommunityPage: React.FC = () => {
       ) : (
         <div className="p-4 grid gap-3">
           {communities.map((community) => (
-            <div
+            <button
               key={community.id}
-              className="rounded-lg border border-[#E8E3EE] p-4"
+              onClick={() => navigate(`/app/community/${community.id}`)}
+              className="rounded-lg border border-[#E8E3EE] p-4 text-left w-full"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -76,28 +59,19 @@ const CommunityPage: React.FC = () => {
                   alt={community.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
-                <div>
+                <div className="flex-1 min-w-0">
                   <h2 className="font-semibold text-[#1C1C1C]">
                     {community.name}
                   </h2>
                   <p className="text-xs text-[#77707F] line-clamp-2">
-                    {community.description || "Join this community channel"}
+                    {community.description || "View this community"}
                   </p>
                 </div>
+                <span className="text-xs text-[#55288D] font-medium shrink-0">
+                  View →
+                </span>
               </div>
-              <button
-                onClick={() => handleJoinConversation(community)}
-                className={`mt-4 w-full rounded-md py-2 text-sm text-white ${
-                  permissions.canJoinCommunityConversation
-                    ? "bg-[#55288D]"
-                    : "bg-[#C8BCD8]"
-                }`}
-              >
-                {permissions.canJoinCommunityConversation
-                  ? "Join the Conversation"
-                  : "Upgrade to Join"}
-              </button>
-            </div>
+            </button>
           ))}
           {!communities.length && (
             <p className="text-sm text-[#77707F]">
