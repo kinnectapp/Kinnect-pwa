@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { chatService } from "@/services/chat.service";
@@ -7,6 +7,7 @@ import { handleApiError } from "@/api/serviceUtils";
 import { useAuthStore } from "@/store/auth.store";
 import { getSubscriptionPermissions } from "@/lib/subscription";
 import { ChevronLeft } from "lucide-react";
+import { ensureStreamConnected } from "@/services/stream-chat.service";
 
 type Community = {
   id: string | number;
@@ -15,6 +16,7 @@ type Community = {
   image?: string;
   externalId?: string;
   externalID?: string;
+  createdBy?: string | number;
 };
 
 const CommunityDetailPage: React.FC = () => {
@@ -22,6 +24,9 @@ const CommunityDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const permissions = getSubscriptionPermissions(user);
+
+  const [isAlreadyJoined, setIsAlreadyJoined] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["community-list"],
@@ -33,22 +38,65 @@ const CommunityDetailPage: React.FC = () => {
     (c) => String(c.id) === String(id),
   );
 
-  const handleJoin = async () => {
+  // Check if the current user is already a member of this community's channel
+  useEffect(() => {
+    if (!community || !user?.id) return;
+
+    const channelId = String(
+      community.externalId || community.externalID || community.id || "",
+    );
+    if (!channelId) return;
+
+    const checkMembership = async () => {
+      try {
+        const client = await ensureStreamConnected(user);
+        const channels = await client.queryChannels(
+          { type: "groupmessaging", id: { $eq: channelId }, members: { $in: [String(user.id)] } },
+          {},
+          { limit: 1 },
+        );
+        setIsAlreadyJoined(channels.length > 0);
+      } catch {
+        // default to showing "Join" if check fails
+      }
+    };
+
+    void checkMembership();
+  }, [community?.id, user?.id]);
+
+  const handleAction = async () => {
     if (!community) return;
 
-    if (!permissions.canJoinCommunityConversation) {
-      toast.error(
-        "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
+    // Already joined — navigate directly without re-joining
+    if (isAlreadyJoined) {
+      const channelId = String(
+        community.externalId || community.externalID || community.id || "",
       );
-      navigate("/app/subscriptions");
+      navigate(`/app/chats/${encodeURIComponent(`groupmessaging:${channelId}`)}`, {
+        state: { channelName: community.name, channelImage: community.image },
+      });
       return;
     }
 
+    // if (!permissions.canJoinCommunityConversation) {
+    //   toast.error(
+    //     "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
+    //   );
+    //   navigate("/app/subscriptions");
+    //   return;
+    // }
+
     try {
+      setIsJoining(true);
       const channelId = await chatService.ensureCommunityChannel(community);
-      navigate(`/app/chats/${channelId}`);
+      setIsAlreadyJoined(true);
+      navigate(`/app/chats/${encodeURIComponent(channelId)}`, {
+        state: { channelName: community.name, channelImage: community.image },
+      });
     } catch (error) {
       toast.error(handleApiError(error));
+    } finally {
+      setIsJoining(false);
     }
   };
 
@@ -78,6 +126,16 @@ const CommunityDetailPage: React.FC = () => {
       </div>
     );
   }
+
+  const buttonLabel = isAlreadyJoined
+    ? "Open Conversation"
+    : permissions.canJoinCommunityConversation
+      ? "Join the Conversation"
+      : "Upgrade to Join";
+
+  const buttonColor = isAlreadyJoined || permissions.canJoinCommunityConversation
+    ? "bg-[#55288D]"
+    : "bg-[#C8BCD8]";
 
   return (
     <div className="min-h-[100dvh] bg-white pb-32">
@@ -109,7 +167,7 @@ const CommunityDetailPage: React.FC = () => {
           </p>
         )}
 
-        {!permissions.canJoinCommunityConversation && (
+        {!permissions.canJoinCommunityConversation && !isAlreadyJoined && (
           <div className="rounded-lg bg-[#F5F0FB] border border-[#E0D3F0] p-3">
             <p className="text-xs text-[#55288D]">
               You're on a Freemium plan. Upgrade to Standard or above to join
@@ -119,22 +177,17 @@ const CommunityDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* Join button — fixed at bottom */}
+      {/* Action button — fixed at bottom */}
       <div
         className="fixed left-0 right-0 px-4 pb-2 bg-white border-t border-[#F0EBF8]"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 56px)" }}
       >
         <button
-          onClick={handleJoin}
-          className={`mt-3 w-full rounded-md py-3 text-sm font-medium text-white ${
-            permissions.canJoinCommunityConversation
-              ? "bg-[#55288D]"
-              : "bg-[#C8BCD8]"
-          }`}
+          onClick={handleAction}
+          disabled={isJoining}
+          className={`mt-3 w-full rounded-md py-3 text-sm font-medium text-white ${buttonColor} disabled:opacity-60`}
         >
-          {permissions.canJoinCommunityConversation
-            ? "Join the Conversation"
-            : "Upgrade to Join"}
+          {isJoining ? "Joining..." : buttonLabel}
         </button>
       </div>
     </div>
