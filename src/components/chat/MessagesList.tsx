@@ -14,7 +14,6 @@ import KinnectChatBtn from "../ai/KinnectChatBtn";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "";
-
   const date = new Date(value);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
@@ -31,19 +30,17 @@ const toPreview = (
   const lastMessage = channel.state.messages[channel.state.messages.length - 1];
 
   let previewText = "No messages yet";
-  
   if (lastMessage) {
     const hasText = lastMessage.text && lastMessage.text.trim().length > 0;
     const hasAttachment = lastMessage.attachments && lastMessage.attachments.length > 0;
-
     if (hasText) {
       previewText = lastMessage.text!;
     } else if (hasAttachment) {
       const attachment = lastMessage.attachments![0];
-      if (attachment.type === 'image') previewText = '📷 Photo';
-      else if (attachment.type === 'video') previewText = '🎥 Video';
-      else if (attachment.type === 'voiceRecording' || attachment.type === 'audio') previewText = '🎤 Voice Note';
-      else previewText = '📎 Attachment';
+      if (attachment.type === "image") previewText = "📷 Photo";
+      else if (attachment.type === "video") previewText = "🎥 Video";
+      else if (attachment.type === "voiceRecording" || attachment.type === "audio") previewText = "🎤 Voice Note";
+      else previewText = "📎 Attachment";
     }
   }
 
@@ -51,7 +48,7 @@ const toPreview = (
     id: resolvedChannelId,
     cid: channel.cid,
     name: otherMember?.user?.name || "Direct Message",
-    image: otherMember?.user?.image || undefined, // undefined triggers our custom fallback logic
+    image: otherMember?.user?.image || undefined,
     userId: otherMember?.user_id,
     lastMessageText: previewText,
     lastMessageAt: lastMessage?.created_at
@@ -61,38 +58,109 @@ const toPreview = (
   };
 };
 
-// Custom avatar component that falls back to the backend API if stream image is missing
-const ChannelAvatar = ({ userId, initialImage, alt, className }: { userId: string, initialImage?: string, alt: string, className: string }) => {
+// Used only for the online-users strip (image only)
+const ChannelAvatar = ({
+  userId,
+  initialImage,
+  alt,
+  className,
+}: {
+  userId: string;
+  initialImage?: string;
+  alt: string;
+  className: string;
+}) => {
   const [image, setImage] = useState<string | undefined>(initialImage);
-  
+
   useEffect(() => {
     let isMounted = true;
-    // Only fetch if initial image is missing or is the generic pwa logo
     if (!initialImage || initialImage === "/pwa-192x192.png") {
-      const fetchImage = async () => {
-        try {
-          // Fetch from Kinnect backend directly
-          const fullUserData = await chatService.getUserById(userId);
-          const profilePhotos = fullUserData?.data?.resp?.profilePhotos;
-          if (profilePhotos && Array.isArray(profilePhotos) && profilePhotos.length > 0 && isMounted) {
-            setImage(profilePhotos[0]);
-          }
-        } catch (error) {
-          console.warn("Could not fetch fallback avatar for user", userId);
-        }
-      };
-      void fetchImage();
+      chatService.getUserById(userId).then((data) => {
+        const photos = data?.data?.resp?.profilePhotos;
+        if (photos?.[0] && isMounted) setImage(photos[0]);
+      }).catch(() => {});
     }
-    
     return () => { isMounted = false; };
   }, [userId, initialImage]);
 
+  return <img src={image || "/pwa-192x192.png"} alt={alt} className={className} />;
+};
+
+// Full row for the main list — fetches name + image together if Stream is missing either
+const ChannelListItem: React.FC<{
+  item: CachedChannelPreview;
+  onClick: (name: string, image: string) => void;
+}> = ({ item, onClick }) => {
+  const userId = item.userId || item.id;
+  const needsEnrich = !item.name || item.name === "Direct Message" || !item.image;
+
+  const [displayName, setDisplayName] = useState(
+    item.name && item.name !== "Direct Message" ? item.name : "",
+  );
+  const [displayImage, setDisplayImage] = useState(
+    item.image && item.image !== "/pwa-192x192.png" ? item.image : "",
+  );
+  const [isLoading, setIsLoading] = useState(needsEnrich);
+
+  useEffect(() => {
+    if (!needsEnrich || !userId) return;
+    let isMounted = true;
+
+    setIsLoading(true);
+    chatService.getUserById(userId).then((data) => {
+      const resp = data?.data?.resp;
+      if (!isMounted) return;
+      if (resp) {
+        const fullName = [resp.firstname, resp.lastname].filter(Boolean).join(" ");
+        if (fullName) setDisplayName(fullName);
+        if (resp.profilePhotos?.[0]) setDisplayImage(resp.profilePhotos[0]);
+      }
+    }).catch(() => {}).finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
+
+    return () => { isMounted = false; };
+  }, [userId, needsEnrich]);
+
+  const name = displayName || item.name || "Direct Message";
+  const image = displayImage || item.image || "";
+  const initial = name.charAt(0).toUpperCase();
+
   return (
-    <img
-      src={image || "/pwa-192x192.png"}
-      alt={alt}
-      className={className}
-    />
+    <button
+      onClick={() => onClick(name, image)}
+      className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-100"
+    >
+      {isLoading ? (
+        <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#F3F3F6] animate-pulse" />
+      ) : image ? (
+        <img
+          src={image}
+          alt={name}
+          className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
+          <span className="text-[#55288D] font-semibold text-lg leading-none">{initial}</span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate font-semibold text-gray-900">{name}</h3>
+        <p className="truncate text-sm text-gray-500">
+          {item.lastMessageText || "No messages yet"}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="whitespace-nowrap text-xs text-gray-400">
+          {formatDate(item.lastMessageAt)}
+        </p>
+        {item.unreadCount > 0 && (
+          <span className="mt-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#55288D] px-1 text-xs text-white">
+            {item.unreadCount}
+          </span>
+        )}
+      </div>
+    </button>
   );
 };
 
@@ -100,22 +168,16 @@ const MessagesList: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const cachedChannels = useChatStore((state) => state.personalChannels);
-  const setPersonalChannels = useChatStore(
-    (state) => state.setPersonalChannels,
-  );
+  const setPersonalChannels = useChatStore((state) => state.setPersonalChannels);
 
   const [channels, setChannels] = useState<Channel[]>([]);
-  // const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadChannels = async () => {
     if (!user?.id) return;
-
-    // setIsRefreshing(true);
     setHasError(false);
-
     try {
       const client = await ensureStreamConnected(user);
       const userId = String(user.id);
@@ -124,7 +186,6 @@ const MessagesList: React.FC = () => {
         { last_message_at: -1 },
         { state: true, watch: true, limit: 30, message_limit: 30 },
       );
-
       setChannels(queried);
       setPersonalChannels(queried.map((channel) => toPreview(channel, userId)));
       setHasLoadedOnce(true);
@@ -135,8 +196,6 @@ const MessagesList: React.FC = () => {
       setErrorMessage(errorMsg);
       setHasError(true);
       toast.error(errorMsg);
-    } finally {
-      // setIsRefreshing(false);
     }
   };
 
@@ -144,64 +203,56 @@ const MessagesList: React.FC = () => {
     let isMounted = true;
     let unsubscribe: (() => void) | undefined;
 
-    const setupChannelListener = async () => {
+    const setup = async () => {
       if (!user?.id) {
         setChannels([]);
         setHasLoadedOnce(true);
         return;
       }
 
-      try {
+      // If we already have cached data, show it immediately — no fetch on remount
+      if (cachedChannels.length > 0) {
+        setHasLoadedOnce(true);
+      } else {
+        // First ever load — fetch and populate the cache
         await loadChannels();
+      }
 
+      try {
         const client = await ensureStreamConnected(user);
         const subscription = client.on((event) => {
+          // Only refetch when there is genuinely new data
           if (
             event.type === "message.new" ||
             event.type === "notification.message_new" ||
             event.type === "notification.added_to_channel"
           ) {
-            if (isMounted) {
-              void loadChannels();
-            }
+            if (isMounted) void loadChannels();
           }
         });
-
-        unsubscribe = () => {
-          subscription.unsubscribe();
-        };
+        unsubscribe = () => subscription.unsubscribe();
       } catch (error) {
         console.warn("Failed to setup listener:", error);
       }
     };
 
-    void setupChannelListener();
-
+    void setup();
     return () => {
       isMounted = false;
       unsubscribe?.();
     };
-  }, [user?.id]);
+  }, [user?.id, cachedChannels.length === 0]);
 
-  // Extract online users from loaded channels
   const onlineUsers = React.useMemo(() => {
     if (!user?.id) return [];
-    
     const uniqueUsers = new Map<string, any>();
-    
-    channels.forEach(channel => {
+    channels.forEach((channel) => {
       const members = Object.values(channel.state.members || {});
-      const otherMember = members.find(m => m.user_id !== String(user.id));
-      
-      // If the partner is marked as online
+      const otherMember = members.find((m) => m.user_id !== String(user.id));
       if (otherMember?.user?.online) {
-        uniqueUsers.set(otherMember.user.id, {
-          ...otherMember.user,
-          cid: channel.cid
-        });
+        uniqueUsers.set(otherMember.user.id, { ...otherMember.user, cid: channel.cid });
       }
     });
-    
     return Array.from(uniqueUsers.values());
   }, [channels, user?.id]);
 
@@ -212,10 +263,7 @@ const MessagesList: React.FC = () => {
     return (
       <div className="space-y-3 p-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div
-            key={index}
-            className="h-16 animate-pulse rounded-md bg-[#F3F3F6]"
-          />
+          <div key={index} className="h-16 animate-pulse rounded-md bg-[#F3F3F6]" />
         ))}
       </div>
     );
@@ -248,30 +296,26 @@ const MessagesList: React.FC = () => {
         </div>
       )}
 
-      {/* {isRefreshing && cachedChannels.length > 0 && (
-        <p className="px-4 py-2 text-xs text-[#77707F]">Refreshing chats...</p>
-      )} */}
-
-      {/* Online Users Horizontal List */}
+      {/* Online users strip */}
       {onlineUsers.length > 0 && !hasError && (
         <div className="flex gap-4 overflow-x-auto px-4 py-4 border-b border-gray-100 [&::-webkit-scrollbar]:hidden">
-          {onlineUsers.map(u => (
-            <button 
-              key={u.id} 
+          {onlineUsers.map((u) => (
+            <button
+              key={u.id}
               onClick={() => navigate(`/app/chats/${encodeURIComponent(u.cid)}`)}
               className="flex flex-col items-center gap-1 w-[56px] shrink-0 transition-opacity hover:opacity-80"
             >
               <div className="relative">
-                <ChannelAvatar 
+                <ChannelAvatar
                   userId={u.id}
                   initialImage={u.image}
-                  alt={u.name || 'User'} 
-                  className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#55288D] p-[1.5px]" 
+                  alt={u.name || "User"}
+                  className="w-14 h-14 rounded-full object-cover border-[2.5px] border-[#55288D] p-[1.5px]"
                 />
-                <span className="absolute bottom-[2px] right-[2px] w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                <span className="absolute bottom-[2px] right-[2px] w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
               </div>
               <span className="text-[11px] text-center truncate w-full text-gray-700 font-medium">
-                {u.name?.split(' ')[0] || 'User'}
+                {u.name?.split(" ")[0] || "User"}
               </span>
             </button>
           ))}
@@ -281,41 +325,18 @@ const MessagesList: React.FC = () => {
       <KinnectChatBtn />
 
       {list.length === 0 && hasError ? (
-        <p className="p-4 text-sm text-[#77707F]">
-          Unable to load chats. Try refreshing.
-        </p>
+        <p className="p-4 text-sm text-[#77707F]">Unable to load chats. Try refreshing.</p>
       ) : (
         list.map((item) => (
-          <button
+          <ChannelListItem
             key={item.cid}
-            onClick={() => navigate(`/app/chats/${encodeURIComponent(item.cid)}`)}
-            className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-100"
-          >
-            <ChannelAvatar
-              userId={item.userId || item.id}
-              initialImage={item.image}
-              alt={item.name || "User"}
-              className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-            />
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate font-semibold text-gray-900">
-                {item.name || "Direct Message"}
-              </h3>
-              <p className="truncate text-sm text-gray-500">
-                {item.lastMessageText || "No messages yet"}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="whitespace-nowrap text-xs text-gray-400">
-                {formatDate(item.lastMessageAt)}
-              </p>
-              {item.unreadCount > 0 && (
-                <span className="mt-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#55288D] px-1 text-xs text-white">
-                  {item.unreadCount}
-                </span>
-              )}
-            </div>
-          </button>
+            item={item}
+            onClick={(name, image) =>
+              navigate(`/app/chats/${encodeURIComponent(item.cid)}`, {
+                state: { channelName: name, channelImage: image },
+              })
+            }
+          />
         ))
       )}
     </div>

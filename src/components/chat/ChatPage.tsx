@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, MoreVertical, AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
@@ -44,6 +44,8 @@ const DisabledAttachmentSelector = () => null;
 const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const channelId = decodeURIComponent(rawChannelId);
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { channelName?: string; channelImage?: string } | null;
   const user = useAuthStore((state) => state.user);
   const setActiveChannelId = useChatStore(
     (state) => state.setActiveChannelId,
@@ -144,9 +146,9 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     };
   }, [channelId, currentUserId, navigate, setActiveChannelId]);
 
-  // Fetch full user data when partner ID is set
+  // Fetch full user data when partner ID is set (DM only)
   useEffect(() => {
-    if (!partnerId) return;
+    if (!partnerId || channel?.type !== "messaging") return;
 
     let isMounted = true;
 
@@ -298,6 +300,14 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       cachedCommunityChannels.find((item) => item.cid === channelId)?.name;
     if (!channel && cachedTitle) return cachedTitle;
     if (!channel) return "Chat";
+    if (channel.type !== "messaging") {
+      return String(
+        (channel.data as Record<string, any>)?.name ||
+        locationState?.channelName ||
+        cachedCommunityChannels.find((item) => item.cid === channelId)?.name ||
+        "Community Channel",
+      );
+    }
     const members = Object.values(channel.state.members || {});
     const otherMember = members.find(
       (member) => member.user_id !== currentUserId,
@@ -309,6 +319,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     channel,
     channelId,
     currentUserId,
+    locationState,
   ]);
 
   // Compute partner age
@@ -360,15 +371,22 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
           <button onClick={() => navigate(-1)} className="p-1">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
-          <h2 onClick={() => navigate(`/app/match-profile/${partnerId}`)} className="font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px]">
+          <h2
+            onClick={() => isPersonalChat ? navigate(`/app/match-profile/${partnerId}`) : undefined}
+            className={`font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px] ${isPersonalChat ? "cursor-pointer" : "cursor-default"}`}
+          >
             {title} <span className="w-1.5 h-1.5 rounded-full bg-[#F416C4]"></span>
           </h2>
-          <button
-            onClick={() => setShowActions((prev) => !prev)}
-            className="p-1 rounded-full hover:bg-gray-100"
-          >
-            <MoreVertical className="w-5 h-5 text-gray-700" />
-          </button>
+          {isPersonalChat ? (
+            <button
+              onClick={() => setShowActions((prev) => !prev)}
+              className="p-1 rounded-full hover:bg-gray-100"
+            >
+              <MoreVertical className="w-5 h-5 text-gray-700" />
+            </button>
+          ) : (
+            <div className="w-7" />
+          )}
         </div>
       </div>
 
@@ -469,11 +487,20 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   head={
                     <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
                       <img
-                        src={partnerImage || UserImg}
+                        src={
+                          isPersonalChat
+                            ? partnerImage || UserImg
+                            : String(
+                                (channel?.data as Record<string, any>)?.image ||
+                                locationState?.channelImage ||
+                                cachedCommunityChannels.find((item) => item.cid === channelId)?.image ||
+                                "/pwa-192x192.png",
+                              )
+                        }
                         alt=""
                         className="w-[60px] object-cover h-[60px] rounded-full border"
                       />
-                      {partnerFullName && (
+                      {isPersonalChat && partnerFullName && (
                         <p className="text-[#1C1C1C] font-medium text-[14px]">
                           {partnerFullName}{partnerAgeDisplay ? `, ${partnerAgeDisplay}` : ''}
                         </p>

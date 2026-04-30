@@ -5,19 +5,29 @@ import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { useAuthStore } from "@/store/auth.store";
 import type { Channel } from "stream-chat";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { handleApiError } from "@/api/serviceUtils";
 import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
+import { chatService } from "@/services/chat.service";
 import KinnectChatBtn from "../ai/KinnectChatBtn";
 
-const toPreview = (channel: Channel): CachedChannelPreview => {
+type Community = {
+  id: string | number;
+  name: string;
+  image?: string;
+  externalId?: string;
+  externalID?: string;
+};
+
+const toPreview = (channel: Channel, matched?: Community): CachedChannelPreview => {
   const resolvedChannelId = channel.id || channel.cid.split(":")[1];
   const lastMessage = channel.state.messages[channel.state.messages.length - 1];
   const channelData = (channel.data as Record<string, any>) || {};
   return {
     id: resolvedChannelId,
     cid: channel.cid,
-    name: String(channelData.name || "Community Channel"),
-    image: String(channelData.image || "/pwa-192x192.png"),
+    name: String(channelData.name || matched?.name || "Community Channel"),
+    image: String(channelData.image || matched?.image || "/pwa-192x192.png"),
     lastMessageText: lastMessage?.text || "No messages yet",
     lastMessageAt: lastMessage?.created_at
       ? String(lastMessage.created_at)
@@ -39,6 +49,18 @@ const CommunityView: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Reuses the same cache key as the community list page — no extra network call if already fetched
+  const { data: communitiesData } = useQuery({
+    queryKey: ["community-list"],
+    queryFn: () => chatService.getCommunities(),
+  });
+  const communities: Community[] = communitiesData?.data?.data || communitiesData?.data?.resp || [];
+
+  const findCommunity = (channelId: string): Community | undefined =>
+    communities.find(
+      (c) => String(c.externalId || c.externalID || c.id) === channelId,
+    );
+
   const loadChannels = async () => {
     if (!user?.id) return;
 
@@ -53,7 +75,12 @@ const CommunityView: React.FC = () => {
       );
 
       setChannels(queried);
-      setCommunityChannels(queried.map((channel) => toPreview(channel)));
+      setCommunityChannels(
+        queried.map((ch) => {
+          const id = ch.id || ch.cid.split(":")[1];
+          return toPreview(ch, findCommunity(id));
+        }),
+      );
       setHasLoadedOnce(true);
       setHasError(false);
     } catch (error) {
@@ -74,7 +101,6 @@ const CommunityView: React.FC = () => {
         await loadChannels();
 
         const client = await ensureStreamConnected(user);
-        // Listen for message events and refresh channels
         const subscription = client.on((event) => {
           if (
             event.type === "message.new" ||
@@ -120,7 +146,10 @@ const CommunityView: React.FC = () => {
   }
 
   const list: CachedChannelPreview[] = channels.length
-    ? channels.map((channel) => toPreview(channel))
+    ? channels.map((ch) => {
+        const id = ch.id || ch.cid.split(":")[1];
+        return toPreview(ch, findCommunity(id));
+      })
     : cachedChannels;
 
   if (!list.length && !hasError) {
@@ -163,22 +192,27 @@ const CommunityView: React.FC = () => {
         <>
           <KinnectChatBtn />
           {list.map((item) => {
+            const matched = findCommunity(item.id);
+            const displayName = matched?.name || item.name;
+            const displayImage = matched?.image || item.image;
             return (
               <button
                 key={item.cid}
                 onClick={() =>
-                  navigate(`/app/chats/${encodeURIComponent(item.cid)}`)
+                  navigate(`/app/chats/${encodeURIComponent(item.cid)}`, {
+                    state: { channelName: displayName, channelImage: displayImage },
+                  })
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors border-b border-gray-100 text-left"
               >
                 <img
-                  src={String(item.image || "/pwa-192x192.png")}
-                  alt={String(item.name || "Community")}
+                  src={String(displayImage || "/pwa-192x192.png")}
+                  alt={String(displayName || "Community")}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">
-                    {String(item.name || "Community Channel")}
+                    {String(displayName || "Community Channel")}
                   </h3>
                   <p className="text-sm text-gray-500 truncate">
                     {item.lastMessageText || "No messages yet"}

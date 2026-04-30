@@ -10,6 +10,7 @@ type Community = {
   image?: string;
   externalId?: string;
   externalID?: string;
+  createdBy?: string | number;
 };
 
 const toId = (value: string | number): string => String(value);
@@ -122,26 +123,38 @@ export const chatService = {
       throw new Error("User not found.");
     }
 
-    // Ask the backend to add us as a member server-side (Stream requires this
-    // for groupmessaging channels — client-side watch fails with 403 otherwise).
-    const joinResponse = await http.post(
-      endpoints.community.join(community.id),
-      {},
+    const channelId = String(
+      community.externalId || community.externalID || community.id || "",
     );
-    const backendChannelId =
-      joinResponse?.data?.data?.channelId ||
-      joinResponse?.data?.channelId ||
-      joinResponse?.data?.resp?.channelId;
+    if (!channelId) {
+      throw new Error("Invalid community id.");
+    }
 
-    const externalId = community.externalId || community.externalID || "";
-    const channelId =
-      backendChannelId || externalId || `community-${toId(community.id)}`;
+    const currentUserId = toId(user.id);
+    const creatorId = community.createdBy ? toId(community.createdBy) : "";
+
+    // de-dup and drop empties
+    const members = Array.from(
+      new Set([creatorId, currentUserId].filter(Boolean)),
+    );
 
     const client = await ensureStreamClient();
-    const channel = client.channel("groupmessaging", channelId);
+    const channel = client.channel("groupmessaging", channelId, {
+      name: community.name ?? "",
+      members,
+      image: community.image ?? "",
+    } as Record<string, unknown>);
 
-    await channel.watch();
+    // Create if not exists — Stream no-ops if already created by this id.
+    await channel.create();
 
-    return channel.id || channelId;
+    // Ensure current user is a member (safe to call even if already joined).
+    await channel.addMembers(
+      [currentUserId],
+      { text: `${user.username ?? ""} joined the channel.` },
+      { hide_history: true },
+    );
+
+    return channel.cid || `groupmessaging:${channelId}`;
   },
 };
