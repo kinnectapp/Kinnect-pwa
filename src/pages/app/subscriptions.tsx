@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PremiumIcon, StandardIcon, VipIcon } from "@/components/icons";
+import { useAuthStore } from "@/store/auth.store";
+import { http } from "@/api/http";
+import { endpoints } from "@/api/endpoints";
 
 type Plan = {
   name: string;
@@ -56,7 +59,7 @@ const plans: Plan[] = [
   },
 ];
 
-const SubscriptionCard: React.FC<{ plan: Plan }> = ({ plan }) => (
+const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; isLoading: boolean }> = ({ plan, onSelect, isLoading }) => (
   <div className="overflow-hidden rounded-[10px] bg-gradient-to-r from-[#240044] via-[#3B1A69] to-[#7D007A] text-white">
     <div className="relative px-4 pb-4 pt-5">
       <div className="absolute right-4 top-4">{plan.icon}</div>
@@ -78,9 +81,11 @@ const SubscriptionCard: React.FC<{ plan: Plan }> = ({ plan }) => (
     <div className="px-4 pb-4 pt-3">
       <button
         type="button"
-        className="h-11 w-full rounded-full bg-white text-[12px] font-semibold text-[#55288D]"
+        onClick={() => onSelect(plan)}
+        disabled={isLoading}
+        className="h-11 w-full rounded-full bg-white text-[12px] font-semibold text-[#55288D] disabled:opacity-70"
       >
-        Get Started
+        {isLoading ? "Processing..." : "Get Started"}
       </button>
     </div>
   </div>
@@ -88,6 +93,68 @@ const SubscriptionCard: React.FC<{ plan: Plan }> = ({ plan }) => (
 
 const SubscriptionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [dbSubscriptions, setDbSubscriptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      try {
+        const response = await http.get(endpoints.subscription.list);
+        if (response.data?.data?.subs) {
+          setDbSubscriptions(response.data.data.subs);
+        }
+      } catch (error) {
+        console.error("Failed to fetch subscriptions", error);
+      }
+    };
+    fetchSubscriptions();
+  }, []);
+
+  const handleSelectPlan = async (plan: Plan) => {
+    if (!user) return;
+    try {
+      setLoadingPlan(plan.name);
+
+      const dbSub = dbSubscriptions.find(
+        (s) => s.name.toUpperCase() === plan.name.toUpperCase()
+      );
+
+      if (!dbSub) {
+        console.error("Subscription plan not found in database");
+        return;
+      }
+
+      const amountString = plan.price.replace(/[^\d.-]/g, '');
+      let amountInNaira = parseInt(amountString, 10);
+      if (isNaN(amountInNaira)) amountInNaira = 0;
+      const amountInKobo = amountInNaira * 100;
+
+      const payload = {
+        email: user.email,
+        amount: amountInKobo,
+        subscriptionId: dbSub.id,
+        metadata: {
+          userId: user.id,
+          planName: plan.name
+        }
+      };
+
+      const response = await http.post(endpoints.payments.initialize, payload);
+
+      const authUrl = response.data?.data?.authorizationUrl || response.data?.authorizationUrl;
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        console.error("No authorization URL returned", response.data);
+      }
+
+    } catch (error) {
+      console.error("Failed to initialize payment", error);
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fff] pb-8">
@@ -124,7 +191,12 @@ const SubscriptionsPage: React.FC = () => {
         </div>
 
         {plans.map((plan) => (
-          <SubscriptionCard key={plan.name} plan={plan} />
+          <SubscriptionCard
+            key={plan.name}
+            plan={plan}
+            onSelect={handleSelectPlan}
+            isLoading={loadingPlan === plan.name}
+          />
         ))}
       </div>
     </div>
