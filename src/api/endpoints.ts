@@ -37,6 +37,7 @@ export const endpoints = {
     add: "/report/add",
   },
   subscription: {
+    list: "/subscription",
     sponsor: (reportedUserId: string) =>
       `/subscription/sponsor/${reportedUserId}`,
   },
@@ -63,5 +64,9 @@ export const endpoints = {
   date: {
     accept: (dateId: string | number) => `/profile/date/accept/${dateId}`,
     reject: (dateId: string | number) => `/profile/date/reject/${dateId}`,
+  },
+  payments: {
+    initialize: "/paystack/initialize",
+    verify: "/paystack/verify",
   },
 };
