@@ -15,6 +15,7 @@ import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
 import OnboardingRoutes from "./routes/OnboardingRoutes";
 import { Toaster } from "sonner";
 import AppRoutes from "./routes/AppRoutes";
+import PaymentRoutes from "./routes/PaymentRoutes";
 import { useAuthStore } from "./store/auth.store";
 import { StreamChatProvider } from "./providers/StreamChatProvider";
 import { AppNotificationProvider } from "./providers/AppNotificationProvider";
@@ -81,6 +82,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/*" element={<SplashRoutes />} />
         <Route path="/auth/*" element={<AuthRoutes />} />
+        <Route path="/payment/*" element={<PaymentRoutes />} />
         <Route
           path="/onboarding/*"
           element={
