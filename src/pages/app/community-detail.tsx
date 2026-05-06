@@ -78,13 +78,13 @@ const CommunityDetailPage: React.FC = () => {
       return;
     }
 
-    // if (!permissions.canJoinCommunityConversation) {
-    //   toast.error(
-    //     "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
-    //   );
-    //   navigate("/app/subscriptions");
-    //   return;
-    // }
+    if (!permissions.canJoinCommunityConversation) {
+      toast.error(
+        "Freemium users can view communities only. Upgrade to Standard or above to join the conversation.",
+      );
+      navigate("/app/subscriptions");
+      return;
+    }
 
     try {
       setIsJoining(true);
