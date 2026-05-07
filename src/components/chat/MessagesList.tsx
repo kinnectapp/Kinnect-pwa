@@ -210,11 +210,12 @@ const MessagesList: React.FC = () => {
         return;
       }
 
-      // If we already have cached data, show it immediately — no fetch on remount
       if (cachedChannels.length > 0) {
+        // Show cached data immediately, then refresh in background
         setHasLoadedOnce(true);
+        void loadChannels();
       } else {
-        // First ever load — fetch and populate the cache
+        // First ever load — wait so we don't flash an empty state
         await loadChannels();
       }
 

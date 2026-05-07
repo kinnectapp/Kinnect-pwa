@@ -81,14 +81,14 @@ export const KinnectAiChatView: React.FC = () => {
 
     try {
       const parsed = JSON.parse(savedHistory);
-      const userHistory: unknown[] = Array.isArray(parsed)
-        ? parsed // legacy flat array — ignore, treat as empty
-        : (parsed as Record<string, unknown[]>)[userKey] ?? [];
+      type RawMsg = KinnectAiMessage & Partial<StoredKinnectAiMessage>;
+      const userHistory: RawMsg[] = Array.isArray(parsed)
+        ? [] // legacy flat array — discard, start fresh
+        : ((parsed as Record<string, unknown[]>)[userKey] ?? []) as RawMsg[];
 
-      if (Array.isArray(userHistory) && userHistory.length) {
+      if (userHistory.length) {
         setMessages(
-          userHistory.map(
-            (message: KinnectAiMessage & Partial<StoredKinnectAiMessage>) => ({
+          userHistory.map((message) => ({
               id:
                 typeof message.id === "string" ? message.id : createMessageId(),
               role: message.role,
