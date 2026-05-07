@@ -5,6 +5,7 @@ import {
   KinnectAiMessage,
   toKinnectAiErrorMessage,
 } from "@/services/kinnect-ai.service";
+import { useAuthStore } from "@/store/auth.store";
 import TypingIndicator from "./TypingIndicator";
 
 const STORAGE_KEY = "kinnect-ai-chat-history";
@@ -28,6 +29,8 @@ const starterMessages: StoredKinnectAiMessage[] = [
 ];
 
 export const KinnectAiChatView: React.FC = () => {
+  const userId = useAuthStore((state) => state.user?.id);
+  const userKey = userId ? String(userId) : null;
   const [input, setInput] = useState("");
   const [hasHydratedHistory, setHasHydratedHistory] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -65,6 +68,11 @@ export const KinnectAiChatView: React.FC = () => {
   }
 
   useEffect(() => {
+    if (userKey === null) {
+      setHasHydratedHistory(true);
+      return;
+    }
+
     const savedHistory = window.localStorage.getItem(STORAGE_KEY);
     if (!savedHistory) {
       setHasHydratedHistory(true);
@@ -73,9 +81,13 @@ export const KinnectAiChatView: React.FC = () => {
 
     try {
       const parsed = JSON.parse(savedHistory);
-      if (Array.isArray(parsed) && parsed.length) {
+      const userHistory: unknown[] = Array.isArray(parsed)
+        ? parsed // legacy flat array — ignore, treat as empty
+        : (parsed as Record<string, unknown[]>)[userKey] ?? [];
+
+      if (Array.isArray(userHistory) && userHistory.length) {
         setMessages(
-          parsed.map(
+          userHistory.map(
             (message: KinnectAiMessage & Partial<StoredKinnectAiMessage>) => ({
               id:
                 typeof message.id === "string" ? message.id : createMessageId(),
@@ -95,15 +107,28 @@ export const KinnectAiChatView: React.FC = () => {
     } finally {
       setHasHydratedHistory(true);
     }
-  }, []);
+  }, [userKey]);
 
   useEffect(() => {
-    if (!hasHydratedHistory) {
+    if (!hasHydratedHistory || !userKey) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  }, [hasHydratedHistory, messages]);
+    const savedHistory = window.localStorage.getItem(STORAGE_KEY);
+    let allHistory: Record<string, unknown[]> = {};
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          allHistory = parsed as Record<string, unknown[]>;
+        }
+      } catch {
+        // start fresh if corrupted
+      }
+    }
+    allHistory[userKey] = messages;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
+  }, [hasHydratedHistory, userKey, messages]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;

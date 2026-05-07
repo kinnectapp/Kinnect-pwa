@@ -9,6 +9,7 @@ import {
   getRefreshToken,
   getUser as getUserStorage,
 } from "@/api/storage";
+import { useChatStore } from "./chat.store";
 
 type AuthUserInput = Partial<User> & Pick<User, "id" | "email">;
 
@@ -105,6 +106,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
+    useChatStore.getState().clearAll();
     await clearStorage();
     set({
       user: null,
