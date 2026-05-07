@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bot } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
 import { Logo } from "../layout/logo";
 
 const STORAGE_KEY = "kinnect-ai-chat-history";
@@ -43,27 +44,30 @@ const getPreviewText = (messages: StoredKinnectAiMessage[]) => {
 
 const KinnectChatBtn: React.FC = () => {
   const navigate = useNavigate();
+  const userId = useAuthStore((state) => state.user?.id);
   const [previewText, setPreviewText] = useState(
     "Ask Kiki for dating advice, message ideas, or profile help.",
   );
 
   useEffect(() => {
+    if (!userId) return;
+    const userKey = String(userId);
+
     try {
       const savedHistory = window.localStorage.getItem(STORAGE_KEY);
-      if (!savedHistory) {
-        return;
-      }
+      if (!savedHistory) return;
 
       const parsed = JSON.parse(savedHistory);
-      if (!Array.isArray(parsed)) {
-        return;
-      }
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
 
-      setPreviewText(getPreviewText(parsed));
+      const userHistory = (parsed as Record<string, StoredKinnectAiMessage[]>)[userKey];
+      if (!Array.isArray(userHistory)) return;
+
+      setPreviewText(getPreviewText(userHistory));
     } catch {
       // Ignore malformed local history and keep the default preview.
     }
-  }, []);
+  }, [userId]);
 
   return (
     <button

@@ -41,6 +41,7 @@ interface ChatStore {
   setTypingUsers: (channelId: string, userIds: string[]) => void;
   setMessageStatus: (messageId: string, status: MessageStatus) => void;
   markChannelAsRead: (channelId: string) => void;
+  clearAll: () => void;
 }
 
 export const useChatStore = create<ChatStore>()(
@@ -87,6 +88,16 @@ export const useChatStore = create<ChatStore>()(
               [channelId]: messages.map((msg) => ({ ...msg, isRead: true })),
             },
           };
+        }),
+      clearAll: () =>
+        set({
+          unreadCount: 0,
+          activeChannelId: null,
+          personalChannels: [],
+          communityChannels: [],
+          channelMessages: {},
+          typingUsers: {},
+          messageStatuses: {},
         }),
     }),
     {
