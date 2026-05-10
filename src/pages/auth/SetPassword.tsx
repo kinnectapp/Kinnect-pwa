@@ -92,6 +92,7 @@ const SetPassword: React.FC = () => {
     <AuthLayout
       title="Set Password"
       description="Input and confirm your password below"
+      back={true}
     >
       <form className="flex h-full flex-col gap-4" onSubmit={handleSubmit}>
         <div className="space-y-4">
@@ -150,6 +151,7 @@ const SetPassword: React.FC = () => {
                 Passwords do not match.
               </p>
             )}
+           
           </div>
         </div>
 
@@ -157,6 +159,8 @@ const SetPassword: React.FC = () => {
           <Button type="submit" className="w-full" disabled={!canSubmit}>
             {isPending ? "Creating account..." : "Submit"}
           </Button>
+
+           
         </div>
       </form>
     </AuthLayout>

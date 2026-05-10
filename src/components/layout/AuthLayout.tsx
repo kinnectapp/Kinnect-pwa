@@ -1,16 +1,21 @@
 import React from "react";
 import Logo from "../../assets/images/logo.svg";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 type AuthLayoutProps = {
   children: React.ReactNode;
   title?: string;
   description?: string;
+  back?: boolean;
 };
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({
   children,
   title,
   description,
+  back,
 }) => {
+  const navigate = useNavigate();
   return (
     <div className="flex min-h-[100dvh] flex-col bg-white px-6 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-[calc(env(safe-area-inset-top)+2rem)]">
       {/* logo */}
@@ -18,14 +23,26 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         <img src={Logo} alt="Kinnect" className="h-8 w-8" />
       </div>
 
-      {title && (
-        <div className="mb-6">
-          <h1 className="text-[24px] font-semibold text-[#55288D]">{title}</h1>
-          {description && (
-            <p className="mt-1 text-[12px] text-[#1C1C1C]">{description}</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-4">
+          {back && (
+            <div
+              onClick={() => navigate(-1)}
+              className="text-[24px] font-semibold text-[#55288D]"
+            >
+              <ArrowLeft />
+            </div>
+          )}
+          {title && (
+            <h1 className="text-[24px] font-semibold text-[#55288D]">
+              {title}
+            </h1>
           )}
         </div>
-      )}
+        {description && (
+          <p className="mt-1 text-[12px] text-[#1C1C1C]">{description}</p>
+        )}
+      </div>
 
       <div className="flex-1 flex flex-col">{children}</div>
     </div>
