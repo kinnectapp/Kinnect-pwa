@@ -77,7 +77,7 @@ const ChannelAvatar = ({
     if (!initialImage || initialImage === "/pwa-192x192.png") {
       chatService.getUserById(userId).then((data) => {
         const photos = data?.data?.resp?.profilePhotos;
-        if (photos?.[0] && isMounted) setImage(photos[0]);
+        if (photos?.[photos.length - 1] && isMounted) setImage(photos[0]);
       }).catch(() => {});
     }
     return () => { isMounted = false; };
@@ -94,9 +94,7 @@ const ChannelListItem: React.FC<{
   const userId = item.userId || item.id;
   const needsEnrich = !item.name || item.name === "Direct Message" || !item.image;
 
-  const [displayName, setDisplayName] = useState(
-    item.name && item.name !== "Direct Message" ? item.name : "",
-  );
+ 
   const [displayImage, setDisplayImage] = useState(
     item.image && item.image !== "/pwa-192x192.png" ? item.image : "",
   );
@@ -111,9 +109,7 @@ const ChannelListItem: React.FC<{
       const resp = data?.data?.resp;
       if (!isMounted) return;
       if (resp) {
-        const fullName = [resp.firstname, resp.lastname].filter(Boolean).join(" ");
-        if (fullName) setDisplayName(fullName);
-        if (resp.profilePhotos?.[0]) setDisplayImage(resp.profilePhotos[0]);
+          if (resp.profilePhotos?.[resp.profilePhotos.length - 1]) setDisplayImage(resp.profilePhotos[resp.profilePhotos.length - 1]);
       }
     }).catch(() => {}).finally(() => {
       if (isMounted) setIsLoading(false);
@@ -122,7 +118,7 @@ const ChannelListItem: React.FC<{
     return () => { isMounted = false; };
   }, [userId, needsEnrich]);
 
-  const name = displayName || item.name || "Direct Message";
+  const name =   item.name || "Direct Message";
   const image = displayImage || item.image || "";
   const initial = name.charAt(0).toUpperCase();
 

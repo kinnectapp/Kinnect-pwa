@@ -160,16 +160,19 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         {/* Image dot indicators */}
         {images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentImageIndex(i)}
-                className={`h-1.5 rounded-full transition-all ${i === currentImageIndex
-                  ? "bg-white w-4"
-                  : "bg-white/50 w-1.5"
-                  }`}
-              />
-            ))}
+            {[...images].reverse().map((_, i) => {
+              const originalIndex = images.length - 1 - i;
+              return (
+                <button
+                  key={originalIndex}
+                  onClick={() => setCurrentImageIndex(originalIndex)}
+                  className={`h-1.5 rounded-full transition-all ${originalIndex === currentImageIndex
+                    ? "bg-white w-4"
+                    : "bg-white/50 w-1.5"
+                    }`}
+                />
+              );
+            })}
           </div>
         )}
       </div>

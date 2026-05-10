@@ -158,7 +158,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         if (fullUserData && isMounted) {
           setPartnerFullName(fullUserData?.data?.resp?.firstname + " " + fullUserData?.data?.resp?.lastname || "");
           setPartnerAge(fullUserData?.data?.resp?.dob || "");
-          setPartnerImage(fullUserData?.data?.resp?.profilePhotos[0] || "");
+          setPartnerImage(fullUserData?.data?.resp?.profilePhotos[fullUserData?.data?.resp?.profilePhotos.length - 1] || "");
           const location =
             `${fullUserData?.data?.resp?.state || ""}, ${fullUserData?.data?.resp?.country || ""}`.trim();
           setPartnerLocation(location);
@@ -498,7 +498,11 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                               )
                         }
                         alt=""
-                        className="w-[60px] object-cover h-[60px] rounded-full border"
+                        className={`w-[60px] object-cover h-[60px] rounded-full border transition-[filter] duration-300${
+                          isPersonalChat && !personalChatAccess.canShareMedia
+                            ? " blur-sm"
+                            : ""
+                        }`}
                       />
                       {isPersonalChat && partnerFullName && (
                         <p className="text-[#1C1C1C] font-medium text-[14px]">
