@@ -61,6 +61,7 @@ const VerifyForgotPassword: React.FC = () => {
     <AuthLayout
       title="Verify Your Email"
       description={`A 6-digit code has been sent to ${email || "your email"}. Input the code below to proceed.`}
+      back={true}
     >
       <form className="flex h-full flex-col" onSubmit={handleSubmit}>
         <OtpInput onChange={setCode} />

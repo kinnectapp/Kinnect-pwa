@@ -46,7 +46,7 @@ const navigate = useNavigate();
       </div>
 
       <div className=" mt-2  p-4 w-full ">
-        <Link to="/onboarding/booksession">
+        <Link to="/onboarding/connection_getstarted">
           <div className=" mb-6 text-[#fff] bg-gradient-to-r from-[#850070]  via-[#2B042599] to-[#55288D] p-4 rounded-[8px] w-full">
             <BookSessionIcon />
             <div className="font-semibold text-[18px] mt-4 mb-2 ">
@@ -60,7 +60,7 @@ const navigate = useNavigate();
           </div>
         </Link>
 
-        <Link to="/onboarding/community">
+        <Link to="/onboarding/connection_getstarted">
           <div className=" mb-6 text-[#fff] background-gradient  p-4 rounded-[8px] w-full">
             <CommunityIcon />
             <div className="font-semibold text-[18px] mt-4 mb-2 ">
