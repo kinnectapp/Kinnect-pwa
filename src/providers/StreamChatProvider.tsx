@@ -50,6 +50,7 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const setUnreadCount = useChatStore((state) => state.setUnreadCount);
   const prevUserIdRef = useRef<string | number | null | undefined>(user?.id);
   const [client, setClient] = useState<StreamChat | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   // Bootstrap and connect on mount
   useEffect(() => {
@@ -103,10 +104,14 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
         }).unsubscribe;
       } catch (error) {
         console.error("Failed to initialize Stream chat", error);
+        if (isMounted) {
+          setConnectError("Chat is unavailable. Please refresh to try again.");
+        }
       }
     };
 
     if (user?.id) {
+      setConnectError(null);
       void bootstrap();
     }
 
@@ -140,6 +145,17 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   // Wrap with Stream's <Chat> when client is ready
   if (client) {
     return <Chat client={client}>{children}</Chat>;
+  }
+
+  if (connectError) {
+    return (
+      <>
+        {children}
+        <div className="fixed bottom-20 left-0 right-0 mx-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 shadow-sm">
+          {connectError}
+        </div>
+      </>
+    );
   }
 
   return <>{children}</>;

@@ -53,12 +53,27 @@ export const audioService = {
     return new Promise((resolve, reject) => {
       const audioUrl = URL.createObjectURL(blob);
       const audio = new Audio();
-      audio.src = audioUrl;
+
+      const cleanup = () => URL.revokeObjectURL(audioUrl);
+
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error("Audio duration timeout"));
+      }, 5000);
+
       audio.onloadedmetadata = () => {
-        URL.revokeObjectURL(audioUrl);
+        clearTimeout(timer);
+        cleanup();
         resolve(audio.duration);
       };
-      audio.onerror = reject;
+
+      audio.onerror = () => {
+        clearTimeout(timer);
+        cleanup();
+        reject(new Error("Failed to load audio"));
+      };
+
+      audio.src = audioUrl;
     });
   },
 

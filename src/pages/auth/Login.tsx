@@ -127,7 +127,7 @@ const Login: React.FC = () => {
     }
 
     toast.error(message);
-    navigate("/auth/register/verify");
+    navigate("/auth/register/verify", { state: { reason: "unverified" } });
   };
 
   const onSubmit = (data: LoginFormValues) => {
@@ -328,25 +328,16 @@ const SocialLoginButtons: React.FC<{
   isGoogleLoading: boolean;
   isGoogleReady: boolean;
 }> = ({ onGoogleLogin, isGoogleLoading, isGoogleReady }) => (
-  <>
-    <Button
-      variant="outline"
-      className="h-10 w-full rounded-full border-[#E4E4F0] text-[14px]"
-      onClick={onGoogleLogin}
-      type="button"
-      disabled={!isGoogleReady || isGoogleLoading}
-    >
-      <span className="mr-2 text-lg">G</span>
-      {isGoogleLoading ? "Signing in..." : "Continue with Google"}
-    </Button>
-    <Button
-      variant="outline"
-      className="h-10 w-full rounded-full border-[#E4E4F0] text-[14px]"
-      type="button"
-    >
-      <span className="mr-2 text-lg"></span> Continue with Apple
-    </Button>
-  </>
+  <Button
+    variant="outline"
+    className="h-10 w-full rounded-full border-[#E4E4F0] text-[14px]"
+    onClick={onGoogleLogin}
+    type="button"
+    disabled={!isGoogleReady || isGoogleLoading}
+  >
+    <span className="mr-2 text-lg">G</span>
+    {isGoogleLoading ? "Signing in..." : "Continue with Google"}
+  </Button>
 );
 
 export default Login;

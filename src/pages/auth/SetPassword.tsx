@@ -13,6 +13,7 @@ import { PasswordRules } from "@/components/auth/PasswordRules";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { RegisterPayload } from "@/lib/types/auth";
 import { toast } from "sonner";
+import { handleApiError } from "@/api/serviceUtils";
 
 const SetPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const SetPassword: React.FC = () => {
     React.useState<RegisterPayload | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("registrationData");
+    const stored = localStorage.getItem("registrationData");
     if (!stored) {
       toast.error("Registration data not found. Please start over.");
       navigate("/auth/register");
@@ -64,6 +65,9 @@ const SetPassword: React.FC = () => {
     };
 
     register(payload, {
+      onError: (error: any) => {
+        toast.error(handleApiError(error));
+      },
       onSuccess: (response: any) => {
         const registerData = response?.data;
         if (registerData?.id && registerData?.email) {
@@ -82,7 +86,7 @@ const SetPassword: React.FC = () => {
           registerData?.email || registrationData.email,
         );
         // Clear registration data
-        sessionStorage.removeItem("registrationData");
+        localStorage.removeItem("registrationData");
         navigate("/auth/register/verify");
       },
     });

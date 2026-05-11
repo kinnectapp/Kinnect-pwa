@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, MoreVertical, AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
@@ -75,6 +75,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
   const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load and watch channel
   useEffect(() => {
@@ -108,7 +109,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         if (!selected) {
           setErrorMessage("Chat not found.");
           setHasError(true);
-          setTimeout(() => navigate("/app/chats", { replace: true }), 2000);
+          redirectTimerRef.current = setTimeout(() => navigate("/app/chats", { replace: true }), 2000);
           return;
         }
 
@@ -143,6 +144,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     return () => {
       isMounted = false;
       setActiveChannelId(null);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
     };
   }, [channelId, currentUserId, navigate, setActiveChannelId]);
 
@@ -156,7 +158,8 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       try {
         const fullUserData = await chatService.getUserById(partnerId);
         if (fullUserData && isMounted) {
-          setPartnerFullName(fullUserData?.data?.resp?.firstname + " " + fullUserData?.data?.resp?.lastname || "");
+          const resp = fullUserData?.data?.resp;
+          setPartnerFullName([resp?.firstname, resp?.lastname].filter(Boolean).join(" "));
           setPartnerAge(fullUserData?.data?.resp?.dob || "");
           setPartnerImage(fullUserData?.data?.resp?.profilePhotos[fullUserData?.data?.resp?.profilePhotos.length - 1] || "");
           const location =
@@ -322,13 +325,13 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     locationState,
   ]);
 
-  // Compute partner age
-  const partnerAgeDisplay = partnerAge
-    ? Math.floor(
-      (Date.now() - new Date(partnerAge).getTime()) /
-      (1000 * 60 * 60 * 24 * 365.25)
-    )
-    : null;
+  // Compute partner age — guard against invalid/missing date
+  const partnerAgeDisplay = useMemo(() => {
+    if (!partnerAge) return null;
+    const dob = new Date(partnerAge);
+    if (isNaN(dob.getTime())) return null;
+    return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+  }, [partnerAge]);
 
   const isPersonalChat = channel?.type === "messaging";
   const shouldRestrictMediaSharing =

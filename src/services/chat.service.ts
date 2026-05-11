@@ -103,8 +103,6 @@ export const chatService = {
 
     try {
       await channel.watch();
-      console.log("channelIdchannelId", channelId);
-
       return channel.cid || channelId;
     } catch (error: any) {
       const errorMsg =

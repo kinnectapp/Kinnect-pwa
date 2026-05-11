@@ -322,8 +322,12 @@ const Register: React.FC = () => {
             phone: `${countryCode}${normalizedPhone}`,
           };
 
-          // Store registration data in sessionStorage to pass to SetPassword page
-          sessionStorage.setItem("registrationData", JSON.stringify(payload));
+          // Store registration data in localStorage so it survives tab close
+          try {
+            localStorage.setItem("registrationData", JSON.stringify(payload));
+          } catch {
+            // Private browsing or quota exceeded — continue without persisting
+          }
           navigate("/auth/set-password");
         }}
       >
@@ -511,14 +515,6 @@ const Register: React.FC = () => {
             >
               <span className="mr-2 text-lg">G</span>
               Continue with Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 rounded-full border-[#E4E4F0] text-[14px]"
-            >
-              <span className="mr-2 text-lg"></span>
-              Continue with Apple
             </Button>
           </div>
         </div>
