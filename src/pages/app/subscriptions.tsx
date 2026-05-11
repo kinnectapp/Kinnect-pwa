@@ -5,6 +5,7 @@ import { PremiumIcon, StandardIcon, VipIcon } from "@/components/icons";
 import { useAuthStore } from "@/store/auth.store";
 import { http } from "@/api/http";
 import { endpoints } from "@/api/endpoints";
+import { resolveSubscriptionTier } from "@/lib/subscription";
 
 type Plan = {
   name: string;
@@ -59,11 +60,18 @@ const plans: Plan[] = [
   },
 ];
 
-const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; isLoading: boolean }> = ({ plan, onSelect, isLoading }) => (
+const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; isLoading: boolean; isCurrent: boolean }> = ({ plan, onSelect, isLoading, isCurrent }) => (
   <div className="overflow-hidden rounded-[10px] bg-gradient-to-r from-[#240044] via-[#3B1A69] to-[#7D007A] text-white">
     <div className="relative px-4 pb-4 pt-5">
       <div className="absolute right-4 top-4">{plan.icon}</div>
-      <h3 className="text-[18px] font-semibold">{plan.name}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[18px] font-semibold">{plan.name}</h3>
+        {isCurrent && (
+          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">
+            Current
+          </span>
+        )}
+      </div>
       <ul className="mt-3 space-y-2 text-[12px] text-[#C7C1CE]">
         {plan.features.map((feature) => (
           <li key={feature}>- {feature}</li>
@@ -81,11 +89,11 @@ const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; i
     <div className="px-4 pb-4 pt-3">
       <button
         type="button"
-        onClick={() => onSelect(plan)}
-        disabled={isLoading}
+        onClick={() => { if (!isCurrent) onSelect(plan); }}
+        disabled={isLoading || isCurrent}
         className="h-11 w-full rounded-full bg-white text-[12px] font-semibold text-[#55288D] disabled:opacity-70"
       >
-        {isLoading ? "Processing..." : "Get Started"}
+        {isCurrent ? "Your Plan" : isLoading ? "Processing..." : "Get Started"}
       </button>
     </div>
   </div>
@@ -94,6 +102,7 @@ const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; i
 const SubscriptionsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const currentTier = resolveSubscriptionTier(user);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [dbSubscriptions, setDbSubscriptions] = useState<any[]>([]);
 
@@ -179,9 +188,11 @@ const SubscriptionsPage: React.FC = () => {
             <h2 className="text-[18px] font-semibold text-[#1C1C1C]">
               Fremium
             </h2>
-            <p className="text-[12px] font-semibold text-[#D400B3]">
-              - Current Plan
-            </p>
+            {currentTier === "fremium" && (
+              <p className="text-[12px] font-semibold text-[#D400B3]">
+                - Current Plan
+              </p>
+            )}
           </div>
           <p className="mt-3 text-[12px] leading-[1.5] text-[#6E6A75]">
             Enjoy 3 curated matches per week, incognito profile access with
@@ -196,6 +207,7 @@ const SubscriptionsPage: React.FC = () => {
             plan={plan}
             onSelect={handleSelectPlan}
             isLoading={loadingPlan === plan.name}
+            isCurrent={plan.name.toLowerCase() === currentTier}
           />
         ))}
       </div>

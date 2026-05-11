@@ -82,9 +82,7 @@ export const connectStreamUser = async (user: User): Promise<StreamChat> => {
     );
   } catch (error) {
     console.error("Failed to connect user to Stream:", error);
-    // Reset client for retry
     streamClient = null;
-    console.log("errorerror", error);
     throw error;
   }
 
@@ -94,29 +92,39 @@ export const connectStreamUser = async (user: User): Promise<StreamChat> => {
   return client;
 };
 
+const MAX_RECONNECT_FAILURES = 5;
+
 const setupConnectionMonitoring = (user: User) => {
   if (connectionMonitorInterval) {
     clearInterval(connectionMonitorInterval);
   }
 
+  let failureCount = 0;
+
   connectionMonitorInterval = setInterval(async () => {
     try {
       const client = getStreamClient();
-      // Check if connection is lost
       if (!client.userID || !client.user?.id) {
-        console.warn("Stream connection lost, attempting reconnect...");
-        // Connection lost, attempt reconnect
+        if (failureCount >= MAX_RECONNECT_FAILURES) {
+          clearInterval(connectionMonitorInterval!);
+          connectionMonitorInterval = null;
+          console.warn("Stream reconnect gave up after max failures.");
+          return;
+        }
         try {
           await connectStreamUser(user);
-          console.log("Stream connection restored");
+          failureCount = 0;
         } catch (error) {
-          console.error("Failed to restore connection:", error);
+          failureCount += 1;
+          console.error(`Stream reconnect failed (${failureCount}/${MAX_RECONNECT_FAILURES}):`, error);
         }
+      } else {
+        failureCount = 0;
       }
     } catch (error) {
       console.warn("Connection monitor error:", error);
     }
-  }, 30000); // Check every 30 seconds
+  }, 30000);
 };
 
 export const ensureStreamConnected = async (

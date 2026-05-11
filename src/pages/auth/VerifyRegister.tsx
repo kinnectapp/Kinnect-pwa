@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { OtpInput } from "./OtpInput";
@@ -10,6 +10,8 @@ import { handleApiError } from "@/api/serviceUtils";
 
 const VerifyRegister: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromLoginUnverified = (location.state as any)?.reason === "unverified";
   const { useVerifyEmailMutation, useSendOtpMutation } = useAuth();
   const { mutate: verifyEmail, isPending } = useVerifyEmailMutation();
   const { mutate: sendOtp, isPending: isResending } = useSendOtpMutation();
@@ -58,6 +60,9 @@ const VerifyRegister: React.FC = () => {
     verifyEmail(
       { email, otp: code },
       {
+        onError: (error: any) => {
+          toast.error(handleApiError(error));
+        },
         onSuccess: async (response) => {
           const accessToken = response.data?.accessToken || response.data?.token;
           const refreshToken = response.data?.refreshToken;
@@ -110,8 +115,14 @@ const VerifyRegister: React.FC = () => {
     <AuthLayout
       title="Verify Your Email"
       description={`A 6-digit code has been sent to ${email || "your email"}. Input the code below to proceed.`}
+      back={true}
     >
       <form className="flex flex-1 flex-col" onSubmit={handleSubmit}>
+        {fromLoginUnverified && (
+          <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            Your account isn't verified yet. We've sent a new code to your email — please check your inbox.
+          </div>
+        )}
         <OtpInput onChange={setCode} />
 
         <div className="mt-6">
