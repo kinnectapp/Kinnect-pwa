@@ -161,8 +161,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
           const resp = fullUserData?.data?.resp;
           setPartnerFullName([resp?.firstname, resp?.lastname].filter(Boolean).join(" "));
           setPartnerAge(fullUserData?.data?.resp?.dob || "");
-          const photos = fullUserData?.data?.resp?.profilePhotos;
-          setPartnerImage(photos?.length ? photos[photos.length - 1] : "");
+          setPartnerImage(fullUserData?.data?.resp?.profilePhotos[fullUserData?.data?.resp?.profilePhotos.length - 1] || "");
           const location =
             `${fullUserData?.data?.resp?.state || ""}, ${fullUserData?.data?.resp?.country || ""}`.trim();
           setPartnerLocation(location);
