@@ -114,20 +114,24 @@ export const KinnectAiChatView: React.FC = () => {
       return;
     }
 
-    const savedHistory = window.localStorage.getItem(STORAGE_KEY);
-    let allHistory: Record<string, unknown[]> = {};
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          allHistory = parsed as Record<string, unknown[]>;
+    const timer = setTimeout(() => {
+      const savedHistory = window.localStorage.getItem(STORAGE_KEY);
+      let allHistory: Record<string, unknown[]> = {};
+      if (savedHistory) {
+        try {
+          const parsed = JSON.parse(savedHistory);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            allHistory = parsed as Record<string, unknown[]>;
+          }
+        } catch {
+          // start fresh if corrupted
         }
-      } catch {
-        // start fresh if corrupted
       }
-    }
-    allHistory[userKey] = messages;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
+      allHistory[userKey] = messages;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(allHistory));
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [hasHydratedHistory, userKey, messages]);
 
   useEffect(() => {

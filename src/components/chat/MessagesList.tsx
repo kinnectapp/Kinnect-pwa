@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import type { Channel } from "stream-chat";
@@ -77,7 +77,7 @@ const ChannelAvatar = ({
     if (!initialImage || initialImage === "/pwa-192x192.png") {
       chatService.getUserById(userId).then((data) => {
         const photos = data?.data?.resp?.profilePhotos;
-        if (photos?.[photos.length - 1] && isMounted) setImage(photos[0]);
+        if (photos?.[photos.length - 1] && isMounted) setImage(photos[photos.length - 1]);
       }).catch(() => {});
     }
     return () => { isMounted = false; };
@@ -171,6 +171,13 @@ const MessagesList: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Ref so loadChannels (defined outside useEffect) can check mount status
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
   const loadChannels = async () => {
     if (!user?.id) return;
     setHasError(false);
@@ -182,12 +189,14 @@ const MessagesList: React.FC = () => {
         { last_message_at: -1 },
         { state: true, watch: true, limit: 30, message_limit: 30 },
       );
+      if (!isMountedRef.current) return;
       setChannels(queried);
       setPersonalChannels(queried.map((channel) => toPreview(channel, userId)));
       setHasLoadedOnce(true);
       setHasError(false);
       setErrorMessage("");
     } catch (error) {
+      if (!isMountedRef.current) return;
       const errorMsg = handleApiError(error);
       setErrorMessage(errorMsg);
       setHasError(true);

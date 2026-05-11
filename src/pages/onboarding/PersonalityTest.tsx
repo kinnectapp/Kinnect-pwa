@@ -77,6 +77,11 @@ const buildPersonalityPayload = (
 
   const scores = (answers as AnswerValue[]).map((value) => value + 1);
 
+  if (scores.length !== 15) {
+    console.error(`PersonalityTest: expected 15 answers, got ${scores.length}`);
+    return null;
+  }
+
   const agreeableness = scores.slice(0, 5);
   const conscientiousness = scores.slice(5, 10);
   const neuroticism = scores.slice(10, 15);

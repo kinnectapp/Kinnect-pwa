@@ -8,12 +8,10 @@ import {
 } from "@/components/icons";
 import { useAuthStore } from "@/store/auth.store";
 import { http } from "@/api/http";
+import { endpoints } from "@/api/endpoints";
 import { Link, useNavigate } from "react-router-dom";
 import WhiteImg from "../../assets/images/white.jpg";
-import useAuth from "@/api/auth";
-import { setUser } from "@/api/storage";
 import { toast } from "sonner";
-import { handleApiError } from "@/api/serviceUtils";
 import {
   useGetProfile,
   useGetProfileMatches,
@@ -38,11 +36,9 @@ type CommunitiesResponse = {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const authSetUser = useAuthStore((state) => state.setUser);
   const permissions = getSubscriptionPermissions(user);
   const displayName = user?.firstname || user?.username || "";
-  const { useGetUserMutation } = useAuth();
-
-  const { mutateAsync: getUserById } = useGetUserMutation();
 
   // Get profile and matches using the new profile service
   const { data: profileData } = useGetProfile();
@@ -52,24 +48,23 @@ const HomePage: React.FC = () => {
     error: matchError,
   } = useGetProfileMatches();
 
-  const handleSubmit = async () => {
-    try {
-      if (user?.id) {
-        const userResponse = await getUserById(String(user.id));
-        const fetchedUser = userResponse?.data?.resp;
-        if (fetchedUser && typeof fetchedUser === "object") {
-          await setUser(fetchedUser as any);
-        }
-      }
-    } catch (error) {
-      toast.error(handleApiError(error));
-    }
-  };
+  // Refresh user data at most once per 5 minutes instead of on every mount
+  const { data: userRefreshData } = useQuery({
+    queryKey: ["user-self", user?.id],
+    queryFn: async () => {
+      const response = await http.get(endpoints.users.single(String(user!.id)));
+      return response.data;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    handleSubmit();
-    console.log("profileData", profileData);
-  }, [user]);
+    const fetchedUser = (userRefreshData as any)?.resp;
+    if (fetchedUser && typeof fetchedUser === "object") {
+      void authSetUser(fetchedUser as any);
+    }
+  }, [userRefreshData]);
 
   const { data: communitiesResponse, isLoading: isLoadingCommunities } =
     useQuery({

@@ -75,7 +75,6 @@ export const normalizeApiError = (error: any): any => {
 
 export const handleApiError = (error: any): string => {
   const normalizedError = normalizeApiError(error);
-console.log("normalizedError",error);
 
   if (normalizedError.response) {
     // Server responded with error status

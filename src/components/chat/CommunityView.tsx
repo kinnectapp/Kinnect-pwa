@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { ensureStreamConnected } from "@/services/stream-chat.service";
@@ -46,6 +46,18 @@ const CommunityView: React.FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Reset local state when user changes so stale channels don't flash for the new user
+  useEffect(() => {
+    setChannels([]);
+    setHasLoadedOnce(false);
+  }, [user?.id]);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -74,6 +86,7 @@ const CommunityView: React.FC = () => {
         { state: true, watch: true, limit: 30 },
       );
 
+      if (!isMountedRef.current) return;
       setChannels(queried);
       setCommunityChannels(
         queried.map((ch) => {
@@ -84,12 +97,13 @@ const CommunityView: React.FC = () => {
       setHasLoadedOnce(true);
       setHasError(false);
     } catch (error) {
+      if (!isMountedRef.current) return;
       const errorMsg = handleApiError(error);
       setErrorMessage(errorMsg);
       setHasError(true);
       toast.error(errorMsg);
     } finally {
-      setIsRefreshing(false);
+      if (isMountedRef.current) setIsRefreshing(false);
     }
   };
 
