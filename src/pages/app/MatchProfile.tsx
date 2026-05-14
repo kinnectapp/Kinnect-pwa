@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import ProfileCard from "@/components/ProfileCard";
 import MoreOptionsModal from "@/components/MoreOptionsModal";
 import ReportModal from "@/components/chat/ReportModal";
-import ConfirmationModal from "@/components/chat/ConfirmationModal";
+import JiltModal from "@/components/chat/JiltModal";
+import BlockModal from "@/components/chat/BlockModal";
 import SponsorModal from "@/components/chat/SponsorModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { chatService } from "@/services/chat.service";
+import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
@@ -44,6 +46,7 @@ type UserByIdResponse = {
       firstname?: string;
       lastname?: string;
       username?: string;
+      incognito?: boolean;
       city?: string;
       state?: string;
       country?: string;
@@ -65,6 +68,7 @@ type UserByIdResponse = {
 export const MatchProfile: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuthStore();
 
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -107,8 +111,10 @@ export const MatchProfile: React.FC = () => {
 
     return {
       id: String(fetchedProfile.id),
-      name:
-        fetchedProfile.firstname && fetchedProfile.lastname
+      username:fetchedProfile.username || ""   ,
+      name: fetchedProfile.incognito
+        ? fetchedProfile.username || "Unknown User"
+        : fetchedProfile.firstname && fetchedProfile.lastname
           ? `${fetchedProfile.firstname} ${fetchedProfile.lastname}`.trim()
           : fetchedProfile.username || "Unknown User",
       location: [fetchedProfile.city, fetchedProfile.state, fetchedProfile.country]
@@ -136,6 +142,11 @@ export const MatchProfile: React.FC = () => {
   }, [fetchedProfile]);
 
   const personalChatAccess = usePersonalChatAccess(currentProfile?.id);
+
+  const isPartnerBlocked = useMemo(() => {
+    if (!currentProfile?.id || !user?.blockedUsers) return false;
+    return (user.blockedUsers as number[]).includes(Number(currentProfile.id));
+  }, [currentProfile?.id, user?.blockedUsers]);
 
   const handleMessage = async () => {
     if (!currentProfile) return;
@@ -184,6 +195,8 @@ export const MatchProfile: React.FC = () => {
     try {
       setIsPerformingAction(true);
       await chatService.blockUser(currentProfile.id);
+      const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
+      await useAuthStore.getState().setUser({ ...user!, blockedUsers: [...currentBlocked, Number(currentProfile.id)] });
       toast.success(`${currentProfile.name} has been blocked`);
       setShowBlockModal(false);
       setShowMoreOptions(false);
@@ -194,6 +207,22 @@ export const MatchProfile: React.FC = () => {
       setIsPerformingAction(false);
     }
   };
+
+  const handleUnblockUser = useCallback(async () => {
+    if (!currentProfile) return;
+    try {
+      setIsPerformingAction(true);
+      await chatService.unblockUser(currentProfile.id);
+      const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
+      await useAuthStore.getState().setUser({ ...user!, blockedUsers: currentBlocked.filter((id) => id !== Number(currentProfile.id)) });
+      toast.success(`${currentProfile.name} has been unblocked`);
+      setShowMoreOptions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [currentProfile, user]);
 
   const handleConfirmReport = async (reason: string) => {
     if (!currentProfile) return;
@@ -278,10 +307,12 @@ export const MatchProfile: React.FC = () => {
       <MoreOptionsModal
         isOpen={showMoreOptions}
         profile={currentProfile}
+        isBlocked={isPartnerBlocked}
         onClose={() => setShowMoreOptions(false)}
         onProceedToDate={handleProceedToDate}
         onSponsorPlan={() => setShowSponsorModal(true)}
         onBlock={() => setShowBlockModal(true)}
+        onUnblock={handleUnblockUser}
         onReport={() => setShowReportModal(true)}
         onJilt={() => setShowJiltModal(true)}
       />
@@ -296,27 +327,23 @@ export const MatchProfile: React.FC = () => {
         isLoading={isPerformingAction}
       />
 
-      <ConfirmationModal
+      <BlockModal
         isOpen={showBlockModal}
-        title="Block Match"
-        message={`Are you sure you want to block ${currentProfile?.name}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
+        userName={currentProfile?.name}
         userImage={currentProfile?.image}
         userLocation={currentProfile?.location}
-        confirmText="Block"
-        isDangerous
+        blurImage={!personalChatAccess.canShareMedia}
         onClose={() => setShowBlockModal(false)}
         onConfirm={handleConfirmBlock}
         isLoading={isPerformingAction}
       />
 
-      <ConfirmationModal
+      <JiltModal
         isOpen={showJiltModal}
-        title="Jilt Match"
-        message={`Are you sure you want to jilt this match? By jilting this match, it means you are no longer interested and want to put off this conversation.`}
+        userName={currentProfile?.name}
         userImage={currentProfile?.image}
         userLocation={currentProfile?.location}
-        confirmText="Jilt"
-        isDangerous
+        blurImage={!personalChatAccess.canShareMedia}
         onClose={() => setShowJiltModal(false)}
         onConfirm={handleConfirmJilt}
         isLoading={isPerformingAction}

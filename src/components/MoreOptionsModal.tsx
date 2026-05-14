@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Heart, Gift, Ban, Flag, MessageCircleX as MessageX } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MoreOptionsModalProps {
@@ -11,10 +11,12 @@ interface MoreOptionsModalProps {
     location: string;
     image: string;
   };
+  isBlocked?: boolean;
   onClose: () => void;
   onProceedToDate: () => void;
   onSponsorPlan: () => void;
   onBlock: () => void;
+  onUnblock?: () => void;
   onReport: () => void;
   onJilt: () => void;
 }
@@ -22,10 +24,12 @@ interface MoreOptionsModalProps {
 export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
   isOpen,
   profile,
+  isBlocked = false,
   onClose,
   onProceedToDate,
   onSponsorPlan,
   onBlock,
+  onUnblock,
   onReport,
   onJilt,
 }) => {
@@ -66,8 +70,7 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
             className="cursor-pointer group"
           >
             <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors flex items-center gap-2">
-              <Heart size={20} className="text-purple-600" />
-              Proceed To Date
+               Proceed To Date
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               Get connected with {profile.name}
@@ -80,25 +83,25 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
             className="cursor-pointer group"
           >
             <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors flex items-center gap-2">
-              <Gift size={20} className="text-purple-600" />
-              Sponsor Plan
+               Sponsor Plan
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               Sponsor this user as they are on a freemium.
             </p>
           </div>
 
-          {/* Block */}
+          {/* Block / Unblock */}
           <div
-            onClick={onBlock}
+            onClick={isBlocked ? onUnblock : onBlock}
             className="cursor-pointer group"
           >
             <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors flex items-center gap-2">
-              <Ban size={20} className="text-red-600" />
-              Block
+               {isBlocked ? "Unblock" : "Block"}
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              This user can no longer see or interact with you once blocked.
+              {isBlocked
+                ? "Unblock this user to send and receive messages."
+                : "This user can no longer see or interact with you once blocked."}
             </p>
           </div>
 
@@ -108,8 +111,7 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
             className="cursor-pointer group"
           >
             <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors flex items-center gap-2">
-              <Flag size={20} className="text-orange-600" />
-              Report
+               Report
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               Your report will be anonymous
@@ -122,8 +124,7 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
             className="cursor-pointer group"
           >
             <h3 className="font-bold text-gray-900 group-hover:text-gray-600 transition-colors flex items-center gap-2">
-              <MessageX size={20} className="text-gray-600" />
-              Jilt
+               Jilt
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               No longer interested in {profile.name}? Remove from matches

@@ -24,6 +24,7 @@ export const endpoints = {
     deleteAccount: "/users/account",
     jilt: (id: string) => `/profile/dislike/${id}`,
     block: (id: string) => `/profile/block/${id}`,
+    unblock: (id: string) => `/profile/unblock/${id}`,
     proceedToDate: (id: string) => `/profile/date/proceed/${id}`,
   },
   admin: {

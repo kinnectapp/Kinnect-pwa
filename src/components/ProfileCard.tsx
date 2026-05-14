@@ -23,6 +23,7 @@ interface ProfileEssentials {
 interface Profile {
   id: string;
   name: string;
+  username?: string;
   location: string;
   dob: string;
   personalityPercentage: string;
@@ -181,7 +182,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         <div className="flex items-start justify-between mb-2">
           <div>
             <h2 className="text-2xl !capitalize font-semibold text-[#1C1C1C]">
-              {profile.name}
+              {profile.username}
             </h2>
             {profile.location && (
               <div className="flex items-center gap-1 mt-1">
