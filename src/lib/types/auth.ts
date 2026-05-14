@@ -64,6 +64,7 @@ export interface User {
   streamToken?: string;
   stream_token?: string;
   incognito?: boolean;
+  blockedUsers?: number[];
   plan?: string;
   subscriptionPlan?: string;
   subscriptionType?: string;

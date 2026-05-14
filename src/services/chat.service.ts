@@ -67,6 +67,11 @@ export const chatService = {
     return data;
   },
 
+  unblockUser: async (id: string) => {
+    const { data } = await http.put(endpoints.users.unblock(id), {});
+    return data;
+  },
+
   jiltUser: async (id: string) => {
     const { data } = await http.put(endpoints.users.jilt(id), {});
     return data;

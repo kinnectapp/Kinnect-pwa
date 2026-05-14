@@ -1,26 +1,32 @@
 import React from "react";
-import { X, Heart, Gift, Ban, Flag, MessageCircleX } from "lucide-react";
+import { X } from "lucide-react";
 
 interface ChatOptionsModalProps {
   isOpen: boolean;
   partnerName: string;
+  isBlocked?: boolean;
   onClose: () => void;
   onProceedToDate: () => void;
   onSponsorPlan: () => void;
   onBlock: () => void;
+  onUnblock?: () => void;
   onReport: () => void;
   onJilt: () => void;
+  profileComp?: React.ReactNode;
 }
 
 const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
   isOpen,
   partnerName,
+  isBlocked = false,
   onClose,
   onProceedToDate,
   onSponsorPlan,
   onBlock,
+  onUnblock,
   onReport,
   onJilt,
+  profileComp,
 }) => {
   if (!isOpen) return null;
 
@@ -35,6 +41,8 @@ const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
           <X size={24} className="text-gray-600" />
         </button>
 
+        {profileComp}
+
         {/* MORE Label */}
         <div className="text-xs font-semibold text-gray-500 mb-6 pt-2">
           MORE
@@ -45,7 +53,7 @@ const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
           {/* Proceed to Date */}
           <div onClick={onProceedToDate} className="cursor-pointer group">
             <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors flex items-center gap-3">
-              <Heart size={20} className="text-purple-600" />
+    
               Proceed To Date
             </h3>
             <p className="text-sm text-gray-600 mt-2">
@@ -56,30 +64,29 @@ const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
           {/* Sponsor Plan */}
           <div onClick={onSponsorPlan} className="cursor-pointer group">
             <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors flex items-center gap-3">
-              <Gift size={20} className="text-purple-600" />
-              Sponsor Plan
+               Sponsor Plan
             </h3>
             <p className="text-sm text-gray-600 mt-2">
               Sponsor this user as they are on a freemium.
             </p>
           </div>
 
-          {/* Block */}
-          <div onClick={onBlock} className="cursor-pointer group">
+          {/* Block / Unblock */}
+          <div onClick={isBlocked ? onUnblock : onBlock} className="cursor-pointer group">
             <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors flex items-center gap-3">
-              <Ban size={20} className="text-red-600" />
-              Block
+              {isBlocked ? "Unblock" : "Block"}
             </h3>
             <p className="text-sm text-gray-600 mt-2">
-              This user can no longer see or interact with you once blocked.
+              {isBlocked
+                ? "Unblock this user to send and receive messages."
+                : "This user can no longer see or interact with you once blocked."}
             </p>
           </div>
 
           {/* Report */}
           <div onClick={onReport} className="cursor-pointer group">
             <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors flex items-center gap-3">
-              <Flag size={20} className="text-red-600" />
-              Report
+               Report
             </h3>
             <p className="text-sm text-gray-600 mt-2">
               Your report will be anonymous
@@ -89,8 +96,7 @@ const ChatOptionsModal: React.FC<ChatOptionsModalProps> = ({
           {/* Jilt */}
           <div onClick={onJilt} className="cursor-pointer group pb-4">
             <h3 className="font-bold text-gray-900 group-hover:text-red-600 transition-colors flex items-center gap-3">
-              <MessageCircleX size={20} className="text-red-600" />
-              Jilt
+               Jilt
             </h3>
             <p className="text-sm text-gray-600 mt-2">
               No longer interested in {partnerName}? Remove from matches

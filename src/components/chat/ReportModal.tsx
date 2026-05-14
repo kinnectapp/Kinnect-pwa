@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, CheckCircle } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -8,17 +8,16 @@ interface ReportModalProps {
   userLocation?: string;
   onClose: () => void;
   onSubmit: (reason: string) => Promise<void>;
+  onJilt?: () => void;
   isLoading?: boolean;
 }
 
 const REPORT_REASONS = [
-  "Inappropriate messages",
-  "Harassment",
+  "Sexual Abuse",
+  "Too Aggressive",
   "Spam",
-  "Fake profile",
-  "Scam attempt",
-  "Offensive content",
-  "Other",
+  "Fake Profile",
+  "Inappropriate Content",
 ];
 
 const ReportModal: React.FC<ReportModalProps> = ({
@@ -28,161 +27,107 @@ const ReportModal: React.FC<ReportModalProps> = ({
   userLocation,
   onClose,
   onSubmit,
+  onJilt,
   isLoading = false,
 }) => {
-  const [selectedReason, setSelectedReason] = useState<string>("");
-  const [customReason, setCustomReason] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async () => {
-    const finalReason =
-      selectedReason === "Other" ? customReason : selectedReason;
-    if (!finalReason.trim()) return;
-    await onSubmit(finalReason);
+  const handleReasonSelect = async (reason: string) => {
+    if (isLoading) return;
+    await onSubmit(reason);
     setIsSubmitted(true);
-    setTimeout(() => {
-      setSelectedReason("");
-      setCustomReason("");
-      setIsSubmitted(false);
-      onClose();
-    }, 2000);
+  };
+
+  const handleClose = () => {
+    setIsSubmitted(false);
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-      <div className="w-full bg-white rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-          disabled={isLoading}
-        >
-          <X size={24} className="text-gray-600" />
-        </button>
+      <div className="w-full bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-center relative px-6 pt-6 pb-4">
+          <h2 className="text-lg font-bold text-[#55288D]">Report Match</h2>
+          <button
+            onClick={handleClose}
+            className="absolute right-6 top-6 p-1 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X size={22} className="text-gray-500" />
+          </button>
+        </div>
 
-        <div className="pt-2">
-          <h2 className="text-lg font-bold text-blue-600 text-center mb-6">
-            Report Match
-          </h2>
-
-          {isSubmitted ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="mb-4">
-                <CheckCircle size={60} className="text-green-500" />
+        {isSubmitted ? (
+          <div className="px-6 pb-8">
+            {/* User card */}
+            {(userImage || userName) && (
+              <div className="flex items-center gap-3 bg-gray-100 rounded-2xl px-4 py-3 mb-8">
+                {userImage ? (
+                  <img
+                    src={userImage}
+                    alt={userName}
+                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0" />
+                )}
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">{userName}</p>
+                  {userLocation && (
+                    <p className="text-xs text-gray-500">{userLocation}</p>
+                  )}
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 text-center">
+            )}
+
+            {/* Confirmation message */}
+            <div className="text-center mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
                 Report Received
               </h3>
-              <p className="text-sm text-gray-600 text-center">
+              <p className="text-sm text-gray-500 leading-relaxed">
                 Thanks for the report. Necessary actions will be taken towards
                 your report.
               </p>
             </div>
-          ) : (
-            <>
-              {/* User Profile Info */}
-              {(userImage || userName) && (
-                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
-                  {userImage && (
-                    <img
-                      src={userImage}
-                      alt={userName}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{userName} </h3>
-                    {userLocation && (
-                      <p className="text-sm text-gray-600">{userLocation}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-              <p className="text-sm text-gray-600 mb-6 text-center">
-                Your report will be anonymous and reviewed by our team.
-              </p>
 
-              {/* Reason Selection */}
-              <div className="space-y-3 mb-6">
-                <label className="text-xs font-semibold text-gray-500 mb-3 block">
-                  SELECT REASON
-                </label>
-                {REPORT_REASONS.map((reason) => (
-                  <div
-                    key={reason}
-                    onClick={() => {
-                      setSelectedReason(reason);
-                      if (reason !== "Other") setCustomReason("");
-                    }}
-                    className={`p-4 rounded-lg cursor-pointer transition-all border-2 ${
-                      selectedReason === reason
-                        ? "border-[#D400B3] bg-pink-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
-                          selectedReason === reason
-                            ? "border-[#D400B3] bg-[#D400B3]"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {selectedReason === reason && (
-                          <div className="w-2 h-2 bg-white rounded-full" />
-                        )}
-                      </div>
-                      <span
-                        className={`text-sm font-medium ${
-                          selectedReason === reason
-                            ? "text-[#D400B3]"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {reason}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* Jilt button */}
+            <button
+              onClick={() => {
+                onJilt?.();
+                handleClose();
+              }}
+              className="w-full py-4 rounded-full bg-[#D400B3] text-white font-semibold text-base"
+            >
+              Jilt
+            </button>
+          </div>
+        ) : (
+          <div className="px-6 pb-8">
+            <p className="text-sm text-gray-500 mb-4">Select a reason</p>
 
-              {/* Custom Reason Input */}
-              {selectedReason === "Other" && (
-                <div className="mb-6">
-                  <label className="text-xs font-semibold text-gray-500 mb-2 block">
-                    DESCRIBE THE ISSUE
-                  </label>
-                  <textarea
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    placeholder="Please describe the issue in detail..."
-                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#D400B3] focus:ring-1 focus:ring-[#D400B3] [-webkit-text-size-adjust:100%]"
-                    rows={4}
-                    disabled={isLoading}
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {!isSubmitted && (
-            <div className="grid grid-cols-1 gap-3 mt-8">
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  isLoading ||
-                  !selectedReason ||
-                  (selectedReason === "Other" && !customReason.trim())
-                }
-                className="w-full px-4 py-3 rounded-full bg-[#D400B3] text-white font-semibold hover:bg-[#d10558] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? "Submitting..." : "Submit Report"}
-              </button>
+            {/* Reasons list */}
+            <div className="bg-gray-100 rounded-2xl overflow-hidden">
+              {REPORT_REASONS.map((reason, index) => (
+                <button
+                  key={reason}
+                  onClick={() => handleReasonSelect(reason)}
+                  disabled={isLoading}
+                  className={`w-full flex items-center justify-between px-4 py-4 bg-white text-left disabled:opacity-50 ${
+                    index < REPORT_REASONS.length - 1
+                      ? "border-b border-gray-100"
+                      : ""
+                  }`}
+                >
+                  <span className="text-sm text-gray-700">{reason}</span>
+                  <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+                </button>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
