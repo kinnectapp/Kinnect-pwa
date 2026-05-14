@@ -232,6 +232,31 @@ const COUNTRIES = (countryList as CountryItem[])
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
+const validateUsername = (
+  username: string,
+  firstname: string,
+  lastname: string,
+): string | null => {
+  const trimmedUsername = username.trim().toLowerCase();
+  const trimmedFirstname = firstname.trim().toLowerCase();
+  const trimmedLastname = lastname.trim().toLowerCase();
+
+  // Check if username contains spaces
+  if (/\s/.test(username)) {
+    return "Username cannot contain spaces";
+  }
+
+  // Check if username is exactly firstname or lastname
+  if (
+    trimmedUsername === trimmedFirstname ||
+    trimmedUsername === trimmedLastname
+  ) {
+    return "Username cannot be the same as your first name or last name";
+  }
+
+  return null;
+};
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const defaultCountry = COUNTRIES.find((country) => country.iso3 === "NGA");
@@ -256,6 +281,16 @@ const Register: React.FC = () => {
       newErrors.firstname = "First name is required";
     if (!formData.lastname.trim()) newErrors.lastname = "Last name is required";
     if (!formData.username.trim()) newErrors.username = "Username is required";
+    else {
+      const usernameError = validateUsername(
+        formData.username,
+        formData.firstname,
+        formData.lastname,
+      );
+      if (usernameError) {
+        newErrors.username = usernameError;
+      }
+    }
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
@@ -382,6 +417,7 @@ const Register: React.FC = () => {
                 errors.username ? "border-red-500" : ""
               }`}
             />
+            <p className="text-xs text-[#6C6C80]">Username is for anonymity</p>
             {errors.username && (
               <p className="text-xs text-red-500">{errors.username}</p>
             )}

@@ -1,6 +1,12 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, MoreVertical, AlertCircle, Lock } from "lucide-react";
+import { ChevronLeft, MoreVertical, AlertCircle, Lock, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import UserImg from "../../assets/images/user-profile.png";
@@ -9,14 +15,13 @@ import {
   CHAT_MEDIA_UNLOCK_DAYS,
   usePersonalChatAccess,
 } from "@/hooks/usePersonalChatAccess";
-import {
-  ensureStreamConnected,
-} from "@/services/stream-chat.service";
+import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
 import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
-import ConfirmationModal from "./ConfirmationModal";
+ import JiltModal from "./JiltModal";
+import BlockModal from "./BlockModal";
 import SponsorModal from "./SponsorModal";
 import CustomDateSeparator from "./CustomDateSeparator";
 import CustomMessageStatus from "./CustomMessageStatus";
@@ -45,11 +50,12 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const channelId = decodeURIComponent(rawChannelId);
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { channelName?: string; channelImage?: string } | null;
+  const locationState = location.state as {
+    channelName?: string;
+    channelImage?: string;
+  } | null;
   const user = useAuthStore((state) => state.user);
-  const setActiveChannelId = useChatStore(
-    (state) => state.setActiveChannelId,
-  );
+  const setActiveChannelId = useChatStore((state) => state.setActiveChannelId);
   const cachedPersonalChannels = useChatStore(
     (state) => state.personalChannels,
   );
@@ -89,7 +95,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       try {
         const currentUser = useAuthStore.getState().user;
         const client = await ensureStreamConnected(currentUser);
-        
+
         // Better way to grab cached channels:
         const [type, id] = channelId.split(":");
         let selected = client.channel(type, id);
@@ -109,7 +115,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         if (!selected) {
           setErrorMessage("Chat not found.");
           setHasError(true);
-          redirectTimerRef.current = setTimeout(() => navigate("/app/chats", { replace: true }), 2000);
+          redirectTimerRef.current = setTimeout(
+            () => navigate("/app/chats", { replace: true }),
+            2000,
+          );
           return;
         }
 
@@ -122,7 +131,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
         setPartnerId(otherMember?.user_id || "");
         setPartnerLocation(
-          `${(otherMember?.user as any)?.state || ""}, ${(otherMember?.user as any)?.country || ""}`.trim(),
+          `${(otherMember?.user as any)?.state || ""} ${(otherMember?.user as any)?.country || ""}`.trim(),
         );
         setChannel(selected);
         setActiveChannelId(selected.cid);
@@ -146,7 +155,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       setActiveChannelId(null);
       if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
     };
-  }, [channelId, currentUserId, navigate, setActiveChannelId]);
+  }, [channelId, currentUserId, navigate, setActiveChannelId, showActions]);
 
   // Fetch full user data when partner ID is set (DM only)
   useEffect(() => {
@@ -159,11 +168,15 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         const fullUserData = await chatService.getUserById(partnerId);
         if (fullUserData && isMounted) {
           const resp = fullUserData?.data?.resp;
-          setPartnerFullName([resp?.firstname, resp?.lastname].filter(Boolean).join(" "));
+          setPartnerFullName(
+            resp?.incognito
+              ? resp?.username || ""
+              : [resp?.firstname, resp?.lastname].filter(Boolean).join(" "),
+          );
           setPartnerAge(fullUserData?.data?.resp?.dob || "");
           setPartnerImage(fullUserData?.data?.resp?.profilePhotos[fullUserData?.data?.resp?.profilePhotos.length - 1] || "");
           const location =
-            `${fullUserData?.data?.resp?.state || ""}, ${fullUserData?.data?.resp?.country || ""}`.trim();
+            `${fullUserData?.data?.resp?.state || ""} ${fullUserData?.data?.resp?.country || ""}`.trim();
           setPartnerLocation(location);
         }
       } catch (error) {
@@ -176,7 +189,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     return () => {
       isMounted = false;
     };
-  }, [partnerId]);
+  }, [partnerId, showActions]);
 
   // Handle Proceed to Date
   const handleProceedToDate = useCallback(async () => {
@@ -257,6 +270,8 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     try {
       setIsPerformingAction(true);
       await chatService.blockUser(partnerId);
+      const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
+      await useAuthStore.getState().setUser({ ...user!, blockedUsers: [...currentBlocked, Number(partnerId)] });
       toast.success("User blocked.");
       setShowBlockModal(false);
       setShowActions(false);
@@ -270,7 +285,22 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     } finally {
       setIsPerformingAction(false);
     }
-  }, [partnerId, navigate]);
+  }, [partnerId, navigate, user]);
+
+  const handleUnblockUser = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.unblockUser(partnerId);
+      const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
+      await useAuthStore.getState().setUser({ ...user!, blockedUsers: currentBlocked.filter((id) => id !== Number(partnerId)) });
+      toast.success("User unblocked.");
+      setShowActions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId, user]);
 
   // Handle Jilt
   const handleJiltUser = useCallback(() => {
@@ -306,9 +336,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     if (channel.type !== "messaging") {
       return String(
         (channel.data as Record<string, any>)?.name ||
-        locationState?.channelName ||
-        cachedCommunityChannels.find((item) => item.cid === channelId)?.name ||
-        "Community Channel",
+          locationState?.channelName ||
+          cachedCommunityChannels.find((item) => item.cid === channelId)
+            ?.name ||
+          "Community Channel",
       );
     }
     const members = Object.values(channel.state.members || {});
@@ -330,13 +361,23 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     if (!partnerAge) return null;
     const dob = new Date(partnerAge);
     if (isNaN(dob.getTime())) return null;
-    return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+    return Math.floor(
+      (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25),
+    );
   }, [partnerAge]);
 
   const isPersonalChat = channel?.type === "messaging";
+
+  const isPartnerBlocked = useMemo(() => {
+    if (!isPersonalChat || !partnerId || !user?.blockedUsers) return false;
+    return (user.blockedUsers as number[]).includes(Number(partnerId));
+  }, [isPersonalChat, partnerId, user?.blockedUsers]);
+
   const shouldRestrictMediaSharing =
     isPersonalChat &&
-    (!partnerId || personalChatAccess.isLoading || !personalChatAccess.canShareMedia);
+    (!partnerId ||
+      personalChatAccess.isLoading ||
+      !personalChatAccess.canShareMedia);
   const lockedMediaMessage = personalChatAccess.hasChatHistory
     ? `Keep chatting for ${personalChatAccess.daysUntilUnlock} more day${
         personalChatAccess.daysUntilUnlock === 1 ? "" : "s"
@@ -375,10 +416,15 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
           <h2
-            onClick={() => isPersonalChat ? navigate(`/app/match-profile/${partnerId}`) : undefined}
+            onClick={() =>
+              isPersonalChat
+                ? navigate(`/app/match-profile/${partnerId}`)
+                : undefined
+            }
             className={`font-semibold text-[#55288D] capitalize flex items-center gap-1 text-[18px] ${isPersonalChat ? "cursor-pointer" : "cursor-default"}`}
           >
-            {title} <span className="w-1.5 h-1.5 rounded-full bg-[#F416C4]"></span>
+            {title}{" "}
+            <span className="w-1.5 h-1.5 rounded-full bg-[#F416C4]"></span>
           </h2>
           {isPersonalChat ? (
             <button
@@ -411,12 +457,36 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
       {/* Action menu */}
       <ChatOptionsModal
+        profileComp={
+          isPersonalChat ? (
+            <div className="flex items-center gap-3 mb-6">
+              <img
+                src={partnerImage || UserImg}
+                alt=""
+                className={`w-[50px] h-[50px] object-cover rounded-full border ${
+                  isPersonalChat && !personalChatAccess.canShareMedia
+                    ? " blur-sm"
+                    : ""
+                }`}
+              />
+              <div>
+                <p className="text-gray-900 font-medium">
+                  {title}
+                  {title && partnerAgeDisplay ? `, ${partnerAgeDisplay}` : ""}
+                </p>
+                <p className="text-sm text-gray-600">{partnerLocation}</p>
+              </div>
+            </div>
+          ) : null
+        }
         isOpen={showActions}
         partnerName={title}
+        isBlocked={isPartnerBlocked}
         onClose={() => setShowActions(false)}
         onProceedToDate={handleProceedToDate}
         onSponsorPlan={handleSponsorPlan}
         onBlock={handleBlockUser}
+        onUnblock={handleUnblockUser}
         onReport={handleReportUser}
         onJilt={handleJiltUser}
       />
@@ -433,28 +503,24 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       />
 
       {/* Block Confirmation Modal */}
-      <ConfirmationModal
+      <BlockModal
         isOpen={showBlockModal}
-        title="Block Match"
-        message={`Are you sure you want to block ${title}? They will no longer be able to see or interact with you. And the user will no longer appear on your feed`}
+        userName={title}
         userImage={partnerImage}
         userLocation={partnerLocation}
-        confirmText="Block"
-        isDangerous
+        blurImage={!personalChatAccess.canShareMedia}
         onClose={() => setShowBlockModal(false)}
         onConfirm={handleConfirmBlock}
         isLoading={isPerformingAction}
       />
 
       {/* Jilt Confirmation Modal */}
-      <ConfirmationModal
+      <JiltModal
         isOpen={showJiltModal}
-        title="Jilt Match"
-        message={`Are you sure you want to jilt this match? By jilting this match, it means your are no longer interested and want to put off this conversation.`}
+        userName={title}
         userImage={partnerImage}
         userLocation={partnerLocation}
-        confirmText="Jilt"
-        isDangerous
+        blurImage={!personalChatAccess.canShareMedia}
         onClose={() => setShowJiltModal(false)}
         onConfirm={handleConfirmJilt}
         isLoading={isPerformingAction}
@@ -477,61 +543,84 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
             <Channel
               channel={channel}
               AttachmentSelector={
-                shouldRestrictMediaSharing ? DisabledAttachmentSelector : undefined
+                shouldRestrictMediaSharing
+                  ? DisabledAttachmentSelector
+                  : undefined
               }
               DateSeparator={CustomDateSeparator}
               MessageStatus={CustomMessageStatus as any}
               QuotedMessage={CustomQuotedMessage as any}
             >
               <div className=" border flex min-h-0 flex-1 flex-col overflow-hidden">
-              <Window>
-                <MessageList
-                  messageActions={['react', 'quote', 'delete']}
-                  head={
-                    <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
-                      <img
-                        src={
-                          isPersonalChat
-                            ? partnerImage || UserImg
-                            : String(
-                                (channel?.data as Record<string, any>)?.image ||
-                                locationState?.channelImage ||
-                                cachedCommunityChannels.find((item) => item.cid === channelId)?.image ||
-                                "/pwa-192x192.png",
-                              )
-                        }
-                        alt=""
-                        className={`w-[60px] object-cover h-[60px] rounded-full border transition-[filter] duration-300${
-                          isPersonalChat && !personalChatAccess.canShareMedia
-                            ? " blur-sm"
-                            : ""
-                        }`}
+                <Window>
+                  <MessageList
+                    messageActions={["react", "quote", "delete"]}
+                    head={
+                      <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
+                        <img
+                          src={
+                            isPersonalChat
+                              ? partnerImage || UserImg
+                              : String(
+                                  (channel?.data as Record<string, any>)
+                                    ?.image ||
+                                    locationState?.channelImage ||
+                                    cachedCommunityChannels.find(
+                                      (item) => item.cid === channelId,
+                                    )?.image ||
+                                    "/pwa-192x192.png",
+                                )
+                          }
+                          alt=""
+                          className={`w-[60px] object-cover h-[60px] rounded-full border transition-[filter] duration-300${
+                            isPersonalChat && !personalChatAccess.canShareMedia
+                              ? " blur-sm"
+                              : ""
+                          }`}
+                        />
+                        {isPersonalChat && partnerFullName && (
+                          <p className="text-[#1C1C1C] font-medium text-[14px]">
+                            {title ?? ""}
+                            {title ? `, ${partnerAgeDisplay}` : ""}
+                          </p>
+                        )}
+                      </div>
+                    }
+                  />
+                  <TypingIndicator />
+                  {isPartnerBlocked && (
+                    <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
+                      <div className="flex items-start gap-2">
+                        <Ban className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
+                        <p>You have blocked this user. Unblock them to send and receive messages.</p>
+                      </div>
+                    </div>
+                  )}
+                  {!personalChatAccess.isLoading &&
+                    isPersonalChat &&
+                    !personalChatAccess.canShareMedia &&
+                    !isPartnerBlocked && (
+                      <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
+                        <div className="flex items-start gap-2">
+                          <Lock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
+                          <p>{lockedMediaMessage}</p>
+                        </div>
+                      </div>
+                    )}
+                  {isPartnerBlocked ? (
+                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-4 flex items-center justify-center gap-2 text-sm text-gray-400">
+                      <Ban size={16} />
+                      <span>You've blocked this user</span>
+                    </div>
+                  ) : (
+                    <div className="border">
+                      <MessageInput
+                        audioRecordingEnabled={!shouldRestrictMediaSharing}
+                        overrideSubmitHandler={handleMessageSubmit}
                       />
-                      {isPersonalChat && partnerFullName && (
-                        <p className="text-[#1C1C1C] font-medium text-[14px]">
-                          {partnerFullName}{partnerAgeDisplay ? `, ${partnerAgeDisplay}` : ''}
-                        </p>
-                      )}
                     </div>
-                  }
-                />
-                <TypingIndicator />
-                {!personalChatAccess.isLoading && isPersonalChat && !personalChatAccess.canShareMedia && (
-                  <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
-                    <div className="flex items-start gap-2">
-                      <Lock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
-                      <p>{lockedMediaMessage}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="border">
-                     <MessageInput
-                  audioRecordingEnabled={!shouldRestrictMediaSharing}
-                  overrideSubmitHandler={handleMessageSubmit}
-                />
-                </div>
-             
-              </Window>
+                  )}
+                </Window>
               </div>
             </Channel>
           </div>
