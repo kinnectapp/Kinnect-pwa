@@ -63,12 +63,20 @@ export const chatService = {
   },
 
   blockUser: async (id: string) => {
-    const { data } = await http.put(endpoints.users.block(id), {});
+    const [{ data }, client] = await Promise.all([
+      http.put(endpoints.users.block(id), {}),
+      ensureStreamClient(),
+    ]);
+    await client.blockUser(id);
     return data;
   },
 
   unblockUser: async (id: string) => {
-    const { data } = await http.put(endpoints.users.unblock(id), {});
+    const [{ data }, client] = await Promise.all([
+      http.put(endpoints.users.unblock(id), {}),
+      ensureStreamClient(),
+    ]);
+    await client.unBlockUser(id);
     return data;
   },
 
