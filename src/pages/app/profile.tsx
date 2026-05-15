@@ -6,6 +6,7 @@ import { useAuth } from "@/api/auth";
 import { handleApiError } from "@/api/serviceUtils";
 import { useAuthStore } from "@/store/auth.store";
 import { getSubscriptionPermissions } from "@/lib/subscription";
+import { calculateProfileStrength } from "@/lib/profile-strength";
 import ProfileIconImg from "../../assets/images/profileIcon.png";
 import {
   BookCoachingIcon,
@@ -27,6 +28,7 @@ import confettiImage from "@/assets/images/confetti.svg";
 import { Logo } from "@/components/layout/logo";
 import ConfirmationModal from "@/components/chat/ConfirmationModal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
+import ProfileStrengthModal from "@/components/ProfileStrengthModal";
 
 const RatingReviewModal: React.FC<{
   open: boolean;
@@ -518,6 +520,8 @@ const ProfilePage: React.FC = () => {
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] =
     React.useState(false);
   const [isProfileImageOpen, setIsProfileImageOpen] = React.useState(false);
+  const [isProfileStrengthModalOpen, setIsProfileStrengthModalOpen] =
+    React.useState(false);
 
   const displayName =
     `${user?.firstname ?? ""} ${user?.lastname ?? ""}`.trim() ||
@@ -527,6 +531,7 @@ const ProfilePage: React.FC = () => {
   const profilePhoto =
     (Array.isArray(user?.profilePhotos) ? user?.profilePhotos[0] : null) ||
     UserImage;
+  const profileStrength = user ? calculateProfileStrength(user) : 0;
 
   const handleConfirmLogout = React.useCallback(async () => {
     try {
@@ -634,16 +639,20 @@ const ProfilePage: React.FC = () => {
           </button>
         </div>
 
-        <div className="mt-5 rounded-[10px] bg-[#21003F]  text-white">
+        <button
+          type="button"
+          // onClick={() => setIsProfileStrengthModalOpen(true)}
+          className="w-full mt-5 rounded-[10px] bg-[#21003F] text-white hover:bg-[#2d0052] transition-colors"
+        >
           <div className="flex p-4 items-center justify-between">
             <div className="flex gap-4 items-center">
               <img src={ProfileIconImg} className="w-8 h-8" alt="" />
-              <div className="">
+              <div className="text-left">
                 <p className="text-[12px] font-medium text-[#D7CBE6]">
                   Profile Strength
                 </p>
                 <p className="text-[18px] font-semibold leading-none">
-                  60% Completed
+                  {profileStrength}% Completed
                 </p>
               </div>
             </div>
@@ -652,7 +661,7 @@ const ProfilePage: React.FC = () => {
           <p className="mt-3 p-4 border-t border-dashed border-[#ffffff3d] text-[12px] text-[#D7CBE6]">
             Complete your profile now to get more matches
           </p>
-        </div>
+        </button>
 
         <div className="mt-4 rounded-[10px] bg-[#FAF8FB] px-4 py-2">
           {menuItems.map((item) => (
@@ -762,6 +771,14 @@ const ProfilePage: React.FC = () => {
         images={[profilePhoto]}
         isOpen={isProfileImageOpen}
         onClose={() => setIsProfileImageOpen(false)}
+      />
+      <ProfileStrengthModal
+        isOpen={isProfileStrengthModalOpen}
+        onClose={() => setIsProfileStrengthModalOpen(false)}
+        user={user}
+        onNavigateToField={(field) => {
+          navigate("/app/my-profile", { state: { scrollToField: field } });
+        }}
       />
     </div>
   );
