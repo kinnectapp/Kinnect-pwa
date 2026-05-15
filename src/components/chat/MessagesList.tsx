@@ -32,14 +32,19 @@ const toPreview = (
   let previewText = "No messages yet";
   if (lastMessage) {
     const hasText = lastMessage.text && lastMessage.text.trim().length > 0;
-    const hasAttachment = lastMessage.attachments && lastMessage.attachments.length > 0;
+    const hasAttachment =
+      lastMessage.attachments && lastMessage.attachments.length > 0;
     if (hasText) {
       previewText = lastMessage.text!;
     } else if (hasAttachment) {
       const attachment = lastMessage.attachments![0];
       if (attachment.type === "image") previewText = "📷 Photo";
       else if (attachment.type === "video") previewText = "🎥 Video";
-      else if (attachment.type === "voiceRecording" || attachment.type === "audio") previewText = "🎤 Voice Note";
+      else if (
+        attachment.type === "voiceRecording" ||
+        attachment.type === "audio"
+      )
+        previewText = "🎤 Voice Note";
       else previewText = "📎 Attachment";
     }
   }
@@ -75,15 +80,23 @@ const ChannelAvatar = ({
   useEffect(() => {
     let isMounted = true;
     if (!initialImage || initialImage === "/pwa-192x192.png") {
-      chatService.getUserById(userId).then((data) => {
-        const photos = data?.data?.resp?.profilePhotos;
-        if (photos?.[photos.length - 1] && isMounted) setImage(photos[photos.length - 1]);
-      }).catch(() => {});
+      chatService
+        .getUserById(userId)
+        .then((data) => {
+          const photos = data?.data?.resp?.profilePhotos;
+          if (photos?.[photos.length - 1] && isMounted)
+            setImage(photos[photos.length - 1]);
+        })
+        .catch(() => {});
     }
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [userId, initialImage]);
 
-  return <img src={image || "/pwa-192x192.png"} alt={alt} className={className} />;
+  return (
+    <img src={image || "/pwa-192x192.png"} alt={alt} className={className} />
+  );
 };
 
 // Full row for the main list — fetches name + image together if Stream is missing either
@@ -92,9 +105,9 @@ const ChannelListItem: React.FC<{
   onClick: (name: string, image: string) => void;
 }> = ({ item, onClick }) => {
   const userId = item.userId || item.id;
-  const needsEnrich = !item.name || item.name === "Direct Message" || !item.image;
+  const needsEnrich =
+    !item.name || item.name === "Direct Message" || !item.image;
 
- 
   const [displayImage, setDisplayImage] = useState(
     item.image && item.image !== "/pwa-192x192.png" ? item.image : "",
   );
@@ -105,20 +118,27 @@ const ChannelListItem: React.FC<{
     let isMounted = true;
 
     setIsLoading(true);
-    chatService.getUserById(userId).then((data) => {
-      const resp = data?.data?.resp;
-      if (!isMounted) return;
-      if (resp) {
-          if (resp.profilePhotos?.[resp.profilePhotos.length - 1]) setDisplayImage(resp.profilePhotos[resp.profilePhotos.length - 1]);
-      }
-    }).catch(() => {}).finally(() => {
-      if (isMounted) setIsLoading(false);
-    });
+    chatService
+      .getUserById(userId)
+      .then((data) => {
+        const resp = data?.data?.resp;
+        if (!isMounted) return;
+        if (resp) {
+          if (resp.profilePhotos?.[resp.profilePhotos.length - 1])
+            setDisplayImage(resp.profilePhotos[resp.profilePhotos.length - 1]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [userId, needsEnrich]);
 
-  const name =   item.name || "Direct Message";
+  const name = item.name || "Direct Message";
   const image = displayImage || item.image || "";
   const initial = name.charAt(0).toUpperCase();
 
@@ -137,7 +157,9 @@ const ChannelListItem: React.FC<{
         />
       ) : (
         <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
-          <span className="text-[#55288D] font-semibold text-lg leading-none">{initial}</span>
+          <span className="text-[#55288D] font-semibold text-lg leading-none">
+            {initial}
+          </span>
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -164,7 +186,9 @@ const MessagesList: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const cachedChannels = useChatStore((state) => state.personalChannels);
-  const setPersonalChannels = useChatStore((state) => state.setPersonalChannels);
+  const setPersonalChannels = useChatStore(
+    (state) => state.setPersonalChannels,
+  );
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -175,7 +199,9 @@ const MessagesList: React.FC = () => {
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const loadChannels = async () => {
@@ -184,12 +210,28 @@ const MessagesList: React.FC = () => {
     try {
       const client = await ensureStreamConnected(user);
       const userId = String(user.id);
-      const queried = await client.queryChannels(
-        { type: "messaging", members: { $in: [userId] } },
-        { last_message_at: -1 },
-        { state: true, watch: true, limit: 30, message_limit: 30 },
-      );
+      const filter = { type: "messaging", members: { $in: [userId] } };
+      const sort = { last_message_at: -1 } as const;
+      const queryOpts = {
+        state: true,
+        watch: true,
+        limit: 30,
+        message_limit: 30,
+      };
+
+      const [visible, hiddenChannels] = await Promise.all([
+        client.queryChannels(filter, sort, queryOpts),
+        client.queryChannels({ ...filter, hidden: true }, sort, queryOpts),
+      ]);
+
       if (!isMountedRef.current) return;
+
+      const seen = new Set(visible.map((c) => c.cid));
+      const queried = [
+        ...visible,
+        ...hiddenChannels.filter((c) => !seen.has(c.cid)),
+      ];
+
       setChannels(queried);
       setPersonalChannels(queried.map((channel) => toPreview(channel, userId)));
       setHasLoadedOnce(true);
@@ -256,7 +298,10 @@ const MessagesList: React.FC = () => {
       const members = Object.values(channel.state.members || {});
       const otherMember = members.find((m) => m.user_id !== String(user.id));
       if (otherMember?.user?.online) {
-        uniqueUsers.set(otherMember.user.id, { ...otherMember.user, cid: channel.cid });
+        uniqueUsers.set(otherMember.user.id, {
+          ...otherMember.user,
+          cid: channel.cid,
+        });
       }
     });
     return Array.from(uniqueUsers.values());
@@ -269,7 +314,10 @@ const MessagesList: React.FC = () => {
     return (
       <div className="space-y-3 p-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-16 animate-pulse rounded-md bg-[#F3F3F6]" />
+          <div
+            key={index}
+            className="h-16 animate-pulse rounded-md bg-[#F3F3F6]"
+          />
         ))}
       </div>
     );
@@ -308,7 +356,9 @@ const MessagesList: React.FC = () => {
           {onlineUsers.map((u) => (
             <button
               key={u.id}
-              onClick={() => navigate(`/app/chats/${encodeURIComponent(u.cid)}`)}
+              onClick={() =>
+                navigate(`/app/chats/${encodeURIComponent(u.cid)}`)
+              }
               className="flex flex-col items-center gap-1 w-[56px] shrink-0 transition-opacity hover:opacity-80"
             >
               <div className="relative">
@@ -331,19 +381,66 @@ const MessagesList: React.FC = () => {
       <KinnectChatBtn />
 
       {list.length === 0 && hasError ? (
-        <p className="p-4 text-sm text-[#77707F]">Unable to load chats. Try refreshing.</p>
+        <p className="p-4 text-sm text-[#77707F]">
+          Unable to load chats. Try refreshing.
+        </p>
       ) : (
-        list.map((item) => (
-          <ChannelListItem
-            key={item.cid}
-            item={item}
-            onClick={(name, image) =>
-              navigate(`/app/chats/${encodeURIComponent(item.cid)}`, {
-                state: { channelName: name, channelImage: image },
-              })
-            }
-          />
-        ))
+        (() => {
+          const normalChats = list.filter(
+            (item) =>
+              !(user?.blockedUsers as number[] | undefined)?.includes(
+                Number(item.userId),
+              ),
+          );
+          const blockedChats = list.filter((item) =>
+            (user?.blockedUsers as number[] | undefined)?.includes(
+              Number(item.userId),
+            ),
+          );
+
+          return (
+            <>
+              {/* Normal Chats */}
+              {normalChats.map((item) => (
+                <ChannelListItem
+                  key={item.cid}
+                  item={item}
+                  onClick={(name, image) =>
+                    navigate(`/app/chats/${encodeURIComponent(item.cid)}`, {
+                      state: { channelName: name, channelImage: image },
+                    })
+                  }
+                />
+              ))}
+
+              {/* Separator and Blocked Chats Header */}
+              {blockedChats.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-3 my-2">
+                    <div className="flex-1 h-px bg-gray-300" />
+                    <span className="text-[10px]  text-[#98939e] ">
+                      Blocked Matches
+                    </span>
+                    <div className="flex-1 h-px bg-gray-300" />
+                  </div>
+
+                  {/* Blocked Chats */}
+                  {blockedChats.map((item) => (
+                    <ChannelListItem
+                      key={item.cid}
+                      item={item}
+                      onClick={(name, image) =>
+                        navigate(`/app/chats/${encodeURIComponent(item.cid)}`, {
+                          state: { channelName: name, channelImage: image },
+                        })
+                      }
+                    />
+                  ))}
+                </>
+              )}
+            </>
+          );
+        })()
       )}
     </div>
   );

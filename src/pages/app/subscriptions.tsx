@@ -64,11 +64,11 @@ const SubscriptionCard: React.FC<{ plan: Plan; onSelect: (plan: Plan) => void; i
   <div className="overflow-hidden rounded-[10px] bg-gradient-to-r from-[#240044] via-[#3B1A69] to-[#7D007A] text-white">
     <div className="relative px-4 pb-4 pt-5">
       <div className="absolute right-4 top-4">{plan.icon}</div>
-      <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center gap-2">
         <h3 className="text-[18px] font-semibold">{plan.name}</h3>
         {isCurrent && (
-          <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">
-            Current
+          <span className="text-xs text-[#d230ff] bg-white px-3 py-1 rounded-full font-medium">
+            Current Plan
           </span>
         )}
       </div>

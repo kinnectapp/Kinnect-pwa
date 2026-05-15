@@ -83,6 +83,12 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    if (!hasError) return;
+    const timer = setTimeout(() => setHasError(false), 5000);
+    return () => clearTimeout(timer);
+  }, [hasError]);
+
   // Load and watch channel
   useEffect(() => {
     let isMounted = true;
@@ -402,7 +408,17 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         return;
       }
 
-      await channel.sendMessage(message, sendOptions);
+      try {
+        await channel.sendMessage(message, sendOptions);
+      } catch (error: any) {
+        const msg: string = error?.message ?? "";
+        const status: number = error?.status ?? error?.StatusCode ?? 0;
+        if (status === 403 || msg.toLowerCase().includes("block")) {
+          toast.error("You can no longer send messages to this user.");
+        } else {
+          toast.error("Failed to send message. Please try again.");
+        }
+      }
     },
     [channel, lockedMediaMessage, shouldRestrictMediaSharing],
   );
