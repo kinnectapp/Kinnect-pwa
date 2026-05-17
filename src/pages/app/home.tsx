@@ -75,6 +75,7 @@ const HomePage: React.FC = () => {
         );
         return response.data;
       },
+      staleTime: 5 * 60 * 1000,
     });
 
   const communities = (communitiesResponse?.data?.data ?? []).slice(0, 4);

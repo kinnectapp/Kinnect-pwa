@@ -12,6 +12,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { chatService } from "@/services/chat.service";
 import KinnectChatBtn from "../ai/KinnectChatBtn";
 
+const userImageCache = new Map<string, string>();
+
 const formatDate = (value?: string | null) => {
   if (!value) return "";
   const date = new Date(value);
@@ -75,17 +77,21 @@ const ChannelAvatar = ({
   alt: string;
   className: string;
 }) => {
-  const [image, setImage] = useState<string | undefined>(initialImage);
+  const [image, setImage] = useState<string | undefined>(
+    userImageCache.get(userId) || initialImage,
+  );
 
   useEffect(() => {
     let isMounted = true;
+    if (userImageCache.has(userId)) return;
     if (!initialImage || initialImage === "/pwa-192x192.png") {
       chatService
         .getUserById(userId)
         .then((data) => {
           const photos = data?.data?.resp?.profilePhotos;
-          if (photos?.[photos.length - 1] && isMounted)
-            setImage(photos[photos.length - 1]);
+          const url = photos?.[photos.length - 1];
+          if (url) userImageCache.set(userId, url);
+          if (url && isMounted) setImage(url);
         })
         .catch(() => {});
     }
@@ -108,13 +114,14 @@ const ChannelListItem: React.FC<{
   const needsEnrich =
     !item.name || item.name === "Direct Message" || !item.image;
 
+  const cached = userImageCache.get(userId);
   const [displayImage, setDisplayImage] = useState(
-    item.image && item.image !== "/pwa-192x192.png" ? item.image : "",
+    cached || (item.image && item.image !== "/pwa-192x192.png" ? item.image : ""),
   );
-  const [isLoading, setIsLoading] = useState(needsEnrich);
+  const [isLoading, setIsLoading] = useState(needsEnrich && !cached);
 
   useEffect(() => {
-    if (!needsEnrich || !userId) return;
+    if (!needsEnrich || !userId || userImageCache.has(userId)) return;
     let isMounted = true;
 
     setIsLoading(true);
@@ -123,9 +130,10 @@ const ChannelListItem: React.FC<{
       .then((data) => {
         const resp = data?.data?.resp;
         if (!isMounted) return;
-        if (resp) {
-          if (resp.profilePhotos?.[resp.profilePhotos.length - 1])
-            setDisplayImage(resp.profilePhotos[resp.profilePhotos.length - 1]);
+        const url = resp?.profilePhotos?.[resp.profilePhotos.length - 1];
+        if (url) {
+          userImageCache.set(userId, url);
+          setDisplayImage(url);
         }
       })
       .catch(() => {})
@@ -210,27 +218,13 @@ const MessagesList: React.FC = () => {
     try {
       const client = await ensureStreamConnected(user);
       const userId = String(user.id);
-      const filter = { type: "messaging", members: { $in: [userId] } };
-      const sort = { last_message_at: -1 } as const;
-      const queryOpts = {
-        state: true,
-        watch: true,
-        limit: 30,
-        message_limit: 30,
-      };
-
-      const [visible, hiddenChannels] = await Promise.all([
-        client.queryChannels(filter, sort, queryOpts),
-        client.queryChannels({ ...filter, hidden: true }, sort, queryOpts),
-      ]);
+      const queried = await client.queryChannels(
+        { type: "messaging", members: { $in: [userId] } },
+        { last_message_at: -1 } as const,
+        { state: true, watch: true, limit: 30, message_limit: 30 },
+      );
 
       if (!isMountedRef.current) return;
-
-      const seen = new Set(visible.map((c) => c.cid));
-      const queried = [
-        ...visible,
-        ...hiddenChannels.filter((c) => !seen.has(c.cid)),
-      ];
 
       setChannels(queried);
       setPersonalChannels(queried.map((channel) => toPreview(channel, userId)));
@@ -392,11 +386,11 @@ const MessagesList: React.FC = () => {
                 Number(item.userId),
               ),
           );
-          const blockedChats = list.filter((item) =>
-            (user?.blockedUsers as number[] | undefined)?.includes(
-              Number(item.userId),
-            ),
-          );
+          // const blockedChats = list.filter((item) =>
+          //   (user?.blockedUsers as number[] | undefined)?.includes(
+          //     Number(item.userId),
+          //   ),
+          // );
 
           return (
             <>
@@ -414,7 +408,7 @@ const MessagesList: React.FC = () => {
               ))}
 
               {/* Separator and Blocked Chats Header */}
-              {blockedChats.length > 0 && (
+              {/* {blockedChats.length > 0 && (
                 <>
                   <div className="flex items-center gap-3 px-4 py-3 my-2">
                     <div className="flex-1 h-px bg-gray-300" />
@@ -424,8 +418,7 @@ const MessagesList: React.FC = () => {
                     <div className="flex-1 h-px bg-gray-300" />
                   </div>
 
-                  {/* Blocked Chats */}
-                  {blockedChats.map((item) => (
+                   {blockedChats.map((item) => (
                     <ChannelListItem
                       key={item.cid}
                       item={item}
@@ -437,7 +430,7 @@ const MessagesList: React.FC = () => {
                     />
                   ))}
                 </>
-              )}
+              )} */}
             </>
           );
         })()

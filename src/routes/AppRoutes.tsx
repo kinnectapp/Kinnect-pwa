@@ -7,6 +7,7 @@ import HomePage from "@/pages/app/home";
 import KinnectAiPage from "@/pages/app/kinnect-ai";
 import MatchProfile from "@/pages/app/MatchProfile";
 import MyProfile from "@/pages/app/myProfile";
+import BlockedUsersPage from "@/pages/app/blocked-users";
 import FAQPage from "@/pages/app/faq";
 import TermsPage from "@/pages/app/terms";
 import PrivacyPolicyPage from "@/pages/app/privacy-policy";
@@ -63,6 +64,10 @@ const AppRoutes = () => (
     <Route
       path="subscriptions"
       element={<LazyRoute Component={SubscriptionsPage} />}
+    />
+    <Route
+      path="blocked-users"
+      element={<LazyRoute Component={BlockedUsersPage} />}
     />
   </Routes>
 );

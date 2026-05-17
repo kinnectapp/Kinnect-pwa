@@ -3,7 +3,7 @@ import ProfileCard from "@/components/ProfileCard";
 import MoreOptionsModal from "@/components/MoreOptionsModal";
 import ReportModal from "@/components/chat/ReportModal";
 import JiltModal from "@/components/chat/JiltModal";
-import BlockModal from "@/components/chat/BlockModal";
+import ConfirmDialog from "@/components/chat/ConfirmDialog";
 import SponsorModal from "@/components/chat/SponsorModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { chatService } from "@/services/chat.service";
@@ -72,7 +72,9 @@ export const MatchProfile: React.FC = () => {
 
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
+  const [pendingReportReason, setPendingReportReason] = useState("");
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showJiltModal, setShowJiltModal] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -198,7 +200,7 @@ export const MatchProfile: React.FC = () => {
       const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
       await useAuthStore.getState().setUser({ ...user!, blockedUsers: [...currentBlocked, Number(currentProfile.id)] });
       toast.success(`${currentProfile.name} has been blocked`);
-      setShowBlockModal(false);
+      setShowBlockConfirm(false);
       setShowMoreOptions(false);
       setTimeout(() => navigate("/app"), 500);
     } catch (error) {
@@ -224,16 +226,23 @@ export const MatchProfile: React.FC = () => {
     }
   }, [currentProfile, user]);
 
-  const handleConfirmReport = async (reason: string) => {
+  const handleReasonSelected = (reason: string) => {
+    setPendingReportReason(reason);
+    setShowReportModal(false);
+    setShowReportConfirm(true);
+  };
+
+  const handleSubmitReport = async () => {
     if (!currentProfile) return;
     try {
       setIsPerformingAction(true);
       await chatService.reportUser({
-        reportedUserId: currentProfile.id,
-        reason,
+        reportedUserId: Number(currentProfile.id),
+        reason: pendingReportReason,
+        reporterId: Number(user?.id),
       });
       toast.success(`Report submitted for ${currentProfile.name}`);
-      setShowReportModal(false);
+      setShowReportConfirm(false);
       setShowMoreOptions(false);
     } catch (error) {
       toast.error(handleApiError(error));
@@ -311,7 +320,7 @@ export const MatchProfile: React.FC = () => {
         onClose={() => setShowMoreOptions(false)}
         onProceedToDate={handleProceedToDate}
         onSponsorPlan={() => setShowSponsorModal(true)}
-        onBlock={() => setShowBlockModal(true)}
+        onBlock={() => setShowBlockConfirm(true)}
         onUnblock={handleUnblockUser}
         onReport={() => setShowReportModal(true)}
         onJilt={() => setShowJiltModal(true)}
@@ -319,23 +328,35 @@ export const MatchProfile: React.FC = () => {
 
       <ReportModal
         isOpen={showReportModal}
-        userName={currentProfile?.name}
+        userName={currentProfile?.name ?? ""}
         userImage={currentProfile?.image}
         userLocation={currentProfile?.location}
         onClose={() => setShowReportModal(false)}
-        onSubmit={handleConfirmReport}
-        isLoading={isPerformingAction}
+        onSubmit={handleReasonSelected}
       />
 
-      <BlockModal
-        isOpen={showBlockModal}
-        userName={currentProfile?.name}
-        userImage={currentProfile?.image}
-        userLocation={currentProfile?.location}
-        blurImage={!personalChatAccess.canShareMedia}
-        onClose={() => setShowBlockModal(false)}
-        onConfirm={handleConfirmBlock}
+      <ConfirmDialog
+        isOpen={showReportConfirm}
+        title="Report User"
+        message={`Report ${currentProfile?.name ?? "this user"} for "${pendingReportReason}"? Your report is anonymous.`}
+        confirmText="Report"
+        cancelText="Cancel"
+        isDangerous
         isLoading={isPerformingAction}
+        onClose={() => setShowReportConfirm(false)}
+        onConfirm={handleSubmitReport}
+      />
+
+      <ConfirmDialog
+        isOpen={showBlockConfirm}
+        title="Block Match"
+        message={`Are you sure you want to block ${currentProfile?.name ?? "this user"}? They will no longer be able to message you.`}
+        confirmText="Block"
+        cancelText="Cancel"
+        isDangerous
+        isLoading={isPerformingAction}
+        onClose={() => setShowBlockConfirm(false)}
+        onConfirm={handleConfirmBlock}
       />
 
       <JiltModal
