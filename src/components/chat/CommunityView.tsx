@@ -65,6 +65,7 @@ const CommunityView: React.FC = () => {
   const { data: communitiesData } = useQuery({
     queryKey: ["community-list"],
     queryFn: () => chatService.getCommunities(),
+    staleTime: 5 * 60 * 1000,
   });
   const communities: Community[] = communitiesData?.data?.data || communitiesData?.data?.resp || [];
 

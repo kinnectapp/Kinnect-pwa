@@ -20,9 +20,9 @@ import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
 import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
- import JiltModal from "./JiltModal";
-import BlockModal from "./BlockModal";
+import JiltModal from "./JiltModal";
 import SponsorModal from "./SponsorModal";
+import ConfirmDialog from "./ConfirmDialog";
 import CustomDateSeparator from "./CustomDateSeparator";
 import CustomMessageStatus from "./CustomMessageStatus";
 import { CustomQuotedMessage } from "./CustomQuotedMessage";
@@ -74,7 +74,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
+  const [pendingReportReason, setPendingReportReason] = useState("");
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showProceedConfirm, setShowProceedConfirm] = useState(false);
   const [showJiltModal, setShowJiltModal] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
@@ -82,6 +85,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
   const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const jiltAfterBlock = useRef(false);
 
   useEffect(() => {
     if (!hasError) return;
@@ -198,18 +202,19 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   }, [partnerId, showActions]);
 
   // Handle Proceed to Date
-  const handleProceedToDate = useCallback(async () => {
+  const handleProceedToDate = useCallback(() => {
+    setShowProceedConfirm(true);
+  }, []);
+
+  const handleConfirmProceedToDate = useCallback(async () => {
     try {
       setIsPerformingAction(true);
       await chatService.proceedToDate(partnerId);
       toast.success("Date request sent.");
+      setShowProceedConfirm(false);
       setShowActions(false);
-      setHasError(false);
     } catch (error) {
-      const errorMsg = handleApiError(error);
-      setErrorMessage(errorMsg);
-      setHasError(true);
-      toast.error(errorMsg);
+      toast.error(handleApiError(error));
     } finally {
       setIsPerformingAction(false);
     }
@@ -243,33 +248,33 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     setShowReportModal(true);
   }, []);
 
-  const handleConfirmReport = useCallback(
-    async (reason: string) => {
-      try {
-        setIsPerformingAction(true);
-        await chatService.reportUser({
-          reportedUserId: partnerId,
-          reason,
-        });
-        toast.success("User reported. Your report will be reviewed.");
-        setShowReportModal(false);
-        setShowActions(false);
-        setHasError(false);
-      } catch (error) {
-        const errorMsg = handleApiError(error);
-        setErrorMessage(errorMsg);
-        setHasError(true);
-        toast.error(errorMsg);
-      } finally {
-        setIsPerformingAction(false);
-      }
-    },
-    [partnerId],
-  );
+  const handleReasonSelected = useCallback((reason: string) => {
+    setPendingReportReason(reason);
+    setShowReportModal(false);
+    setShowReportConfirm(true);
+  }, []);
+
+  const handleSubmitReport = useCallback(async () => {
+    try {
+      setIsPerformingAction(true);
+      await chatService.reportUser({
+        reportedUserId: Number(partnerId),
+        reason: pendingReportReason,
+        reporterId: Number(currentUserId),
+      });
+      toast.success("User reported. Your report will be reviewed.");
+      setShowReportConfirm(false);
+      setShowActions(false);
+    } catch (error) {
+      toast.error(handleApiError(error));
+    } finally {
+      setIsPerformingAction(false);
+    }
+  }, [partnerId, pendingReportReason, currentUserId]);
 
   // Handle Block
   const handleBlockUser = useCallback(() => {
-    setShowBlockModal(true);
+    setShowBlockConfirm(true);
   }, []);
 
   const handleConfirmBlock = useCallback(async () => {
@@ -279,15 +284,12 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
       await useAuthStore.getState().setUser({ ...user!, blockedUsers: [...currentBlocked, Number(partnerId)] });
       toast.success("User blocked.");
-      setShowBlockModal(false);
+      setShowBlockConfirm(false);
       setShowActions(false);
-      setHasError(false);
-      setTimeout(() => navigate("/app"), 500);
+      jiltAfterBlock.current = true;
+      setShowJiltModal(true);
     } catch (error) {
-      const errorMsg = handleApiError(error);
-      setErrorMessage(errorMsg);
-      setHasError(true);
-      toast.error(errorMsg);
+      toast.error(handleApiError(error));
     } finally {
       setIsPerformingAction(false);
     }
@@ -507,27 +509,52 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         onJilt={handleJiltUser}
       />
 
-      {/* Report Modal */}
+      {/* Report — reason selector */}
       <ReportModal
         isOpen={showReportModal}
         userName={title}
         userImage={partnerImage}
         userLocation={partnerLocation}
         onClose={() => setShowReportModal(false)}
-        onSubmit={handleConfirmReport}
-        isLoading={isPerformingAction}
+        onSubmit={handleReasonSelected}
       />
 
-      {/* Block Confirmation Modal */}
-      <BlockModal
-        isOpen={showBlockModal}
-        userName={title}
-        userImage={partnerImage}
-        userLocation={partnerLocation}
-        blurImage={!personalChatAccess.canShareMedia}
-        onClose={() => setShowBlockModal(false)}
-        onConfirm={handleConfirmBlock}
+      {/* Report — confirm dialog */}
+      <ConfirmDialog
+        isOpen={showReportConfirm}
+        title="Report User"
+        message={`Report ${title} for "${pendingReportReason}"? Your report is anonymous and will be reviewed by our team.`}
+        confirmText="Report"
+        cancelText="Cancel"
+        isDangerous
         isLoading={isPerformingAction}
+        onClose={() => setShowReportConfirm(false)}
+        onConfirm={handleSubmitReport}
+      />
+
+      {/* Block — confirm dialog */}
+      <ConfirmDialog
+        isOpen={showBlockConfirm}
+        title="Block Match"
+        message={`Are you sure you want to block ${title}? They will no longer be able to message you.`}
+        confirmText="Block"
+        cancelText="Cancel"
+        isDangerous
+        isLoading={isPerformingAction}
+        onClose={() => setShowBlockConfirm(false)}
+        onConfirm={handleConfirmBlock}
+      />
+
+      {/* Proceed to Date — confirm dialog */}
+      <ConfirmDialog
+        isOpen={showProceedConfirm}
+        title="Proceed to Date"
+        message={`Send a date request to ${title}?`}
+        confirmText="Send Request"
+        cancelText="Cancel"
+        isLoading={isPerformingAction}
+        onClose={() => setShowProceedConfirm(false)}
+        onConfirm={handleConfirmProceedToDate}
       />
 
       {/* Jilt Confirmation Modal */}
@@ -537,7 +564,13 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         userImage={partnerImage}
         userLocation={partnerLocation}
         blurImage={!personalChatAccess.canShareMedia}
-        onClose={() => setShowJiltModal(false)}
+        onClose={() => {
+          setShowJiltModal(false);
+          if (jiltAfterBlock.current) {
+            jiltAfterBlock.current = false;
+            navigate("/app/chats");
+          }
+        }}
         onConfirm={handleConfirmJilt}
         isLoading={isPerformingAction}
       />

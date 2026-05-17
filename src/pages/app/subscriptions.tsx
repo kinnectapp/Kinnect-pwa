@@ -130,7 +130,7 @@ const SubscriptionsPage: React.FC = () => {
       );
 
       if (!dbSub) {
-        console.error("Subscription plan not found in database");
+        console.error("Subscription plan not found.");
         return;
       }
 
