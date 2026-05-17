@@ -31,6 +31,7 @@ const CommunityDetailPage: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["community-list"],
     queryFn: async () => chatService.getCommunities(),
+    staleTime: 5 * 60 * 1000,
   });
 
   const communities: Community[] = data?.data?.data || data?.data?.resp || [];
