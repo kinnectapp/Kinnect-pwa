@@ -605,6 +605,11 @@ const ProfilePage: React.FC = () => {
       label: "Privacy Policy",
       onClick: () => navigate("/app/privacy-policy"),
     },
+    // {
+    //   icon: () => <Ban size={18} className="text-[#6B7280]" />,
+    //   label: "Blocked Users",
+    //   onClick: () => navigate("/app/blocked-users"),
+    // },
   ];
 
   return (
