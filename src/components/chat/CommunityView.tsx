@@ -119,7 +119,8 @@ const CommunityView: React.FC = () => {
         const subscription = client.on((event) => {
           if (
             event.type === "message.new" ||
-            event.type === "notification.added_to_channel"
+            event.type === "notification.added_to_channel" ||
+            event.type === "notification.mark_read"
           ) {
             if (isMounted) {
               void loadChannels();
@@ -233,6 +234,11 @@ const CommunityView: React.FC = () => {
                     {item.lastMessageText || "No messages yet"}
                   </p>
                 </div>
+                {item.unreadCount > 0 && (
+                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#55288D] px-1 text-xs text-white">
+                    {item.unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}

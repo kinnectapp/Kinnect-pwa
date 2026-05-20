@@ -103,11 +103,14 @@ export const useChatStore = create<ChatStore>()(
     {
       name: "chat-store",
       partialize: (state) => ({
-        unreadCount: state.unreadCount,
         personalChannels: state.personalChannels,
         communityChannels: state.communityChannels,
         channelMessages: state.channelMessages,
       }),
+      merge: (persisted, current) => {
+        const { unreadCount: _dropped, ...rest } = persisted as Partial<ChatStore>;
+        return { ...current, ...rest };
+      },
     },
   ),
 );
