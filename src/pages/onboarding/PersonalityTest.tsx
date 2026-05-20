@@ -268,7 +268,8 @@ const PersonalityTest: React.FC = () => {
 
   const handleBack = () => {
     if (currentIndex === 0) {
-      navigate("/onboarding/personality_intro");
+      // navigate("/onboarding/personality_intro");
+        navigate(-1);
       return;
     }
     goToQuestion(currentIndex - 1);

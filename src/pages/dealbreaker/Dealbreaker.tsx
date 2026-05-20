@@ -292,7 +292,7 @@ function CompletionScreen() {
   const handleFindMatch = () => {
     // Check if personality test is completed
     if (!profileData?.personalityId) {
-      navigate("/onboarding/takepersonalitytest");
+      navigate("/onboarding/personality_test?q=1");
       return;
     }
 
