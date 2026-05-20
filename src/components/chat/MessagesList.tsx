@@ -263,11 +263,12 @@ const MessagesList: React.FC = () => {
       try {
         const client = await ensureStreamConnected(user);
         const subscription = client.on((event) => {
-          // Only refetch when there is genuinely new data
+          // Refetch on new messages or when messages are marked read
           if (
             event.type === "message.new" ||
             event.type === "notification.message_new" ||
-            event.type === "notification.added_to_channel"
+            event.type === "notification.added_to_channel" ||
+            event.type === "notification.mark_read"
           ) {
             if (isMounted) void loadChannels();
           }
