@@ -12,7 +12,11 @@ const navItems = [
 
 export const BottomNav: React.FC = () => {
   const { pathname } = useLocation();
-  const unreadCount = useChatStore((state) => state.unreadCount);
+  const personalChannels = useChatStore((state) => state.personalChannels);
+  const communityChannels = useChatStore((state) => state.communityChannels);
+  const totalUnread =
+    personalChannels.reduce((sum, ch) => sum + ch.unreadCount, 0) +
+    communityChannels.reduce((sum, ch) => sum + ch.unreadCount, 0);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white pb-[calc(env(safe-area-inset-bottom))]">
@@ -20,7 +24,7 @@ export const BottomNav: React.FC = () => {
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
-          const showBadge = item.href === "/app/chats" && unreadCount > 0;
+          const showBadge = item.href === "/app/chats" && totalUnread > 0;
 
           return (
             <Link
@@ -34,7 +38,7 @@ export const BottomNav: React.FC = () => {
                 <Icon />
                 {showBadge && (
                   <span className="absolute -top-1.5 -right-2.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#55288D] px-1 text-[10px] font-bold text-white leading-none">
-                    {unreadCount > 99 ? "99+" : unreadCount}
+                    {totalUnread > 99 ? "99+" : totalUnread}
                   </span>
                 )}
               </div>
