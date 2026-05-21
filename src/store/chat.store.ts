@@ -11,6 +11,7 @@ export interface CachedChannelPreview {
   lastMessageText: string;
   lastMessageAt?: string;
   unreadCount: number;
+  canShareMedia?: boolean;
 }
 
 export interface CachedChatMessage {
