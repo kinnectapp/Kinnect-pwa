@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { CalendarIcon, DrinkIcon, GradIcon, ReligionIcon, SmokeIcon, WorkIcon } from "./icons";
 
 interface ProfileEssentials {
@@ -41,6 +42,8 @@ interface ProfileCardProps {
   onMessage: () => void;
   onMore: () => void;
   shouldBlurImages?: boolean;
+  messageDisabled?: boolean;
+  hideMore?: boolean;
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -68,6 +71,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   onMessage,
   onMore,
   shouldBlurImages = true,
+  messageDisabled = false,
+  hideMore = false,
 }) => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -326,19 +331,28 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         {/* Action Buttons */}
         <div className="mt-8 flex gap-6">
           <Button
-            onClick={onMessage}
-            className="flex-1 bg-[#55288D] hover:bg-[#3e1a6e] text-white rounded-full h-12 font-semibold flex items-center justify-center gap-2"
+            onClick={() => {
+              if (messageDisabled) {
+                toast.info("Upgrade your plan to message matches. Redirecting to subscriptions...");
+                setTimeout(() => navigate("/app/subscriptions"), 3000);
+              } else {
+                onMessage();
+              }
+            }}
+            className={`flex-1 bg-[#55288D] text-white rounded-full h-12 font-semibold flex items-center justify-center gap-2 hover:bg-[#3e1a6e]`}
           >
             <MessageCircleMore className="fill-current" size={20} />
             Message
           </Button>
-          <Button
-            onClick={onMore}
-            variant="outline"
-            className="w-12 h-12 p-0 rounded-full border-gray-300 hover:bg-gray-50 bg-transparent"
-          >
-            <MoreVertical size={20} />
-          </Button>
+          {!hideMore && (
+            <Button
+              onClick={onMore}
+              variant="outline"
+              className="w-12 h-12 p-0 rounded-full border-gray-300 hover:bg-gray-50 bg-transparent"
+            >
+              <MoreVertical size={20} />
+            </Button>
+          )}
         </div>
       </div>
     </div>

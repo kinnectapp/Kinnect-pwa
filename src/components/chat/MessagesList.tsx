@@ -161,9 +161,13 @@ const ChannelListItem: React.FC<{
     };
   }, [userId, needsEnrich]);
 
+
+  // Female avatar
+const femaleAvatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${userId}`;
+
   const name = item.name || "Direct Message";
   const image = displayImage || item.image || "";
-  const initial = name.charAt(0).toUpperCase();
+  // const initial = name.charAt(0).toUpperCase();
 
   return (
     <button
@@ -172,35 +176,39 @@ const ChannelListItem: React.FC<{
     >
       {isLoading ? (
         <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#F3F3F6] animate-pulse" />
-      ) : item.canShareMedia !== true ? (
-        <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden">
-          <div
-            className="absolute inset-0 scale-110 blur-md"
-            style={{
-              backgroundImage: `url(${image || "/pwa-192x192.png"})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-          <div
-            className="absolute inset-0 select-none"
-            onContextMenu={(e) => e.preventDefault()}
-            onDragStart={(e) => e.preventDefault()}
-          />
-        </div>
-      ) : image ? (
-        <img
-          src={image}
-          alt={name}
-          className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
-          <span className="text-[#55288D] font-semibold text-lg leading-none">
-            {initial}
-          </span>
-        </div>
-      )}
+      ) : <img className="h-12 w-12 flex-shrink-0 rounded-full" src={femaleAvatar} alt=""  />
+      
+      
+      // item.canShareMedia !== true ? (
+      //   <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden">
+      //     <div
+      //       className="absolute inset-0 blur-[2px]"
+      //       style={{
+      //         backgroundImage: `url(${image || "/pwa-192x192.png"})`,
+      //         backgroundSize: "cover",
+      //         backgroundPosition: "center",
+      //       }}
+      //     />
+      //     <div
+      //       className="absolute inset-0 select-none"
+      //       onContextMenu={(e) => e.preventDefault()}
+      //       onDragStart={(e) => e.preventDefault()}
+      //     />
+      //   </div>
+      // ) : image ? (
+      //   <img
+      //     src={image}
+      //     alt={name}
+      //     className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+      //   />
+      // ) : (
+      //   <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
+      //     <span className="text-[#55288D] font-semibold text-lg leading-none">
+      //       {initial}
+      //     </span>
+      //   </div>
+      // )
+      }
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-semibold text-gray-900">{name}</h3>
         <p className="truncate text-sm text-gray-500">
