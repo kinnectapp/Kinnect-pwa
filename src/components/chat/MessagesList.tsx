@@ -8,9 +8,11 @@ import { handleApiError } from "@/api/serviceUtils";
 import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { CachedChannelPreview, useChatStore } from "@/store/chat.store";
 import { useAuthStore } from "@/store/auth.store";
-
+import { CHAT_MEDIA_UNLOCK_DAYS } from "@/hooks/usePersonalChatAccess";
 import { chatService } from "@/services/chat.service";
 import KinnectChatBtn from "../ai/KinnectChatBtn";
+
+const UNLOCK_MS = CHAT_MEDIA_UNLOCK_DAYS * 24 * 60 * 60 * 1000;
 
 const userImageCache = new Map<string, string>();
 
@@ -51,6 +53,18 @@ const toPreview = (
     }
   }
 
+  const messages = channel.state.messages;
+  const firstMsg = messages[0];
+  const lastMsg = messages[messages.length - 1];
+  const spanMs =
+    firstMsg && lastMsg
+      ? Math.max(
+          0,
+          new Date(String(lastMsg.created_at)).getTime() -
+            new Date(String(firstMsg.created_at)).getTime(),
+        )
+      : 0;
+
   return {
     id: resolvedChannelId,
     cid: channel.cid,
@@ -62,6 +76,7 @@ const toPreview = (
       ? String(lastMessage.created_at)
       : undefined,
     unreadCount: channel.countUnread(),
+    canShareMedia: spanMs >= UNLOCK_MS,
   };
 };
 
@@ -157,6 +172,22 @@ const ChannelListItem: React.FC<{
     >
       {isLoading ? (
         <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#F3F3F6] animate-pulse" />
+      ) : item.canShareMedia !== true ? (
+        <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden">
+          <div
+            className="absolute inset-0 scale-110 blur-md"
+            style={{
+              backgroundImage: `url(${image || "/pwa-192x192.png"})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div
+            className="absolute inset-0 select-none"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+          />
+        </div>
       ) : image ? (
         <img
           src={image}

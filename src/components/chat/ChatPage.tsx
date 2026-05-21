@@ -478,15 +478,17 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         profileComp={
           isPersonalChat ? (
             <div className="flex items-center gap-3 mb-6">
-              <img
-                src={partnerImage || UserImg}
-                alt=""
-                className={`w-[50px] h-[50px] object-cover rounded-full border ${
-                  isPersonalChat && !personalChatAccess.canShareMedia
-                    ? " blur-sm"
-                    : ""
-                }`}
-              />
+              {isPersonalChat && !personalChatAccess.canShareMedia ? (
+                <div className="relative w-[50px] h-[50px] rounded-full border overflow-hidden flex-shrink-0">
+                  <div
+                    className="absolute inset-0 scale-110  blur-sm "
+                    style={{ backgroundImage: `url(${partnerImage || UserImg})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                  />
+                  <div className="absolute inset-0 select-none" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
+                </div>
+              ) : (
+                <img src={partnerImage || UserImg} alt="" className="w-[50px] h-[50px] object-cover rounded-full border" />
+              )}
               <div>
                 <p className="text-gray-900 font-medium">
                   {title}
@@ -606,27 +608,33 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     messageActions={["react", "quote", "delete"]}
                     head={
                       <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
-                        <img
-                          src={
-                            isPersonalChat
-                              ? partnerImage || UserImg
-                              : String(
-                                  (channel?.data as Record<string, any>)
-                                    ?.image ||
-                                    locationState?.channelImage ||
-                                    cachedCommunityChannels.find(
-                                      (item) => item.cid === channelId,
-                                    )?.image ||
-                                    "/pwa-192x192.png",
-                                )
-                          }
-                          alt=""
-                          className={`w-[60px] object-cover h-[60px] rounded-full border transition-[filter] duration-300${
-                            isPersonalChat && !personalChatAccess.canShareMedia
-                              ? " blur-sm"
-                              : ""
-                          }`}
-                        />
+                        {isPersonalChat && !personalChatAccess.canShareMedia ? (
+                          <div className="relative w-[60px] h-[60px] rounded-full border overflow-hidden flex-shrink-0">
+                            <div
+                              className="absolute inset-0 blur-sm  "
+                              style={{ backgroundImage: `url(${partnerImage || UserImg})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                            />
+                            <div className="absolute inset-0 select-none" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
+                          </div>
+                        ) : (
+                          <img
+                            src={
+                              isPersonalChat
+                                ? partnerImage || UserImg
+                                : String(
+                                    (channel?.data as Record<string, any>)
+                                      ?.image ||
+                                      locationState?.channelImage ||
+                                      cachedCommunityChannels.find(
+                                        (item) => item.cid === channelId,
+                                      )?.image ||
+                                      "/pwa-192x192.png",
+                                  )
+                            }
+                            alt=""
+                            className="w-[60px] object-cover h-[60px] rounded-full border"
+                          />
+                        )}
                         {isPersonalChat && partnerFullName && (
                           <p className="text-[#1C1C1C] font-medium text-[14px]">
                             {title ?? ""}

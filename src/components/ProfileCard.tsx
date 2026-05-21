@@ -122,13 +122,31 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
 
         <div className="w-full h-full rounded-[8px] overflow-hidden">
-          <img
-            src={images[currentImageIndex] || "/placeholder.svg"}
-            alt={profile.name}
-            className={`w-full h-full object-cover ${
-              shouldBlurImages ? "blur" : ""
-            }`}
-          />
+          {shouldBlurImages ? (
+            <div className="relative w-full h-full">
+              {/* background-image can't be dragged, long-pressed for "Save", or opened in a new tab */}
+              <div
+                className="absolute inset-0 scale-110 blur"
+                style={{
+                  backgroundImage: `url(${images[currentImageIndex] || "/placeholder.svg"})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+              {/* Overlay blocks any remaining pointer interaction */}
+              <div
+                className="absolute inset-0 select-none"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+            </div>
+          ) : (
+            <img
+              src={images[currentImageIndex] || "/placeholder.svg"}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
+          )}
         </div>
 
         {/* Back button */}
