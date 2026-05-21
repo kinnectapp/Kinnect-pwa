@@ -35,9 +35,7 @@ const CommunityDetailPage: React.FC = () => {
   });
 
   const communities: Community[] = data?.data?.data || data?.data?.resp || [];
-  const community = communities.find(
-    (c) => String(c.id) === String(id),
-  );
+  const community = communities.find((c) => String(c.id) === String(id));
 
   // Check if the current user is already a member of this community's channel
   useEffect(() => {
@@ -52,7 +50,11 @@ const CommunityDetailPage: React.FC = () => {
       try {
         const client = await ensureStreamConnected(user);
         const channels = await client.queryChannels(
-          { type: "groupmessaging", id: { $eq: channelId }, members: { $in: [String(user.id)] } },
+          {
+            type: "groupmessaging",
+            id: { $eq: channelId },
+            members: { $in: [String(user.id)] },
+          },
           {},
           { limit: 1 },
         );
@@ -73,9 +75,12 @@ const CommunityDetailPage: React.FC = () => {
       const channelId = String(
         community.externalId || community.externalID || community.id || "",
       );
-      navigate(`/app/chats/${encodeURIComponent(`groupmessaging:${channelId}`)}`, {
-        state: { channelName: community.name, channelImage: community.image },
-      });
+      navigate(
+        `/app/chats/${encodeURIComponent(`groupmessaging:${channelId}`)}`,
+        {
+          state: { channelName: community.name, channelImage: community.image },
+        },
+      );
       return;
     }
 
@@ -134,14 +139,15 @@ const CommunityDetailPage: React.FC = () => {
       ? "Join the Conversation"
       : "Upgrade to Join";
 
-  const buttonColor = isAlreadyJoined || permissions.canJoinCommunityConversation
-    ? "bg-[#55288D]"
-    : "bg-[#C8BCD8]";
+  const buttonColor =
+    isAlreadyJoined || permissions.canJoinCommunityConversation
+      ? "bg-[#55288D]"
+      : "bg-[#C8BCD8]";
 
   return (
-    <div className="min-h-[100dvh] bg-white pb-32">
+    <div className="min-h-[70dvh] bg-white pb-32">
       {/* Hero image */}
-      <div className="relative h-64 w-full">
+      <div className="relative mt-6 h-64 w-full">
         <img
           src={community.image || "/pwa-192x192.png"}
           alt={community.name}
@@ -151,7 +157,7 @@ const CommunityDetailPage: React.FC = () => {
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 left-4 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 text-white"
-        >
+        > 
           <ChevronLeft className="w-5 h-5" />
         </button>
       </div>

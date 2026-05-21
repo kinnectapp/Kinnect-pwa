@@ -269,7 +269,7 @@ const HomePage: React.FC = () => {
 
         <Link to="/app/subscriptions">
           {" "}
-          <div className="flex p-4 mt-6 justify-between items-center  background-gradient text-[#fff] w-full">
+          <div className="flex p-4 my-8 justify-between items-center  background-gradient text-[#fff] w-full">
             <div className="flex items-center gap-4">
               <CrownIcon />
               <div className="">
