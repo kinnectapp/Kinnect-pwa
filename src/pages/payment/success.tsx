@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { http } from "@/api/http";
 import { endpoints } from "@/api/endpoints";
 import { useAuthStore } from "@/store/auth.store";
@@ -9,8 +10,12 @@ import { useAuthStore } from "@/store/auth.store";
 const PaymentSuccessPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const setUser = useAuthStore((state) => state.setUser);
-  const [status, setStatus] = useState<"verifying" | "success" | "failed">("verifying");
+  const user = useAuthStore((state) => state.user);
+  const [status, setStatus] = useState<"verifying" | "success" | "failed">(
+    "verifying",
+  );
 
   const reference = searchParams.get("reference") || searchParams.get("trxref");
 
@@ -21,7 +26,7 @@ const PaymentSuccessPage = () => {
     }
 
     http
-      .get(`${endpoints.payments.verify}?reference=${reference}`)
+      .get(`${endpoints.payments.verify}/${reference}`)
       .then(async () => {
         try {
           const profileRes = await http.get(endpoints.users.profile);
@@ -29,6 +34,10 @@ const PaymentSuccessPage = () => {
           const updatedUser = body?.data || body?.resp || body;
           if (updatedUser?.id) {
             await setUser(updatedUser);
+            // Invalidate the React Query cache to ensure updated subscription data
+            await queryClient.invalidateQueries({
+              queryKey: ["user-profile", updatedUser.id],
+            });
           }
         } catch {
           // Non-critical — user refresh failed, subscription still activated
@@ -36,7 +45,7 @@ const PaymentSuccessPage = () => {
         setStatus("success");
       })
       .catch(() => setStatus("failed"));
-  }, [reference, navigate, setUser]);
+  }, [reference, navigate, setUser, queryClient]);
 
   if (status === "verifying") {
     return (
@@ -59,7 +68,8 @@ const PaymentSuccessPage = () => {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-gray-900">Payment Failed</h1>
             <p className="text-gray-500">
-              We could not verify your payment. Please contact support if you were charged.
+              We could not verify your payment. Please contact support if you
+              were charged.
             </p>
           </div>
           <div className="pt-4 space-y-3">
@@ -91,7 +101,9 @@ const PaymentSuccessPage = () => {
           </div>
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900">Payment Successful!</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Payment Successful!
+          </h1>
           <p className="text-gray-500">
             Your subscription is now active. Enjoy your plan!
           </p>
