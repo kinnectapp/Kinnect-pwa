@@ -21,7 +21,7 @@ const PaymentSuccessPage = () => {
     }
 
     http
-      .get(`${endpoints.payments.verify}?reference=${reference}`)
+      .get(`${endpoints.payments.verify}/${reference}`)
       .then(async () => {
         try {
           const profileRes = await http.get(endpoints.users.profile);
