@@ -12,7 +12,7 @@ const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const setUser = useAuthStore((state) => state.setUser);
-  const user = useAuthStore((state) => state.user);
+  // const user = useAuthStore((state) => state.user);
   const [status, setStatus] = useState<"verifying" | "success" | "failed">(
     "verifying",
   );
