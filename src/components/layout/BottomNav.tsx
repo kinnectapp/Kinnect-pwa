@@ -12,11 +12,7 @@ const navItems = [
 
 export const BottomNav: React.FC = () => {
   const { pathname } = useLocation();
-  const personalChannels = useChatStore((state) => state.personalChannels);
-  const communityChannels = useChatStore((state) => state.communityChannels);
-  const totalUnread =
-    personalChannels.reduce((sum, ch) => sum + ch.unreadCount, 0) +
-    communityChannels.reduce((sum, ch) => sum + ch.unreadCount, 0);
+  const totalUnread = useChatStore((state) => state.unreadCount);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white pb-[calc(env(safe-area-inset-bottom))]">
