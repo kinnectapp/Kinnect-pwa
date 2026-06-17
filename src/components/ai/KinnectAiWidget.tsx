@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "../layout/logo";
+import KikiChat from "../../assets/images/kiki-chat.png";
 
 type KinnectAiWidgetProps = {
   visibleRoutes?: string[];
@@ -31,10 +32,10 @@ export const KinnectAiWidget: React.FC<KinnectAiWidgetProps> = ({
       <button
         type="button"
         onClick={() => navigate("/app/kinnect-ai")}
-        className="fixed border bottom-24 right-4 z-[1000] flex h-14 w-14 items-center justify-center rounded-full  shadow-[0_14px_30px_rgba(85,40,141,0.35)]"
+        className="fixed border bottom-24 right-4 z-[1000] flex h-fit w-fit overflow-clip items-center justify-center rounded-full  shadow-[0_14px_30px_rgba(85,40,141,0.35)]"
         aria-label="Open Kiki"
       >
-        <Logo />
+       <img src={KikiChat} alt="Kiki Chat" className="h-14 w-14 object-cover" />  
         {/* <MessageCircle size={22} /> */}
       </button>
 
