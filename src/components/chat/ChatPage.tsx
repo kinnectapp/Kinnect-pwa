@@ -6,7 +6,14 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, MoreVertical, AlertCircle, Lock, Ban } from "lucide-react";
+import {
+  ChevronLeft,
+  MoreVertical,
+  AlertCircle,
+  Lock,
+  Ban,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import UserImg from "../../assets/images/user-profile.png";
@@ -18,6 +25,7 @@ import {
 import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
+import { resolveSubscriptionTier } from "@/lib/subscription";
 import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
 import JiltModal from "./JiltModal";
@@ -45,6 +53,25 @@ type Props = {
 };
 
 const DisabledAttachmentSelector = () => null;
+const FREEMIUM_PREDEFINED_MESSAGE =
+  "Hello i'm a freemium user do you want to sponsor me ";
+
+const getStreamSendErrorInfo = (error: unknown) => {
+  if (!error || typeof error !== "object") {
+    return { message: "", status: 0 };
+  }
+
+  const record = error as Record<string, unknown>;
+  const message = typeof record.message === "string" ? record.message : "";
+  const status =
+    typeof record.status === "number"
+      ? record.status
+      : typeof record.StatusCode === "number"
+        ? record.StatusCode
+        : 0;
+
+  return { message, status };
+};
 
 const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const channelId = decodeURIComponent(rawChannelId);
@@ -81,6 +108,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [showJiltModal, setShowJiltModal] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [isPerformingAction, setIsPerformingAction] = useState(false);
+  const [isSendingFreemiumMessage, setIsSendingFreemiumMessage] =
+    useState(false);
+  const [sentFreemiumSuggestionChannelIds, setSentFreemiumSuggestionChannelIds] =
+    useState<Set<string>>(() => new Set());
 
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
   const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
@@ -386,6 +417,27 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     (!partnerId ||
       personalChatAccess.isLoading ||
       !personalChatAccess.canShareMedia);
+  const isFreemiumUser = resolveSubscriptionTier(user) === "fremium";
+  const shouldRestrictFreemiumMessaging = isPersonalChat && isFreemiumUser;
+  const hasSentFreemiumMessage = useMemo(() => {
+    if (!shouldRestrictFreemiumMessaging || !currentUserId || !channel) {
+      return false;
+    }
+
+    return (
+      sentFreemiumSuggestionChannelIds.has(channel.cid) ||
+      channel.state.messages.some(
+        (existingMessage) =>
+          existingMessage.user?.id === currentUserId &&
+          existingMessage.text === FREEMIUM_PREDEFINED_MESSAGE,
+      )
+    );
+  }, [
+    channel,
+    currentUserId,
+    sentFreemiumSuggestionChannelIds,
+    shouldRestrictFreemiumMessaging,
+  ]);
   const lockedMediaMessage = personalChatAccess.hasChatHistory
     ? `Keep chatting for ${personalChatAccess.daysUntilUnlock} more day${
         personalChatAccess.daysUntilUnlock === 1 ? "" : "s"
@@ -405,6 +457,21 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       if (!channel) return;
 
       const hasAttachments = (message.attachments?.length || 0) > 0;
+      const messageText = message.text ?? "";
+      if (shouldRestrictFreemiumMessaging) {
+        if (hasAttachments || messageText !== FREEMIUM_PREDEFINED_MESSAGE) {
+          toast.error(
+            "Freemium users can only send the predefined sponsor message.",
+          );
+          return;
+        }
+
+        if (hasSentFreemiumMessage) {
+          toast.error("Freemium users can send this message only once.");
+          return;
+        }
+      }
+
       if (shouldRestrictMediaSharing && hasAttachments) {
         toast.error(lockedMediaMessage);
         return;
@@ -412,18 +479,46 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
       try {
         await channel.sendMessage(message, sendOptions);
-      } catch (error: any) {
-        const msg: string = error?.message ?? "";
-        const status: number = error?.status ?? error?.StatusCode ?? 0;
-        if (status === 403 || msg.toLowerCase().includes("block")) {
+      } catch (error) {
+        const { message, status } = getStreamSendErrorInfo(error);
+        if (status === 403 || message.toLowerCase().includes("block")) {
           toast.error("You can no longer send messages to this user.");
         } else {
           toast.error("Failed to send message. Please try again.");
         }
       }
     },
-    [channel, lockedMediaMessage, shouldRestrictMediaSharing],
+    [
+      channel,
+      hasSentFreemiumMessage,
+      lockedMediaMessage,
+      shouldRestrictFreemiumMessaging,
+      shouldRestrictMediaSharing,
+    ],
   );
+
+  const handleSendFreemiumMessage = useCallback(async () => {
+    if (!channel || hasSentFreemiumMessage || isSendingFreemiumMessage) return;
+
+    try {
+      setIsSendingFreemiumMessage(true);
+      await channel.sendMessage({ text: FREEMIUM_PREDEFINED_MESSAGE });
+      setSentFreemiumSuggestionChannelIds((previous) => {
+        const next = new Set(previous);
+        next.add(channel.cid);
+        return next;
+      });
+    } catch (error) {
+      const { message, status } = getStreamSendErrorInfo(error);
+      if (status === 403 || message.toLowerCase().includes("block")) {
+        toast.error("You can no longer send messages to this user.");
+      } else {
+        toast.error("Failed to send message. Please try again.");
+      }
+    } finally {
+      setIsSendingFreemiumMessage(false);
+    }
+  }, [channel, hasSentFreemiumMessage, isSendingFreemiumMessage]);
 
   return (
     <div className="flex h-[100dvh] pb-[calc(env(safe-area-inset-bottom))] flex-col overflow-hidden bg-[#FAF8FB]">
@@ -668,6 +763,42 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     <div className="border-t border-gray-100 bg-gray-50 px-4 py-4 flex items-center justify-center gap-2 text-sm text-gray-400">
                       <Ban size={16} />
                       <span>You've blocked this user</span>
+                    </div>
+                  ) : shouldRestrictFreemiumMessaging ? (
+                    <div className="border-t border-[#F1ECF5] bg-white px-4 py-3">
+                      {!hasSentFreemiumMessage && (
+                        <button
+                          type="button"
+                          onClick={handleSendFreemiumMessage}
+                          disabled={isSendingFreemiumMessage}
+                          className="mb-2 w-full rounded-lg border border-[#DECFEA] bg-[#FAF8FB] px-3 py-2 text-left text-sm text-[#1C1C1C] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {FREEMIUM_PREDEFINED_MESSAGE}
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2 rounded-lg border border-[#E3DCEB] bg-[#F3F1F5] px-3 py-2">
+                        <input
+                          type="text"
+                          value=""
+                          readOnly
+                          disabled
+                          placeholder="Freemium users can only send the suggestion above"
+                          className="min-w-0 flex-1 bg-transparent text-sm text-[#77707F] outline-none placeholder:text-[#9B95A3] disabled:cursor-not-allowed"
+                        />
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#D8D1E0] text-white disabled:cursor-not-allowed"
+                          aria-label="Send message disabled for freemium users"
+                        >
+                          <Send size={16} />
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-[#77707F]">
+                        {hasSentFreemiumMessage
+                          ? "You've already sent your freemium sponsor message."
+                          : "Freemium users can send one predefined sponsor message."}
+                      </p>
                     </div>
                   ) : (
                     <div className="border">
