@@ -8,9 +8,12 @@ import {
   disconnectStreamUser,
   getStreamClient,
 } from "@/services/stream-chat.service";
+import { CHAT_MEDIA_UNLOCK_DAYS } from "@/hooks/usePersonalChatAccess";
 import type { User } from "@/lib/types/auth";
 import { Chat } from "stream-chat-react";
-import type { StreamChat } from "stream-chat";
+import type { Channel, StreamChat } from "stream-chat";
+
+const CHAT_MEDIA_UNLOCK_MS = CHAT_MEDIA_UNLOCK_DAYS * 24 * 60 * 60 * 1000;
 
 type Props = {
   children: React.ReactNode;
@@ -45,9 +48,70 @@ const showNotification = async (
   };
 };
 
+const getChannelId = (channel: Channel) => channel.id || channel.cid.split(":")[1];
+
+const toPersonalPreview = (channel: Channel, currentUserId: string) => {
+  const members = Object.values(channel.state.members || {});
+  const otherMember = members.find(
+    (member) => member.user_id !== currentUserId,
+  );
+  const messages = channel.state.messages;
+  const firstMessage = messages[0];
+  const lastMessage = messages[messages.length - 1];
+  const spanMs =
+    firstMessage && lastMessage
+      ? Math.max(
+          0,
+          new Date(String(lastMessage.created_at)).getTime() -
+            new Date(String(firstMessage.created_at)).getTime(),
+        )
+      : 0;
+
+  return {
+    id: getChannelId(channel),
+    cid: channel.cid,
+    name: otherMember?.user?.name || "Direct Message",
+    image: otherMember?.user?.image || undefined,
+    userId: otherMember?.user_id,
+    lastMessageText: lastMessage?.text || "No messages yet",
+    lastMessageAt: lastMessage?.created_at
+      ? String(lastMessage.created_at)
+      : undefined,
+    unreadCount: channel.countUnread(),
+    canShareMedia: spanMs >= CHAT_MEDIA_UNLOCK_MS,
+  };
+};
+
+const toCommunityPreview = (channel: Channel) => {
+  const channelData = (channel.data as Record<string, unknown>) || {};
+  const lastMessage = channel.state.messages[channel.state.messages.length - 1];
+
+  return {
+    id: getChannelId(channel),
+    cid: channel.cid,
+    name:
+      typeof channelData.name === "string"
+        ? channelData.name
+        : "Community Channel",
+    image:
+      typeof channelData.image === "string"
+        ? channelData.image
+        : "/pwa-192x192.png",
+    lastMessageText: lastMessage?.text || "No messages yet",
+    lastMessageAt: lastMessage?.created_at
+      ? String(lastMessage.created_at)
+      : undefined,
+    unreadCount: channel.countUnread(),
+  };
+};
+
 export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const user = useAuthStore((state) => state.user);
   const setUnreadCount = useChatStore((state) => state.setUnreadCount);
+  const setPersonalChannels = useChatStore((state) => state.setPersonalChannels);
+  const setCommunityChannels = useChatStore(
+    (state) => state.setCommunityChannels,
+  );
   const prevUserIdRef = useRef<string | number | null | undefined>(user?.id);
   const [client, setClient] = useState<StreamChat | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -73,15 +137,40 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
         }
 
         const streamClient = getStreamClient();
+        const currentUserId = String(user.id);
+
+        const refreshUnreadState = async () => {
+          const [unread, personalChannels, communityChannels] =
+            await Promise.all([
+              streamClient.getUnreadCount(),
+              streamClient.queryChannels(
+                { type: "messaging", members: { $in: [currentUserId] } },
+                { last_message_at: -1 },
+                { state: true, watch: true, limit: 30, message_limit: 30 },
+              ),
+              streamClient.queryChannels(
+                { type: "groupmessaging", members: { $in: [currentUserId] } },
+                { last_message_at: -1 },
+                { state: true, watch: true, limit: 30, message_limit: 30 },
+              ),
+            ]);
+
+          if (!isMounted) return;
+
+          setUnreadCount(unread.total_unread_count || 0);
+          setPersonalChannels(
+            personalChannels.map((channel) =>
+              toPersonalPreview(channel, currentUserId),
+            ),
+          );
+          setCommunityChannels(communityChannels.map(toCommunityPreview));
+        };
 
         if (isMounted) {
           setClient(streamClient);
         }
 
-        const unread = await streamClient.getUnreadCount();
-        if (isMounted) {
-          setUnreadCount(unread.total_unread_count || 0);
-        }
+        await refreshUnreadState();
 
         unsubscribe = streamClient.on((event) => {
           if (!isMounted) return;
@@ -89,16 +178,28 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
             setUnreadCount(event.total_unread_count || 0);
           }
 
+          if (
+            event.type === "message.new" ||
+            event.type === "notification.message_new" ||
+            event.type === "notification.added_to_channel" ||
+            event.type === "notification.mark_read"
+          ) {
+            void refreshUnreadState();
+          }
+
           if (event.type === "message.new" && event.channel_id) {
+            const eventCid =
+              event.cid ||
+              `${event.channel_type || "messaging"}:${event.channel_id}`;
             const sameChannel =
-              useChatStore.getState().activeChannelId === event.channel_id;
+              useChatStore.getState().activeChannelId === eventCid;
             if (sameChannel) return;
 
             if (document.visibilityState !== "visible") {
               const senderName =
                 event.user?.name || event.user?.id || "New message";
               const content = event.message?.text || "You have a new message.";
-              void showNotification(senderName, content, event.channel_id);
+              void showNotification(senderName, content, eventCid);
             }
           }
         }).unsubscribe;
@@ -122,7 +223,7 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
       }
       // Don't disconnect here - let logout handler do it
     };
-  }, [setUnreadCount, user?.id]);
+  }, [setCommunityChannels, setPersonalChannels, setUnreadCount, user?.id]);
 
   // Handle logout - detect transition from logged in to logged out
   useEffect(() => {

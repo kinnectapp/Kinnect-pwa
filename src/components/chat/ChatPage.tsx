@@ -751,7 +751,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   {!personalChatAccess.isLoading &&
                     isPersonalChat &&
                     !personalChatAccess.canShareMedia &&
-                    !isPartnerBlocked && (
+                    !isPartnerBlocked && !shouldRestrictFreemiumMessaging && (
                       <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
                         <div className="flex items-start gap-2">
                           <Lock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
@@ -765,7 +765,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                       <span>You've blocked this user</span>
                     </div>
                   ) : shouldRestrictFreemiumMessaging ? (
-                    <div className="border-t border-[#F1ECF5] bg-white px-4 py-3">
+                    <div className="border-t border-[#F1ECF5] bg-white   py-3">
                       {!hasSentFreemiumMessage && (
                         <button
                           type="button"
@@ -776,7 +776,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                           {FREEMIUM_PREDEFINED_MESSAGE}
                         </button>
                       )}
-                      <div className="flex items-center gap-2 rounded-lg border border-[#E3DCEB] bg-[#F3F1F5] px-3 py-2">
+                      <div className="flex items-center gap-2   border border-[#E3DCEB] px-3 py-2">
                         <input
                           type="text"
                           value=""
@@ -794,7 +794,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                           <Send size={16} />
                         </button>
                       </div>
-                      <p className="mt-2 text-xs text-[#77707F]">
+                      <p className="mt-2 text-center text-xs text-[#77707F]">
                         {hasSentFreemiumMessage
                           ? "You've already sent your freemium sponsor message."
                           : "Freemium users can send one predefined sponsor message."}
