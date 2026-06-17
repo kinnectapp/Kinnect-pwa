@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Logo } from "../layout/logo";
-import KikiChat from "../../assets/images/kiki-chat.png";
+ import KikiChat from "../../assets/images/kiki-chat.png";
 
 type KinnectAiWidgetProps = {
   visibleRoutes?: string[];
