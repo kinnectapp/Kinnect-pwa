@@ -243,16 +243,24 @@ const HomePage: React.FC = () => {
             <div className="grid overflow-clip grid-cols-2 gap-3">
               {communities.map((community) => (
                 <Link key={community.id} to={`/app/community/${community.id}`}>
-                  <div
-                    style={{
-                      backgroundImage: `url(${community.image || WhiteImg})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      backgroundColor: "#00000033",
-                    }}
-                    className="border overflow-clip flex flex-col justify-end  h-[210px] rounded-[8px]"
-                  >
-                    <div className="splash-gradient  py-4 px-2">
+                  <div className="relative border overflow-hidden flex flex-col justify-end h-[210px] rounded-[8px]">
+                    {/* Blurred background image */}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `url(${community.image || WhiteImg})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        filter: "blur(4px)",
+                        transform: "scale(1.1)", // prevents blurred edges
+                      }}
+                    />
+
+                    {/* Optional dark overlay */}
+                    <div className="absolute inset-0 bg-black/20" />
+
+                    {/* Content */}
+                    <div className="relative z-10 splash-gradient py-4 px-2">
                       <div className="text-[16px] text-white font-semibold">
                         {community.name}
                       </div>
