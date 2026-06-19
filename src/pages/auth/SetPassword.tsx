@@ -15,23 +15,72 @@ import { RegisterPayload } from "@/lib/types/auth";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 
+const REGISTRATION_DATA_KEY = "registrationData";
+const REGISTRATION_DRAFT_KEY = "registrationDraft";
+const REGISTRATION_ERRORS_KEY = "registrationErrors";
+const REGISTRATION_PASSWORD_DRAFT_KEY = "registrationPasswordDraft";
+
+type PasswordDraft = {
+  password: string;
+  confirmPassword: string;
+};
+
+const getStoredPasswordDraft = (): PasswordDraft => {
+  try {
+    const stored = localStorage.getItem(REGISTRATION_PASSWORD_DRAFT_KEY);
+    if (!stored) return { password: "", confirmPassword: "" };
+
+    const parsed = JSON.parse(stored) as Partial<PasswordDraft>;
+    return {
+      password: typeof parsed.password === "string" ? parsed.password : "",
+      confirmPassword:
+        typeof parsed.confirmPassword === "string"
+          ? parsed.confirmPassword
+          : "",
+    };
+  } catch {
+    return { password: "", confirmPassword: "" };
+  }
+};
+
+const getDuplicateRegistrationError = (message: string) => {
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("email already exists")) {
+    return { email: "Email already exists." };
+  }
+
+  if (normalizedMessage.includes("phone already exists")) {
+    return { phone: "Phone number already exists." };
+  }
+
+  if (normalizedMessage.includes("username already exists")) {
+    return { username: "Username already exists." };
+  }
+
+  return null;
+};
+
 const SetPassword: React.FC = () => {
   const navigate = useNavigate();
   const { useRegisterMutation } = useAuth();
   const { mutate: register, isPending } = useRegisterMutation();
+  const passwordDraft = React.useMemo(getStoredPasswordDraft, []);
 
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [password, setPassword] = React.useState(passwordDraft.password);
+  const [confirmPassword, setConfirmPassword] = React.useState(
+    passwordDraft.confirmPassword,
+  );
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
-  const [touched, setTouched] = React.useState(false);
+  const [touched, setTouched] = React.useState(Boolean(passwordDraft.password));
 
   // Retrieve registration data from sessionStorage
   const [registrationData, setRegistrationData] =
     React.useState<RegisterPayload | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("registrationData");
+    const stored = localStorage.getItem(REGISTRATION_DATA_KEY);
     if (!stored) {
       toast.error("Registration data not found. Please start over.");
       navigate("/auth/register");
@@ -45,6 +94,17 @@ const SetPassword: React.FC = () => {
       navigate("/auth/register");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        REGISTRATION_PASSWORD_DRAFT_KEY,
+        JSON.stringify({ password, confirmPassword }),
+      );
+    } catch {
+      // Private browsing or quota exceeded - continue without persisting.
+    }
+  }, [password, confirmPassword]);
 
   const ruleState = getPasswordRuleState(password);
   const allValid = areAllPasswordRulesValid(ruleState);
@@ -66,7 +126,20 @@ const SetPassword: React.FC = () => {
 
     register(payload, {
       onError: (error: any) => {
-        toast.error(handleApiError(error));
+        const errorMessage = handleApiError(error);
+        const duplicateError = getDuplicateRegistrationError(errorMessage);
+
+        if (duplicateError) {
+          localStorage.setItem(
+            REGISTRATION_ERRORS_KEY,
+            JSON.stringify(duplicateError),
+          );
+          toast.error(errorMessage);
+          navigate("/auth/register");
+          return;
+        }
+
+        toast.error(errorMessage);
       },
       onSuccess: (response: any) => {
         const registerData = response?.data;
@@ -86,7 +159,10 @@ const SetPassword: React.FC = () => {
           registerData?.email || registrationData.email,
         );
         // Clear registration data
-        localStorage.removeItem("registrationData");
+        localStorage.removeItem(REGISTRATION_DATA_KEY);
+        localStorage.removeItem(REGISTRATION_DRAFT_KEY);
+        localStorage.removeItem(REGISTRATION_ERRORS_KEY);
+        localStorage.removeItem(REGISTRATION_PASSWORD_DRAFT_KEY);
         navigate("/auth/register/verify");
       },
     });
