@@ -8,6 +8,10 @@ import {
   disconnectStreamUser,
   getStreamClient,
 } from "@/services/stream-chat.service";
+import {
+  registerStreamPushDevice,
+  unregisterStreamPushDevice,
+} from "@/services/chat-push.service";
 import { CHAT_MEDIA_UNLOCK_DAYS } from "@/hooks/usePersonalChatAccess";
 import type { User } from "@/lib/types/auth";
 import { Chat } from "stream-chat-react";
@@ -170,6 +174,12 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
           setClient(streamClient);
         }
 
+        void registerStreamPushDevice(streamClient, currentUserId).catch(
+          (error) => {
+            console.warn("Unable to register Stream push device:", error);
+          },
+        );
+
         await refreshUnreadState();
 
         unsubscribe = streamClient.on((event) => {
@@ -230,8 +240,15 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
     if (prevUserIdRef.current && !user?.id) {
       // User was logged in and now is logged out
       console.log("User logged out, disconnecting Stream...");
+      const previousUserId = String(prevUserIdRef.current);
       setClient(null);
-      void disconnectStreamUser();
+      void (async () => {
+        try {
+          await unregisterStreamPushDevice(getStreamClient(), previousUserId);
+        } finally {
+          await disconnectStreamUser();
+        }
+      })();
     }
     prevUserIdRef.current = user?.id;
   }, [user?.id]);
