@@ -24,10 +24,18 @@ interface RegistrationData {
   dob: string;
 }
 
+type RegistrationDraft = RegistrationData & {
+  selectedCountryIso3: string;
+};
+
 type CountryItem = {
   name: string;
   iso3: string;
 };
+
+const REGISTRATION_DATA_KEY = "registrationData";
+const REGISTRATION_DRAFT_KEY = "registrationDraft";
+const REGISTRATION_ERRORS_KEY = "registrationErrors";
 
 const DIAL_CODES: Record<string, string> = {
   AFG: "+93",
@@ -260,19 +268,73 @@ const validateUsername = (
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const defaultCountry = COUNTRIES.find((country) => country.iso3 === "NGA");
+  const getStoredDraft = (): RegistrationDraft | null => {
+    try {
+      const stored = localStorage.getItem(REGISTRATION_DRAFT_KEY);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as RegistrationDraft;
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const storedDraft = getStoredDraft();
   const [selectedCountryIso3, setSelectedCountryIso3] = useState(
-    defaultCountry?.iso3 || "NGA",
+    storedDraft?.selectedCountryIso3 || defaultCountry?.iso3 || "NGA",
   );
   const [formData, setFormData] = useState<RegistrationData>({
-    firstname: "",
-    lastname: "",
-    username: "",
-    email: "",
-    phone: "",
-    gender: "",
-    dob: "",
+    firstname: storedDraft?.firstname || "",
+    lastname: storedDraft?.lastname || "",
+    username: storedDraft?.username || "",
+    email: storedDraft?.email || "",
+    phone: storedDraft?.phone || "",
+    gender: storedDraft?.gender || "",
+    dob: storedDraft?.dob || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const usernameInputRef = React.useRef<HTMLInputElement>(null);
+  const emailInputRef = React.useRef<HTMLInputElement>(null);
+  const phoneInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    try {
+      const storedErrors = localStorage.getItem(REGISTRATION_ERRORS_KEY);
+      if (!storedErrors) return;
+
+      const parsed = JSON.parse(storedErrors) as Record<string, string>;
+      setErrors(parsed);
+      localStorage.removeItem(REGISTRATION_ERRORS_KEY);
+
+      window.setTimeout(() => {
+        const target =
+          parsed.email
+            ? emailInputRef.current
+            : parsed.phone
+              ? phoneInputRef.current
+              : parsed.username
+                ? usernameInputRef.current
+                : null;
+
+        target?.scrollIntoView({ behavior: "smooth", block: "center" });
+        target?.focus();
+      }, 0);
+    } catch {
+      localStorage.removeItem(REGISTRATION_ERRORS_KEY);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    try {
+      const draft: RegistrationDraft = {
+        ...formData,
+        selectedCountryIso3,
+      };
+      localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // Private browsing or quota exceeded - continue without persisting.
+    }
+  }, [formData, selectedCountryIso3]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -359,7 +421,11 @@ const Register: React.FC = () => {
 
           // Store registration data in localStorage so it survives tab close
           try {
-            localStorage.setItem("registrationData", JSON.stringify(payload));
+            localStorage.setItem(REGISTRATION_DATA_KEY, JSON.stringify(payload));
+            localStorage.setItem(
+              REGISTRATION_DRAFT_KEY,
+              JSON.stringify({ ...formData, selectedCountryIso3 }),
+            );
           } catch {
             // Private browsing or quota exceeded — continue without persisting
           }
@@ -409,6 +475,7 @@ const Register: React.FC = () => {
               Username
             </Label>
             <Input
+              ref={usernameInputRef}
               name="username"
               placeholder="Username"
               value={formData.username}
@@ -428,6 +495,7 @@ const Register: React.FC = () => {
               Email Address
             </Label>
             <Input
+              ref={emailInputRef}
               name="email"
               type="email"
               placeholder="sampleemail@kinnect.com"
@@ -466,6 +534,7 @@ const Register: React.FC = () => {
                 </SelectContent>
               </Select>
               <Input
+                ref={phoneInputRef}
                 name="phone"
                 placeholder="812 3456 790"
                 value={formData.phone}
