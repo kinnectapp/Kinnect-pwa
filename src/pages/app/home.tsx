@@ -251,7 +251,7 @@ const HomePage: React.FC = () => {
                         backgroundImage: `url(${community.image || WhiteImg})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        filter: "blur(4px)",
+                        // filter: "blur(4px)",
                         transform: "scale(1.1)", // prevents blurred edges
                       }}
                     />
