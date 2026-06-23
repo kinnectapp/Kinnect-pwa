@@ -145,24 +145,32 @@ const CommunityDetailPage: React.FC = () => {
       : "bg-[#C8BCD8]";
 
   return (
-    <div className="min-h-[70dvh] bg-white pb-32">
+    <div className="min-h-[70dvh] md:flex bg-white pb-32">
       {/* Hero image */}
-      <div className="relative mt-6 h-64 w-full">
-        <img
+      <div
+        style={{
+          backgroundImage: `url(${community.image || "/pwa-192x192.png"})`,
+          backgroundSize: "cover",
+          backgroundPosition: "top",
+        }}
+        className="relative md:h-[65vh] mt-6 h-96 w-full"
+      >
+        {/* <img
           src={community.image || "/pwa-192x192.png"}
           alt={community.name}
-          className="h-full w-full object-cover"
-        />
+          className="h-full w-full object-cover position-top "
+        /> */}
         <div className="absolute inset-0 bg-black/30" />
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 left-4 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 text-white"
-        > 
+        >
           <ChevronLeft className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Content */}
+     <div className="">
+       {/* Content */}
       <div className="p-4 space-y-4">
         <h1 className="text-2xl font-semibold text-[#1C1C1C]">
           {community.name}
@@ -186,7 +194,7 @@ const CommunityDetailPage: React.FC = () => {
 
       {/* Action button — fixed at bottom */}
       <div
-        className="fixed left-0 right-0 px-4 pb-2 bg-white border-t border-[#F0EBF8]"
+        className=" mt-6 max-w-[600px]  w-full px-4 pb-2 bg-white border-t border-[#F0EBF8]"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 56px)" }}
       >
         <button
@@ -197,6 +205,7 @@ const CommunityDetailPage: React.FC = () => {
           {isJoining ? "Joining..." : buttonLabel}
         </button>
       </div>
+     </div>
     </div>
   );
 };
