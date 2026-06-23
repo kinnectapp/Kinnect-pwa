@@ -34,10 +34,10 @@ const Location = () => {
     city: String(user?.city ?? ""),
     state: String(user?.state ?? ""),
     country: String(user?.country ?? ""),
-    address: String(user?.address ?? ""),
+    // address: String(user?.address ?? ""),
   });
   const [errors, setErrors] = useState({
-    address: "",
+    // address: "",
     city: "",
     state: "",
     country: "",
@@ -81,7 +81,7 @@ const Location = () => {
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors = {
-      address: formData.address.trim() ? "" : "address should not be empty",
+      // address: formData.address.trim() ? "" : "address should not be empty",
       city: formData.city.trim() ? "" : "city should not be empty",
       state: formData.state ? "" : "state should not be empty",
       country: formData.country ? "" : "country should not be empty",
@@ -97,7 +97,7 @@ const Location = () => {
         city: formData.city.trim(),
         state: formData.state,
         country: formData.country,
-        address: formData.address.trim(),
+        // address: formData.address.trim(),
       });
 
       if (user?.id) {
@@ -199,7 +199,7 @@ const Location = () => {
             </div>
           )}
 
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium mb-2">Address</label>
             <Input
               name="address"
@@ -211,7 +211,7 @@ const Location = () => {
             {errors.address && (
               <p className="mt-1 text-xs text-[#D92D20]">{errors.address}</p>
             )}
-          </div>
+          </div> */}
         </div>
 
         <Button type="submit" disabled={isPending} className="mt-6 w-full">

@@ -5,7 +5,6 @@ import VerifyForgotPassword from "@/pages/auth/VerifyForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
 import Register from "@/pages/auth/Register";
 import VerifyRegister from "@/pages/auth/VerifyRegister";
-import SetPassword from "@/pages/auth/SetPassword";
 import { useAuthStore } from "@/store/auth.store";
 
 const AuthRoutes = () => {
@@ -40,7 +39,7 @@ const AuthRoutes = () => {
         element={<VerifyForgotPassword />}
       />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/set-password" element={<SetPassword />} />
+      <Route path="/set-password" element={<Navigate to="/auth/register" replace />} />
       <Route
         path="/register"
         element={

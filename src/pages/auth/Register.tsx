@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,6 +14,14 @@ import {
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { toast } from "sonner";
 import countryList from "@/data/countryList";
+import useAuth from "@/api/auth";
+import { RegisterPayload } from "@/lib/types/auth";
+import { handleApiError } from "@/api/serviceUtils";
+import {
+  areAllPasswordRulesValid,
+  getPasswordRuleState,
+} from "@/lib/password-rules";
+import { PasswordRules } from "@/components/auth/PasswordRules";
 
 interface RegistrationData {
   firstname: string;
@@ -22,6 +31,8 @@ interface RegistrationData {
   phone: string;
   gender: string;
   dob: string;
+  password: string;
+  confirmPassword: string;
 }
 
 type RegistrationDraft = RegistrationData & {
@@ -33,9 +44,9 @@ type CountryItem = {
   iso3: string;
 };
 
-const REGISTRATION_DATA_KEY = "registrationData";
 const REGISTRATION_DRAFT_KEY = "registrationDraft";
 const REGISTRATION_ERRORS_KEY = "registrationErrors";
+const REGISTRATION_PASSWORD_DRAFT_KEY = "registrationPasswordDraft";
 
 const DIAL_CODES: Record<string, string> = {
   AFG: "+93",
@@ -265,8 +276,30 @@ const validateUsername = (
   return null;
 };
 
+const getDuplicateRegistrationError = (
+  message: string,
+): Record<string, string> | null => {
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes("email already exists")) {
+    return { email: "Email already exists." };
+  }
+
+  if (normalizedMessage.includes("phone already exists")) {
+    return { phone: "Phone number already exists." };
+  }
+
+  if (normalizedMessage.includes("username already exists")) {
+    return { username: "Username already exists." };
+  }
+
+  return null;
+};
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { useRegisterMutation } = useAuth();
+  const { mutate: register, isPending } = useRegisterMutation();
   const defaultCountry = COUNTRIES.find((country) => country.iso3 === "NGA");
   const getStoredDraft = (): RegistrationDraft | null => {
     try {
@@ -291,11 +324,24 @@ const Register: React.FC = () => {
     phone: storedDraft?.phone || "",
     gender: storedDraft?.gender || "",
     dob: storedDraft?.dob || "",
+    password: storedDraft?.password || "",
+    confirmPassword: storedDraft?.confirmPassword || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [passwordTouched, setPasswordTouched] = React.useState(
+    Boolean(storedDraft?.password),
+  );
   const usernameInputRef = React.useRef<HTMLInputElement>(null);
   const emailInputRef = React.useRef<HTMLInputElement>(null);
   const phoneInputRef = React.useRef<HTMLInputElement>(null);
+
+  const passwordRuleState = getPasswordRuleState(formData.password);
+  const passwordIsValid = areAllPasswordRulesValid(passwordRuleState);
+  const passwordsMatch =
+    formData.confirmPassword.length > 0 &&
+    formData.confirmPassword === formData.password;
 
   React.useEffect(() => {
     try {
@@ -360,6 +406,16 @@ const Register: React.FC = () => {
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.dob) newErrors.dob = "Date of birth is required";
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (!passwordIsValid) {
+      newErrors.password = "Password does not meet the requirements";
+    }
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Confirm password is required";
+    } else if (formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -378,6 +434,10 @@ const Register: React.FC = () => {
         ...prev,
         [name]: "",
       }));
+    }
+
+    if (name === "password" && !passwordTouched) {
+      setPasswordTouched(true);
     }
   };
 
@@ -414,14 +474,13 @@ const Register: React.FC = () => {
             COUNTRIES.find((item) => item.iso3 === selectedCountryIso3) ||
             defaultCountry;
           const countryCode = selectedCountry?.dialCode || "+234";
-          const payload: RegistrationData = {
+          const payload: RegisterPayload = {
             ...formData,
             phone: `${countryCode}${normalizedPhone}`,
           };
 
           // Store registration data in localStorage so it survives tab close
           try {
-            localStorage.setItem(REGISTRATION_DATA_KEY, JSON.stringify(payload));
             localStorage.setItem(
               REGISTRATION_DRAFT_KEY,
               JSON.stringify({ ...formData, selectedCountryIso3 }),
@@ -429,7 +488,59 @@ const Register: React.FC = () => {
           } catch {
             // Private browsing or quota exceeded — continue without persisting
           }
-          navigate("/auth/set-password");
+          register(payload, {
+            onError: (error: any) => {
+              const errorMessage = handleApiError(error);
+              const duplicateError = getDuplicateRegistrationError(errorMessage);
+
+              if (duplicateError) {
+                setErrors((previousErrors) => ({
+                  ...previousErrors,
+                  ...duplicateError,
+                }));
+
+                window.setTimeout(() => {
+                  const target =
+                    duplicateError.email
+                      ? emailInputRef.current
+                      : duplicateError.phone
+                        ? phoneInputRef.current
+                        : duplicateError.username
+                          ? usernameInputRef.current
+                          : null;
+
+                  target?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+                  target?.focus();
+                }, 0);
+              }
+
+              toast.error(errorMessage);
+            },
+            onSuccess: (response: any) => {
+              const registerData = response?.data;
+              if (registerData?.id && registerData?.email) {
+                sessionStorage.setItem(
+                  "pendingUser",
+                  JSON.stringify({
+                    id: registerData.id,
+                    email: registerData.email,
+                  }),
+                );
+              }
+
+              sessionStorage.setItem(
+                "verificationEmail",
+                registerData?.email || formData.email,
+              );
+              localStorage.removeItem(REGISTRATION_DRAFT_KEY);
+              localStorage.removeItem(REGISTRATION_ERRORS_KEY);
+              localStorage.removeItem(REGISTRATION_PASSWORD_DRAFT_KEY);
+              navigate("/auth/register/verify");
+            },
+          });
         }}
       >
         <div className="space-y-3 pr-2">
@@ -593,6 +704,67 @@ const Register: React.FC = () => {
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
+              Password
+            </Label>
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={formData.password}
+                onChange={handleChange}
+                onFocus={() => setPasswordTouched(true)}
+                className={`h-11 border-[#E4E4F0] pr-10 text-[14px] [-webkit-text-size-adjust:100%] ${
+                  errors.password ? "border-red-500" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute inset-y-0 right-3 flex items-center text-[#B200D7]"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-red-500">{errors.password}</p>
+            )}
+            <PasswordRules state={passwordRuleState} visible={passwordTouched} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
+              Confirm Password
+            </Label>
+            <div className="relative">
+              <Input
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`h-11 border-[#E4E4F0] pr-10 text-[14px] [-webkit-text-size-adjust:100%] ${
+                  errors.confirmPassword ? "border-red-500" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((value) => !value)}
+                className="absolute inset-y-0 right-3 flex items-center text-[#B200D7]"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+            )}
+            {formData.confirmPassword.length > 0 && !passwordsMatch && (
+              <p className="text-xs text-red-500">Passwords do not match.</p>
+            )}
+          </div>
+
           <p className="mt-1 text-[14px] leading-[20px] text-[#6C6C80]">
             By signing up, you agree to our{" "}
             <span className="text-[#7D1BCB]">Terms &amp; Conditions</span>. See
@@ -602,7 +774,9 @@ const Register: React.FC = () => {
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
-          <Button type="submit">Create account</Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Creating account..." : "Create account"}
+          </Button>
 
           <p className="text-center text-[13px] text-[#6C6C80]">
             Already have an account?{" "}
