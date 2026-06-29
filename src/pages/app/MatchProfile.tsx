@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
-import { resolveSubscriptionTier } from "@/lib/subscription";
+import { canChatNormallyWithUser } from "@/lib/subscription";
 import { Loader } from "lucide-react";
 import UserImage from "../../assets/images/user-profile.png";
 import { useQuery } from "@tanstack/react-query";
@@ -145,7 +145,9 @@ export const MatchProfile: React.FC = () => {
   }, [fetchedProfile]);
 
   const personalChatAccess = usePersonalChatAccess(currentProfile?.id);
-  const isFreemium = resolveSubscriptionTier(user) === "fremium";
+  const canChatNormally = currentProfile
+    ? canChatNormallyWithUser(user, currentProfile.id)
+    : false;
 
   const isPartnerBlocked = useMemo(() => {
     if (!currentProfile?.id || !user?.blockedUsers) return false;
@@ -311,8 +313,8 @@ export const MatchProfile: React.FC = () => {
             onMessage={handleMessage}
             onMore={() => setShowMoreOptions(true)}
             shouldBlurImages={!personalChatAccess.canShareMedia}
-            messageDisabled={isFreemium}
-            hideMore={isFreemium}
+            messageDisabled={!canChatNormally}
+            hideMore={!canChatNormally}
           />
         </div>
       </div>

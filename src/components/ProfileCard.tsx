@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { CalendarIcon, DrinkIcon, GradIcon, ReligionIcon, SmokeIcon, WorkIcon } from "./icons";
 
 interface ProfileEssentials {
@@ -71,7 +71,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   onMessage,
   onMore,
   shouldBlurImages = true,
-  messageDisabled = false,
+  // messageDisabled = false,
   hideMore = false,
 }) => {
   const navigate = useNavigate();
@@ -332,12 +332,12 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         <div className="mt-8 flex gap-6">
           <Button
             onClick={() => {
-              if (messageDisabled) {
-                toast.info("Upgrade your plan to message matches. Redirecting to subscriptions...");
-                setTimeout(() => navigate("/app/subscriptions"), 3000);
-              } else {
+              // if (messageDisabled) {
+              //   toast.info("Upgrade your plan to message matches. Redirecting to subscriptions...");
+              //   setTimeout(() => navigate("/app/subscriptions"), 3000);
+              // } else {
                 onMessage();
-              }
+              // }
             }}
             className={`flex-1 bg-[#55288D] text-white rounded-full h-12 font-semibold flex items-center justify-center gap-2 hover:bg-[#3e1a6e]`}
           >

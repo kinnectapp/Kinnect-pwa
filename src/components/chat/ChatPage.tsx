@@ -25,7 +25,7 @@ import {
 import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
-import { resolveSubscriptionTier } from "@/lib/subscription";
+import { canChatNormallyWithUser } from "@/lib/subscription";
 import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
 import JiltModal from "./JiltModal";
@@ -54,7 +54,7 @@ type Props = {
 
 const DisabledAttachmentSelector = () => null;
 const FREEMIUM_PREDEFINED_MESSAGE =
-  "Hello i'm a freemium user do you want to sponsor me ";
+  "Hello i'm a freemium user do you want to sponsor me? ";
 
 const getStreamSendErrorInfo = (error: unknown) => {
   if (!error || typeof error !== "object") {
@@ -417,8 +417,8 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     (!partnerId ||
       personalChatAccess.isLoading ||
       !personalChatAccess.canShareMedia);
-  const isFreemiumUser = resolveSubscriptionTier(user) === "fremium";
-  const shouldRestrictFreemiumMessaging = isPersonalChat && isFreemiumUser;
+  const shouldRestrictFreemiumMessaging =
+    isPersonalChat && !canChatNormallyWithUser(user, partnerId);
   const hasSentFreemiumMessage = useMemo(() => {
     if (!shouldRestrictFreemiumMessaging || !currentUserId || !channel) {
       return false;
@@ -767,14 +767,16 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   ) : shouldRestrictFreemiumMessaging ? (
                     <div className="border-t border-[#F1ECF5] bg-white   py-3">
                       {!hasSentFreemiumMessage && (
-                        <button
+                       <div className="flex justify ">
+                         <button
                           type="button"
                           onClick={handleSendFreemiumMessage}
                           disabled={isSendingFreemiumMessage}
-                          className="mb-2 w-full rounded-lg border border-[#DECFEA] bg-[#FAF8FB] px-3 py-2 text-left text-sm text-[#1C1C1C] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
+                          className="mb-2 w-full rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-3 max-w-[95vw] py-2 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
                         >
                           {FREEMIUM_PREDEFINED_MESSAGE}
                         </button>
+                       </div>
                       )}
                       <div className="flex items-center gap-2   border border-[#E3DCEB] px-3 py-2">
                         <input

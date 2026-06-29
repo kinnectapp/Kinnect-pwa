@@ -10,6 +10,7 @@ import axios, {
 import { endpoints } from "@/api/endpoints";
 import { API_BASE_URL } from "@/env";
 import { useAuthStore } from "@/store/auth.store";
+import type { User } from "@/lib/types/auth";
 import {
   clearStorage,
   getAccessToken,
@@ -30,6 +31,42 @@ const refreshClient = axios.create({
 
 // Single shared promise — all concurrent 401s wait on the same refresh, no boolean flag needed.
 let refreshPromise: Promise<string> | null = null;
+
+const isProfileRequest = (config?: InternalAxiosRequestConfig) => {
+  if (String(config?.method || "get").toLowerCase() !== "get") {
+    return false;
+  }
+
+  const url = config?.url?.split("?")[0] ?? "";
+  return url === endpoints.users.profile || url.endsWith(endpoints.users.profile);
+};
+
+const syncProfileResponseToAuthStore = async (
+  responseData: unknown,
+  config?: InternalAxiosRequestConfig,
+) => {
+  if (!isProfileRequest(config)) {
+    return;
+  }
+
+  const profileUser = (responseData as { data?: { user?: Partial<User> } })
+    ?.data?.user;
+  if (!profileUser || typeof profileUser !== "object") {
+    return;
+  }
+
+  const authStore = useAuthStore.getState();
+  const mergedUser = {
+    ...(authStore.user ?? {}),
+    ...profileUser,
+  };
+
+  if (!mergedUser.id || !mergedUser.email) {
+    return;
+  }
+
+  await authStore.setUser(mergedUser as User);
+};
 
 const shouldSkipRefresh = (config?: RetryableConfig): boolean => {
   const url = config?.url ?? "";
@@ -62,7 +99,10 @@ export const attachAuthInterceptors = (client: AxiosInstance) => {
   );
 
   client.interceptors.response.use(
-    (response) => response,
+    async (response) => {
+      await syncProfileResponseToAuthStore(response.data, response.config);
+      return response;
+    },
     async (error: AxiosError) => {
       const original = (error.config ?? {}) as RetryableConfig;
       const status = error.response?.status;

@@ -70,6 +70,7 @@ export interface User {
   subscriptionType?: string;
   currentSubId?: string | number | null;
   currentSubName?: string | null;
+  sponsoringUser?: Array<string | number>;
   subStartDate?: string | null;
   subExpiryDate?: string | null;
   subscriptionStatus?: string | null;
