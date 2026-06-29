@@ -69,7 +69,12 @@ export const resolveSubscriptionTier = (
       user.plan,
   );
 
-  if (!explicitPlan || explicitPlan.includes("free") || explicitPlan.includes("freemium")) {
+  if (
+    !explicitPlan ||
+    explicitPlan.includes("free") ||
+    explicitPlan.includes("freemium") ||
+    explicitPlan.includes("sponsor")
+  ) {
     return "fremium";
   }
 
@@ -86,6 +91,28 @@ export const resolveSubscriptionTier = (
   }
 
   return user.currentSubId ? "standard" : "fremium";
+};
+
+export const canChatNormallyWithUser = (
+  user: User | null | undefined,
+  partnerId: string | number | null | undefined,
+) => {
+  if (resolveSubscriptionTier(user) !== "fremium") {
+    return true;
+  }
+
+  const isSponsoredPlan = safeLower(user?.currentSubName).includes("sponsor");
+  if (!isSponsoredPlan || partnerId === null || partnerId === undefined) {
+    return false;
+  }
+
+  const sponsoringUsers = Array.isArray(user?.sponsoringUser)
+    ? user.sponsoringUser
+    : [];
+
+  return sponsoringUsers.some(
+    (sponsoringUserId) => String(sponsoringUserId) === String(partnerId),
+  );
 };
 
 const hasActivePaidSubscription = (user: User | null | undefined) => {
