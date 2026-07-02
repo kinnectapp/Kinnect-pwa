@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { handleApiError } from "@/api/serviceUtils";
 import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
-import { canChatNormallyWithUser } from "@/lib/subscription";
+import { canChatNormallyWithUser, isKikiUsername } from "@/lib/subscription";
 import { Loader } from "lucide-react";
 import UserImage from "../../assets/images/user-profile.png";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ interface ProfileEssentials {
 
 interface Profile {
   id: string;
+  username: string;
   name: string;
   location: string;
   dob: string;
@@ -145,8 +146,11 @@ export const MatchProfile: React.FC = () => {
   }, [fetchedProfile]);
 
   const personalChatAccess = usePersonalChatAccess(currentProfile?.id);
+  const isKikiProfile =
+    isKikiUsername(currentProfile?.username) ||
+    isKikiUsername(currentProfile?.name);
   const canChatNormally = currentProfile
-    ? canChatNormallyWithUser(user, currentProfile.id)
+    ? canChatNormallyWithUser(user, currentProfile.id, currentProfile.username)
     : false;
 
   const isPartnerBlocked = useMemo(() => {
@@ -260,7 +264,7 @@ export const MatchProfile: React.FC = () => {
     try {
       setIsPerformingAction(true);
       await chatService.jiltUser(currentProfile.id);
-      toast.success(`${currentProfile.name} removed from matches`);
+      toast.success(`${currentProfile.name} removed from matches and blocked`);
       setShowJiltModal(false);
       setShowMoreOptions(false);
       setTimeout(() => navigate("/app"), 500);
@@ -312,7 +316,9 @@ export const MatchProfile: React.FC = () => {
             profile={currentProfile}
             onMessage={handleMessage}
             onMore={() => setShowMoreOptions(true)}
-            shouldBlurImages={!personalChatAccess.canShareMedia}
+            shouldBlurImages={
+              !isKikiProfile && !personalChatAccess.canShareMedia
+            }
             messageDisabled={!canChatNormally}
             hideMore={!canChatNormally}
           />
@@ -370,7 +376,7 @@ export const MatchProfile: React.FC = () => {
         userName={currentProfile?.name}
         userImage={currentProfile?.image}
         userLocation={currentProfile?.location}
-        blurImage={!personalChatAccess.canShareMedia}
+        blurImage={!isKikiProfile && !personalChatAccess.canShareMedia}
         onClose={() => setShowJiltModal(false)}
         onConfirm={handleConfirmJilt}
         isLoading={isPerformingAction}

@@ -27,6 +27,31 @@ const ensureStreamClient = async () => {
   return connectStreamUser(user);
 };
 
+const addBlockedUserToAuthStore = async (id: string) => {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const blockedUserId = Number(id);
+  const currentBlocked = (user.blockedUsers as number[] | undefined) ?? [];
+
+  if (currentBlocked.includes(blockedUserId)) return;
+
+  await useAuthStore.getState().setUser({
+    ...user,
+    blockedUsers: [...currentBlocked, blockedUserId],
+  });
+};
+
+const blockUserById = async (id: string) => {
+  const [{ data }, client] = await Promise.all([
+    http.put(endpoints.users.block(id), {}),
+    ensureStreamClient(),
+  ]);
+  await client.blockUser(id);
+  await addBlockedUserToAuthStore(id);
+  return data;
+};
+
 const buildDmChannelId = (currentUserId: string, otherUserId: string) => {
   return `dm-${[currentUserId, otherUserId].sort().join("-")}`;
 };
@@ -63,12 +88,7 @@ export const chatService = {
   },
 
   blockUser: async (id: string) => {
-    const [{ data }, client] = await Promise.all([
-      http.put(endpoints.users.block(id), {}),
-      ensureStreamClient(),
-    ]);
-    await client.blockUser(id);
-    return data;
+    return blockUserById(id);
   },
 
   unblockUser: async (id: string) => {
@@ -81,6 +101,15 @@ export const chatService = {
   },
 
   jiltUser: async (id: string) => {
+    const user = getCurrentUser();
+    const blockedUserId = Number(id);
+    const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
+    const isAlreadyBlocked = currentBlocked.includes(blockedUserId);
+
+    if (!isAlreadyBlocked) {
+      await blockUserById(id);
+    }
+
     const { data } = await http.put(endpoints.users.jilt(id), {});
     return data;
   },

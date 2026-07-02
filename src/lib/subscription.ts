@@ -31,6 +31,8 @@ type SubscriptionPermissions = {
 const safeLower = (value: unknown) =>
   typeof value === "string" ? value.trim().toLowerCase() : "";
 
+export const isKikiUsername = (username: unknown) => safeLower(username) === "kiki";
+
 const isActiveSubscriptionStatus = (status: unknown) => {
   const normalized = safeLower(status);
   if (!normalized) {
@@ -96,7 +98,12 @@ export const resolveSubscriptionTier = (
 export const canChatNormallyWithUser = (
   user: User | null | undefined,
   partnerId: string | number | null | undefined,
+  partnerUsername?: unknown,
 ) => {
+  if (isKikiUsername(partnerUsername)) {
+    return true;
+  }
+
   if (resolveSubscriptionTier(user) !== "fremium") {
     return true;
   }
