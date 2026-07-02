@@ -73,7 +73,7 @@ const JiltModal: React.FC<JiltModalProps> = ({
           {/* Description */}
           <p className="text-sm text-gray-500 text-center mb-8 leading-relaxed">
             By jilting this match, it means you are no longer interested and
-            want to put off this conversation.
+            want to put off this conversation. This user will also be blocked.
           </p>
 
           {/* Jilt button */}

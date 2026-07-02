@@ -25,7 +25,7 @@ import {
 import { ensureStreamConnected } from "@/services/stream-chat.service";
 import { chatService } from "@/services/chat.service";
 import { handleApiError } from "@/api/serviceUtils";
-import { canChatNormallyWithUser } from "@/lib/subscription";
+import { canChatNormallyWithUser, isKikiUsername } from "@/lib/subscription";
 import ChatOptionsModal from "./ChatOptionsModal";
 import ReportModal from "./ReportModal";
 import JiltModal from "./JiltModal";
@@ -95,6 +95,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [partnerId, setPartnerId] = useState<string>("");
   const [partnerFullName, setPartnerFullName] = useState<string>("");
+  const [partnerUsername, setPartnerUsername] = useState<string>("");
   const [partnerAge, setPartnerAge] = useState<string>("");
   const [partnerImage, setPartnerImage] = useState<string>("");
   const [partnerLocation, setPartnerLocation] = useState<string>("");
@@ -171,6 +172,13 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         );
 
         setPartnerId(otherMember?.user_id || "");
+        setPartnerUsername(
+          String(
+            (otherMember?.user as any)?.username ||
+              (otherMember?.user as any)?.name ||
+              "",
+          ),
+        );
         setPartnerLocation(
           `${(otherMember?.user as any)?.state || ""} ${(otherMember?.user as any)?.country || ""}`.trim(),
         );
@@ -209,6 +217,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         const fullUserData = await chatService.getUserById(partnerId);
         if (fullUserData && isMounted) {
           const resp = fullUserData?.data?.resp;
+          setPartnerUsername(resp?.username || "");
           setPartnerFullName(
             resp?.incognito
               ? resp?.username || ""
@@ -350,7 +359,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
     try {
       setIsPerformingAction(true);
       await chatService.jiltUser(partnerId);
-      toast.success("Match removed.");
+      toast.success("Match removed and user blocked.");
       setShowJiltModal(false);
       setShowActions(false);
       setHasError(false);
@@ -406,6 +415,12 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   }, [partnerAge]);
 
   const isPersonalChat = channel?.type === "messaging";
+  const isKikiPartner =
+    isKikiUsername(partnerUsername) ||
+    isKikiUsername(partnerFullName) ||
+    isKikiUsername(title);
+  const canShareMediaWithPartner =
+    isKikiPartner || personalChatAccess.canShareMedia;
 
   const isPartnerBlocked = useMemo(() => {
     if (!isPersonalChat || !partnerId || !user?.blockedUsers) return false;
@@ -414,11 +429,12 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
 
   const shouldRestrictMediaSharing =
     isPersonalChat &&
+    !isKikiPartner &&
     (!partnerId ||
       personalChatAccess.isLoading ||
-      !personalChatAccess.canShareMedia);
+      !canShareMediaWithPartner);
   const shouldRestrictFreemiumMessaging =
-    isPersonalChat && !canChatNormallyWithUser(user, partnerId);
+    isPersonalChat && !canChatNormallyWithUser(user, partnerId, partnerUsername);
   const hasSentFreemiumMessage = useMemo(() => {
     if (!shouldRestrictFreemiumMessaging || !currentUserId || !channel) {
       return false;
@@ -573,7 +589,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         profileComp={
           isPersonalChat ? (
             <div className="flex items-center gap-3 mb-6">
-              {isPersonalChat && !personalChatAccess.canShareMedia ? (
+              {isPersonalChat && !canShareMediaWithPartner ? (
                 <div className="relative w-[50px] h-[50px] rounded-full border overflow-hidden flex-shrink-0">
                   <div
                     className="absolute inset-0 scale-110  blur-sm "
@@ -660,7 +676,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         userName={title}
         userImage={partnerImage}
         userLocation={partnerLocation}
-        blurImage={!personalChatAccess.canShareMedia}
+        blurImage={!canShareMediaWithPartner}
         onClose={() => {
           setShowJiltModal(false);
           if (jiltAfterBlock.current) {
@@ -703,7 +719,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     messageActions={["react", "quote", "delete"]}
                     head={
                       <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
-                        {isPersonalChat && !personalChatAccess.canShareMedia ? (
+                        {isPersonalChat && !canShareMediaWithPartner ? (
                           <div className="relative w-[60px] h-[60px] rounded-full border overflow-hidden flex-shrink-0">
                             <div
                               className="absolute inset-0 blur-sm  "
@@ -750,7 +766,7 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   )}
                   {!personalChatAccess.isLoading &&
                     isPersonalChat &&
-                    !personalChatAccess.canShareMedia &&
+                    !canShareMediaWithPartner &&
                     !isPartnerBlocked && !shouldRestrictFreemiumMessaging && (
                       <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
                         <div className="flex items-start gap-2">

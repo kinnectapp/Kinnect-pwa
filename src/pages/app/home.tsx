@@ -64,6 +64,7 @@ const HomePage: React.FC = () => {
     if (fetchedUser && typeof fetchedUser === "object") {
       void authSetUser(fetchedUser as any);
     }
+    localStorage.removeItem("dealBreakerRankings")
   }, [userRefreshData]);
 
   const { data: communitiesResponse, isLoading: isLoadingCommunities } =
