@@ -101,7 +101,7 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({
             <p className="text-sm text-gray-600 mt-1">
               {isBlocked
                 ? "Unblock this user to send and receive messages."
-                : "This user can no longer see or interact with you once blocked."}
+                : "This user can no longer see or interact with you once blocked. "}
             </p>
           </div>
 
