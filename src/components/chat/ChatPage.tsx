@@ -823,44 +823,53 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                             type="button"
                             onClick={handleSendFreemiumMessage}
                             disabled={isSendingFreemiumMessage}
-                            className="mb-2 w-full rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-3 max-w-[95vw] py-2 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
+                            className="mb-2 w-full rounded-xl border border-[#DECFEA] m-auto bg-[#D400B3] px-3 max-w-[95vw] py-2 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
                           >
                             {FREEMIUM_PREDEFINED_MESSAGE}
                           </button>
                         </div>
                       )}
                       <div className="flex items-center gap-2   border border-[#E3DCEB] px-3 py-2">
-                        <input
+                        <p className="text-xs text-[#77707F]">
+                          Freemium users can only send the suggestion above
+                        </p>
+                        {/* <input
                           type="text"
                           value=""
                           readOnly
                           disabled
                           placeholder="Freemium users can only send the suggestion above"
-                          className="min-w-0 flex-1 bg-transparent text-sm text-[#77707F] outline-none placeholder:text-[#9B95A3] disabled:cursor-not-allowed"
-                        />
+                          className="min-w-0 flex-1 bg-transparent text-sm text-[#77707F] outline-none placeholder:text-[#9B95A3]
+                         
+                          placeholder:text-[12px] 
+                          disabled:cursor-not-allowed"
+                        /> */}
+
                         <button
+                          type="button"
+                          onClick={() => navigate("/app/subscriptions")}
+                          className="  w-fit rounded-md border border-[#DECFEA] m-auto bg-[#D400B3] px-2  py-1 text-left text-xs text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait 
+                           text-nowrap disabled:opacity-70"
+                        >
+                          Unlock this chat for free
+                        </button>
+                        {/* <button
                           type="button"
                           disabled
                           className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#D8D1E0] text-white disabled:cursor-not-allowed"
                           aria-label="Send message disabled for freemium users"
                         >
                           <Send size={16} />
-                        </button>
+                        </button> */}
                       </div>
-                      <div className="flex py-3 px-2 items-center justify-center flex-wrap gap-2  ">
+                      {/* <div className="flex py-3 px-2 items-center justify-center flex-wrap gap-2  ">
                         <p className="  text-center text-xs text-[#77707F]">
                           {hasSentFreemiumMessage
                             ? "You've already sent your freemium sponsor message."
                             : "Freemium users can send one predefined message."}
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => navigate("/app/subscriptions")}
-                          className="  w-fit rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-2  py-1 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
-                        >
-                          Unlock chat
-                        </button>
-                      </div>
+                       
+                      </div> */}
                     </div>
                   ) : (
                     <div className="border">
