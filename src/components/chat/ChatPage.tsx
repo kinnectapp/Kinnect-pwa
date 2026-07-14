@@ -54,7 +54,7 @@ type Props = {
 
 const DisabledAttachmentSelector = () => null;
 const FREEMIUM_PREDEFINED_MESSAGE =
-  "Hello i'm a freemium user do you want to sponsor me? ";
+  "Hello, I'm a Freemium user. Do you want to sponsor our conversation? ";
 
 const getStreamSendErrorInfo = (error: unknown) => {
   if (!error || typeof error !== "object") {
@@ -111,8 +111,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [isPerformingAction, setIsPerformingAction] = useState(false);
   const [isSendingFreemiumMessage, setIsSendingFreemiumMessage] =
     useState(false);
-  const [sentFreemiumSuggestionChannelIds, setSentFreemiumSuggestionChannelIds] =
-    useState<Set<string>>(() => new Set());
+  const [
+    sentFreemiumSuggestionChannelIds,
+    setSentFreemiumSuggestionChannelIds,
+  ] = useState<Set<string>>(() => new Set());
 
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
   const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
@@ -224,7 +226,11 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
               : [resp?.firstname, resp?.lastname].filter(Boolean).join(" "),
           );
           setPartnerAge(fullUserData?.data?.resp?.dob || "");
-          setPartnerImage(fullUserData?.data?.resp?.profilePhotos[fullUserData?.data?.resp?.profilePhotos.length - 1] || "");
+          setPartnerImage(
+            fullUserData?.data?.resp?.profilePhotos[
+              fullUserData?.data?.resp?.profilePhotos.length - 1
+            ] || "",
+          );
           const location =
             `${fullUserData?.data?.resp?.state || ""} ${fullUserData?.data?.resp?.country || ""}`.trim();
           setPartnerLocation(location);
@@ -322,7 +328,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       setIsPerformingAction(true);
       await chatService.blockUser(partnerId);
       const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
-      await useAuthStore.getState().setUser({ ...user!, blockedUsers: [...currentBlocked, Number(partnerId)] });
+      await useAuthStore.getState().setUser({
+        ...user!,
+        blockedUsers: [...currentBlocked, Number(partnerId)],
+      });
       toast.success("User blocked.");
       setShowBlockConfirm(false);
       setShowActions(false);
@@ -340,7 +349,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
       setIsPerformingAction(true);
       await chatService.unblockUser(partnerId);
       const currentBlocked = (user?.blockedUsers as number[] | undefined) ?? [];
-      await useAuthStore.getState().setUser({ ...user!, blockedUsers: currentBlocked.filter((id) => id !== Number(partnerId)) });
+      await useAuthStore.getState().setUser({
+        ...user!,
+        blockedUsers: currentBlocked.filter((id) => id !== Number(partnerId)),
+      });
       toast.success("User unblocked.");
       setShowActions(false);
     } catch (error) {
@@ -430,11 +442,10 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const shouldRestrictMediaSharing =
     isPersonalChat &&
     !isKikiPartner &&
-    (!partnerId ||
-      personalChatAccess.isLoading ||
-      !canShareMediaWithPartner);
+    (!partnerId || personalChatAccess.isLoading || !canShareMediaWithPartner);
   const shouldRestrictFreemiumMessaging =
-    isPersonalChat && !canChatNormallyWithUser(user, partnerId, partnerUsername);
+    isPersonalChat &&
+    !canChatNormallyWithUser(user, partnerId, partnerUsername);
   const hasSentFreemiumMessage = useMemo(() => {
     if (!shouldRestrictFreemiumMessaging || !currentUserId || !channel) {
       return false;
@@ -593,12 +604,24 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                 <div className="relative w-[50px] h-[50px] rounded-full border overflow-hidden flex-shrink-0">
                   <div
                     className="absolute inset-0 scale-110  blur-sm "
-                    style={{ backgroundImage: `url(${partnerImage || UserImg})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                    style={{
+                      backgroundImage: `url(${partnerImage || UserImg})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
                   />
-                  <div className="absolute inset-0 select-none" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
+                  <div
+                    className="absolute inset-0 select-none"
+                    onContextMenu={(e) => e.preventDefault()}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
                 </div>
               ) : (
-                <img src={partnerImage || UserImg} alt="" className="w-[50px] h-[50px] object-cover rounded-full border" />
+                <img
+                  src={partnerImage || UserImg}
+                  alt=""
+                  className="w-[50px] h-[50px] object-cover rounded-full border"
+                />
               )}
               <div>
                 <p className="text-gray-900 font-medium">
@@ -723,9 +746,17 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                           <div className="relative w-[60px] h-[60px] rounded-full border overflow-hidden flex-shrink-0">
                             <div
                               className="absolute inset-0 blur-sm  "
-                              style={{ backgroundImage: `url(${partnerImage || UserImg})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                              style={{
+                                backgroundImage: `url(${partnerImage || UserImg})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                              }}
                             />
-                            <div className="absolute inset-0 select-none" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
+                            <div
+                              className="absolute inset-0 select-none"
+                              onContextMenu={(e) => e.preventDefault()}
+                              onDragStart={(e) => e.preventDefault()}
+                            />
                           </div>
                         ) : (
                           <img
@@ -760,14 +791,18 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
                       <div className="flex items-start gap-2">
                         <Ban className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
-                        <p>You have blocked this user. Unblock them to send and receive messages.</p>
+                        <p>
+                          You have blocked this user. Unblock them to send and
+                          receive messages.
+                        </p>
                       </div>
                     </div>
                   )}
                   {!personalChatAccess.isLoading &&
                     isPersonalChat &&
                     !canShareMediaWithPartner &&
-                    !isPartnerBlocked && !shouldRestrictFreemiumMessaging && (
+                    !isPartnerBlocked &&
+                    !shouldRestrictFreemiumMessaging && (
                       <div className="border-t border-[#F1ECF5] bg-white px-4 py-3 text-xs text-[#77707F]">
                         <div className="flex items-start gap-2">
                           <Lock className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#D400B3]" />
@@ -783,16 +818,16 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                   ) : shouldRestrictFreemiumMessaging ? (
                     <div className="border-t border-[#F1ECF5] bg-white   py-3">
                       {!hasSentFreemiumMessage && (
-                       <div className="flex justify ">
-                         <button
-                          type="button"
-                          onClick={handleSendFreemiumMessage}
-                          disabled={isSendingFreemiumMessage}
-                          className="mb-2 w-full rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-3 max-w-[95vw] py-2 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {FREEMIUM_PREDEFINED_MESSAGE}
-                        </button>
-                       </div>
+                        <div className="flex justify ">
+                          <button
+                            type="button"
+                            onClick={handleSendFreemiumMessage}
+                            disabled={isSendingFreemiumMessage}
+                            className="mb-2 w-full rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-3 max-w-[95vw] py-2 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {FREEMIUM_PREDEFINED_MESSAGE}
+                          </button>
+                        </div>
                       )}
                       <div className="flex items-center gap-2   border border-[#E3DCEB] px-3 py-2">
                         <input
@@ -812,11 +847,20 @@ const ChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                           <Send size={16} />
                         </button>
                       </div>
-                      <p className="mt-2 text-center text-xs text-[#77707F]">
-                        {hasSentFreemiumMessage
-                          ? "You've already sent your freemium sponsor message."
-                          : "Freemium users can send one predefined sponsor message."}
-                      </p>
+                      <div className="flex py-3 px-2 items-center justify-center flex-wrap gap-2  ">
+                        <p className="  text-center text-xs text-[#77707F]">
+                          {hasSentFreemiumMessage
+                            ? "You've already sent your freemium sponsor message."
+                            : "Freemium users can send one predefined message."}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/app/subscriptions")}
+                          className="  w-fit rounded-full border border-[#DECFEA] m-auto bg-[#D400B3] px-2  py-1 text-left text-sm text-[#ffffff] transition-colors hover:bg-[#F2ECF7] disabled:cursor-wait disabled:opacity-70"
+                        >
+                          Unlock chat
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <div className="border">
