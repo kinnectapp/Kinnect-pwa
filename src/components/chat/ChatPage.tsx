@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Lock,
   Ban,
-  Send,
+  // Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
