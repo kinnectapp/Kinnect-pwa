@@ -31,8 +31,11 @@ import {
   DealBreakerPayload,
   RatingPayload,
   RatingResponse,
+  RefreshTokenResponse,
 } from "@/lib/types/auth";
 import { encodeBase64 } from "@/lib/base64";
+import { getRefreshToken } from "./storage";
+import { useAuthStore } from "@/store/auth.store";
 
 export const useAuth = () => {
   const { http } = useHttp();
@@ -330,16 +333,37 @@ export const useAuth = () => {
 
   // Refresh token mutation
   const useRefreshTokenMutation = (): UseMutationResult<
-    AuthResponse,
+    RefreshTokenResponse,
     Error,
     void
   > => {
     return useMutation({
       mutationFn: async () => {
-        const response = await http.post<AuthResponse>(
+        const refreshToken = await getRefreshToken();
+
+        if (!refreshToken) {
+          throw new Error("No refresh token available");
+        }
+
+        const response = await http.post<RefreshTokenResponse>(
           endpoints.auth.refreshToken,
-          {},
+          { token: refreshToken },
         );
+
+        const tokenData = response.data?.data;
+        const accessToken = tokenData?.accessToken || tokenData?.token;
+
+        if (!accessToken) {
+          throw new Error("Refresh token did not return a new access token");
+        }
+
+        await useAuthStore
+          .getState()
+          .setTokens(
+            accessToken,
+            tokenData.newRefreshToken || tokenData.refreshToken || refreshToken,
+          );
+
         return response.data;
       },
     });

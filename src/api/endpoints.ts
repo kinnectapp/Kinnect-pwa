@@ -8,8 +8,8 @@ export const endpoints = {
     forgotPassword: "/auth/forgot-password",
     resetPassword: "/auth/forgot-password/reset",
     logout: "/auth/logout",
-    refreshToken: "/v1/auth/token",
-    googleAuth: "/v1/auth/google",
+    refreshToken: "/auth/token",
+    googleAuth: "/auth/google",
     appleAuth: "/auth/apple",
   },
   users: {

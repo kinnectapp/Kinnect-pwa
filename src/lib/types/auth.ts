@@ -101,6 +101,17 @@ export interface AuthResponse {
   status: boolean | string;
 }
 
+export interface RefreshTokenResponse {
+  data: {
+    token: string;
+    newRefreshToken: string;
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  message: string;
+  status: boolean | string;
+}
+
 export interface OtpResponse {
   data: {
     email: string;
