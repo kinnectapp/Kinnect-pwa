@@ -134,7 +134,10 @@ export const attachAuthInterceptors = (client: AxiosInstance) => {
 
             const tokenData = data?.data ?? data ?? {};
             const newAccessToken = tokenData.accessToken || tokenData.token;
-            const newRefreshToken = tokenData.refreshToken || storedRefreshToken;
+            const newRefreshToken =
+              tokenData.newRefreshToken ||
+              tokenData.refreshToken ||
+              storedRefreshToken;
 
             if (!newAccessToken) {
               throw new Error("Refresh token did not return a new access token");
