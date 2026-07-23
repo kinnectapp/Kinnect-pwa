@@ -205,7 +205,7 @@ export default function DealBreakers() {
       {/* Decorative elements */}
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between mb-8">
+      <div className="relative z-10 flex items-center justify-between mb-4">
         <button
           onClick={handleBack}
           className="bg-gray-700/50 hover:bg-gray-600/50 p-2 rounded-full transition"
@@ -216,9 +216,13 @@ export default function DealBreakers() {
           Deal Breakers
         </h1>
         <div className="w-10"></div>
+         
       </div>
 
       {/* Progress */}
+       <span className="text-gray-300 m-auto mb-8 max-w-[80%] text-center text-[12px]">
+               Rank your dealbreaker from 1 to 5, where 1 is the lowest and 5 is the highest .
+              </span>
       <div className="relative z-10 text-center mb-2">
         <p className="text-sm  text-gray-300">
           {currentQuestion + 1} / {dealBreakerQuestionList.length}
