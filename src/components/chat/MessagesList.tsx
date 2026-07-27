@@ -422,6 +422,7 @@ const MessagesList: React.FC = () => {
         (() => {
           const normalChats = list.filter(
             (item) =>
+              !!item.lastMessageAt &&
               !(user?.blockedUsers as number[] | undefined)?.includes(
                 Number(item.userId),
               ),
