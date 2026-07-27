@@ -41,6 +41,8 @@ import {
   MessageInput,
   TypingIndicator,
 } from "stream-chat-react";
+import { isKikiUsername } from "@/lib/subscription";
+import { usePersonalChatAccess } from "@/hooks/usePersonalChatAccess";
 
 type Props = {
   channelId: string;
@@ -85,6 +87,7 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [partnerId, setPartnerId] = useState<string>("");
   const [partnerFullName, setPartnerFullName] = useState<string>("");
+  const [partnerUsername, setPartnerUsername] = useState<string>("");
   const [partnerAge, setPartnerAge] = useState<string>("");
   const [partnerImage, setPartnerImage] = useState<string>("");
   const [partnerLocation, setPartnerLocation] = useState<string>("");
@@ -100,6 +103,8 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   const [isPerformingAction, setIsPerformingAction] = useState(false);
 
   const currentUserId = useMemo(() => String(user?.id || ""), [user?.id]);
+    const personalChatAccess = usePersonalChatAccess(partnerId, channel?.cid);
+  
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const jiltAfterBlock = useRef(false);
 
@@ -156,6 +161,13 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         );
 
         setPartnerId(otherMember?.user_id || "");
+         setPartnerUsername(
+          String(
+            (otherMember?.user as any)?.username ||
+              (otherMember?.user as any)?.name ||
+              "",
+          ),
+        );
         setPartnerLocation(
           `${(otherMember?.user as any)?.state || ""} ${(otherMember?.user as any)?.country || ""}`.trim(),
         );
@@ -194,6 +206,7 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
         const fullUserData = await chatService.getUserById(partnerId);
         if (fullUserData && isMounted) {
           const resp = fullUserData?.data?.resp;
+           setPartnerUsername(resp?.username || "");
           setPartnerFullName(
             resp?.incognito
               ? resp?.username || ""
@@ -401,6 +414,12 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
   }, [partnerAge]);
 
   const isPersonalChat = channel?.type === "messaging";
+  const isKikiPartner =
+    isKikiUsername(partnerUsername) ||
+    isKikiUsername(partnerFullName) ||
+    isKikiUsername(title);
+    const canShareMediaWithPartner =
+    isKikiPartner || personalChatAccess.canShareMedia;
 
   const isPartnerBlocked = useMemo(() => {
     if (!isPersonalChat || !partnerId || !user?.blockedUsers) return false;
@@ -621,7 +640,7 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                     messageActions={["react", "quote", "delete"]}
                     head={
                       <div className="flex justify-center gap-2 flex-col items-center pt-3 pb-4">
-                        <img
+                        {/* <img
                           src={
                             isPersonalChat
                               ? partnerImage || UserImg
@@ -637,7 +656,35 @@ const TestChatPage: React.FC<Props> = ({ channelId: rawChannelId }) => {
                           }
                           alt=""
                           className="w-[60px] object-cover h-[60px] rounded-full border"
-                        />
+                        /> */}
+
+
+                        {isPersonalChat && !canShareMediaWithPartner ? (
+                                        <div className="relative w-[60px] h-[60px] rounded-full border overflow-hidden flex-shrink-0">
+                                          <div
+                                            className="absolute inset-0 scale-110  blur-sm "
+                                            style={{
+                                              backgroundImage: `url(${partnerImage || UserImg})`,
+                                              backgroundSize: "cover",
+                                              backgroundPosition: "center",
+                                            }}
+                                          />
+                                          <div
+                                            className="absolute inset-0 select-none"
+                                            onContextMenu={(e) => e.preventDefault()}
+                                            onDragStart={(e) => e.preventDefault()}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <img
+                                          src={partnerImage || UserImg}
+                                          alt=""
+                                          className="w-[50px] h-[50px] object-cover rounded-full border"
+                                        />
+                                      )}
+
+
+
                         {isPersonalChat && partnerFullName && (
                           <p className="text-[#1C1C1C] font-medium text-[14px]">
                             {title ?? ""}
