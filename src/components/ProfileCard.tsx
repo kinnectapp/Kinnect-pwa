@@ -328,8 +328,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex gap-6">
+        {/* Spacer so content isn't hidden behind the fixed action bar */}
+        <div className="h-24" />
+      </div>
+
+      {/* Action Buttons — fixed to the bottom of the viewport */}
+      <div className="fixed inset-x-0 bottom-0 z-20 bg-[#00000000] backdrop-blur-[1px] border-t border-gray-100 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4">
+        <div className="mx-auto flex w-full max-w-sm gap-6 px-4">
           <Button
             onClick={() => {
               // if (messageDisabled) {
