@@ -36,13 +36,28 @@ const isIosSafari = () => {
 
 type InstallPromptType = "android" | "ios" | null;
 
+const UPDATE_CHECK_INTERVAL_MS = 60 * 1000;
+
 export const PWAUpdatePrompt: React.FC = () => {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(registration: unknown) {
-      console.log("SW registered", registration);
+    onRegisteredSW(_swScriptUrl, registration) {
+      if (!registration) return;
+
+      // Browsers only re-check the SW script passively (on navigation, at
+      // most once/24h). Poll explicitly so installed/home-screen users pick
+      // up new releases without having to reinstall the app.
+      const checkForUpdate = () => registration.update().catch(() => {});
+
+      window.setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          checkForUpdate();
+        }
+      });
     },
     onRegisterError(error: unknown) {
       console.error("SW registration error", error);
