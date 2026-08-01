@@ -23,8 +23,6 @@ declare module "*.gif" {
   export default src;
 }
 
-declare module "virtual:pwa-register/react";
-
 interface Window {
   google?: {
     accounts: {
