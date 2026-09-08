@@ -119,17 +119,31 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
   const prevUserIdRef = useRef<string | number | null | undefined>(user?.id);
   const [client, setClient] = useState<StreamChat | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const retryRef = useRef<() => void>(() => {});
 
   // Bootstrap and connect on mount
   useEffect(() => {
     let isMounted = true;
     let unsubscribe: (() => void) | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    let connecting = false;
+    let connected = false;
 
     const bootstrap = async () => {
-      if (!user) return;
+      if (!user || !isMounted || connecting || connected) return;
+      clearTimeout(retryTimer);
+      if (!navigator.onLine) {
+        setConnectError("You're offline. Chat will retry when you're back online.");
+        return;
+      }
+      connecting = true;
+      setConnectError(null);
       try {
         const profileResponse = await chatService.getProfile();
+        if (!isMounted) return;
         const profileUser =
+          profileResponse?.data?.user ??
           profileResponse?.data?.resp ?? profileResponse?.data?.data;
         if (profileUser && typeof profileUser === "object") {
           await setUser(profileUser as Record<string, unknown>);
@@ -137,9 +151,10 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
             await connectStreamUser(profileUser as User);
           }
         } else {
-          await connectStreamUser(user);
+          await connectStreamUser(useAuthStore.getState().user ?? user);
         }
 
+        if (!isMounted) return;
         const streamClient = getStreamClient();
         const currentUserId = String(user.id);
 
@@ -172,6 +187,8 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
 
         if (isMounted) {
           setClient(streamClient);
+          setConnectError(null);
+          connected = true;
         }
 
         void registerStreamPushDevice(streamClient, currentUserId).catch(
@@ -180,7 +197,11 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
           },
         );
 
-        await refreshUnreadState();
+        const safelyRefreshUnreadState = () => {
+          void refreshUnreadState().catch((error) => {
+            console.warn("Unable to refresh chat previews:", error);
+          });
+        };
 
         unsubscribe = streamClient.on((event) => {
           if (!isMounted) return;
@@ -192,9 +213,10 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
             event.type === "message.new" ||
             event.type === "notification.message_new" ||
             event.type === "notification.added_to_channel" ||
-            event.type === "notification.mark_read"
+            event.type === "notification.mark_read" ||
+            event.type === "connection.recovered"
           ) {
-            void refreshUnreadState();
+            safelyRefreshUnreadState();
           }
 
           if (event.type === "message.new" && event.channel_id) {
@@ -213,13 +235,37 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
             }
           }
         }).unsubscribe;
+        safelyRefreshUnreadState();
       } catch (error) {
         console.error("Failed to initialize Stream chat", error);
         if (isMounted) {
-          setConnectError("Chat is unavailable. Please refresh to try again.");
+          attempts += 1;
+          const willRetry = attempts <= 4;
+          setConnectError(
+            willRetry
+              ? "Chat couldn't connect. Retrying automatically..."
+              : "Chat couldn't connect. Check your connection and try again.",
+          );
+          if (willRetry) {
+            retryTimer = setTimeout(() => void bootstrap(), 2000 * 2 ** (attempts - 1));
+          }
         }
+      } finally {
+        connecting = false;
       }
     };
+
+    const retry = () => {
+      if (!isMounted || connecting || connected) return;
+      attempts = 0;
+      void bootstrap();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") retry();
+    };
+    retryRef.current = retry;
+    window.addEventListener("online", retry);
+    document.addEventListener("visibilitychange", onVisible);
 
     if (user?.id) {
       setConnectError(null);
@@ -228,6 +274,9 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
 
     return () => {
       isMounted = false;
+      clearTimeout(retryTimer);
+      window.removeEventListener("online", retry);
+      document.removeEventListener("visibilitychange", onVisible);
       if (unsubscribe) {
         unsubscribe();
       }
@@ -269,8 +318,15 @@ export const StreamChatProvider: React.FC<Props> = ({ children }) => {
     return (
       <>
         {children}
-        <div className="fixed bottom-20 left-0 right-0 mx-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 shadow-sm">
+        <div role="status" className="fixed bottom-20 left-0 right-0 z-50 mx-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 shadow-sm">
           {connectError}
+          <button
+            type="button"
+            className="ml-3 font-semibold underline"
+            onClick={() => retryRef.current()}
+          >
+            Retry
+          </button>
         </div>
       </>
     );
