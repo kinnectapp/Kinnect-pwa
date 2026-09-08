@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { CHAT_MEDIA_UNLOCK_DAYS } from "@/hooks/usePersonalChatAccess";
 import { chatService } from "@/services/chat.service";
 import KinnectChatBtn from "../ai/KinnectChatBtn";
+import chatEmptyStateImage from "@/assets/images/session.svg";
 
 const UNLOCK_MS = CHAT_MEDIA_UNLOCK_DAYS * 24 * 60 * 60 * 1000;
 
@@ -131,7 +132,8 @@ const ChannelListItem: React.FC<{
 
   const cached = userImageCache.get(userId);
   const [displayImage, setDisplayImage] = useState(
-    cached || (item.image && item.image !== "/pwa-192x192.png" ? item.image : ""),
+    cached ||
+      (item.image && item.image !== "/pwa-192x192.png" ? item.image : ""),
   );
   const [isLoading, setIsLoading] = useState(needsEnrich && !cached);
 
@@ -161,9 +163,8 @@ const ChannelListItem: React.FC<{
     };
   }, [userId, needsEnrich]);
 
-
   // Female avatar
-const femaleAvatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${userId}`;
+  const femaleAvatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${userId}`;
 
   const name = item.name || "Direct Message";
   const image = displayImage || item.image || "";
@@ -174,40 +175,46 @@ const femaleAvatar = `https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${
       onClick={() => onClick(name, image)}
       className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-100"
     >
-      {isLoading ? (
-        <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#F3F3F6] animate-pulse" />
-      ) : <img className="h-12 w-12 flex-shrink-0 rounded-full" src={femaleAvatar} alt=""  />
-      
-      
-      // item.canShareMedia !== true ? (
-      //   <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden">
-      //     <div
-      //       className="absolute inset-0 blur-[2px]"
-      //       style={{
-      //         backgroundImage: `url(${image || "/pwa-192x192.png"})`,
-      //         backgroundSize: "cover",
-      //         backgroundPosition: "center",
-      //       }}
-      //     />
-      //     <div
-      //       className="absolute inset-0 select-none"
-      //       onContextMenu={(e) => e.preventDefault()}
-      //       onDragStart={(e) => e.preventDefault()}
-      //     />
-      //   </div>
-      // ) : image ? (
-      //   <img
-      //     src={image}
-      //     alt={name}
-      //     className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-      //   />
-      // ) : (
-      //   <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
-      //     <span className="text-[#55288D] font-semibold text-lg leading-none">
-      //       {initial}
-      //     </span>
-      //   </div>
-      // )
+      {
+        isLoading ? (
+          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#F3F3F6] animate-pulse" />
+        ) : (
+          <img
+            className="h-12 w-12 flex-shrink-0 rounded-full"
+            src={femaleAvatar}
+            alt=""
+          />
+        )
+
+        // item.canShareMedia !== true ? (
+        //   <div className="relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden">
+        //     <div
+        //       className="absolute inset-0 blur-[2px]"
+        //       style={{
+        //         backgroundImage: `url(${image || "/pwa-192x192.png"})`,
+        //         backgroundSize: "cover",
+        //         backgroundPosition: "center",
+        //       }}
+        //     />
+        //     <div
+        //       className="absolute inset-0 select-none"
+        //       onContextMenu={(e) => e.preventDefault()}
+        //       onDragStart={(e) => e.preventDefault()}
+        //     />
+        //   </div>
+        // ) : image ? (
+        //   <img
+        //     src={image}
+        //     alt={name}
+        //     className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+        //   />
+        // ) : (
+        //   <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[#E8E0F0] flex items-center justify-center">
+        //     <span className="text-[#55288D] font-semibold text-lg leading-none">
+        //       {initial}
+        //     </span>
+        //   </div>
+        // )
       }
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-semibold text-gray-900">{name}</h3>
@@ -363,7 +370,16 @@ const MessagesList: React.FC = () => {
       : cachedChannels;
 
   if (!list.length && !hasError) {
-    return <p className="p-4 text-sm text-[#77707F]">No personal chats yet.</p>;
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+        <img
+          src={chatEmptyStateImage}
+          alt="People connecting through chat"
+          className="mb-6 h-auto w-full max-w-[220px]"
+        />
+        <p className="text-base font-semibold text-[#2D2533]">No chat yet</p>
+      </div>
+    );
   }
 
   return (

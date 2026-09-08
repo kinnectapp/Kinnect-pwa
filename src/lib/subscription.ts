@@ -139,9 +139,37 @@ const hasActivePaidSubscription = (user: User | null | undefined) => {
   return hasFutureExpiry(user?.subExpiryDate);
 };
 
+
+const FORCE_LIFETIME_FOR_TESTING = true;
+
+
 export const getSubscriptionPermissions = (
   user: User | null | undefined,
 ): SubscriptionPermissions => {
+
+
+  if (FORCE_LIFETIME_FOR_TESTING) {
+    return {
+      tier: "lifetime",
+      isPaid: true,
+      hasActiveSubscription: true,
+      communityAccess: "full",
+      canJoinCommunityConversation: true,
+      kikiChatAccess: "personalized",
+      kikiCoachingAccess: "personalized",
+      canAccessLiveCoach: true,
+      canAccessSponsoredFirstDates: true,
+      canReceiveSpendingVoucher: true,
+      canPurchaseEventTickets: true,
+      hasGuaranteedEventAccess: true,
+      incognitoControl: "full",
+      canToggleIncognito: true,
+      canToggleIncognitoToday: true,
+    };
+  }
+
+
+
   const tier = resolveSubscriptionTier(user);
   const hasActiveSubscription = hasActivePaidSubscription(user);
   const effectiveTier =
