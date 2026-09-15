@@ -70,4 +70,11 @@ export const endpoints = {
     initialize: "/paystack/initialize",
     verify: "/paystack/verify",
   },
+  referral: {
+    dashboard: "/referral",
+    referrals: "/referral/users",
+    banks: "/paystack/banks",
+    resolveAccount: "/paystack/resolve-account",
+    withdraw: "/referral/withdraw",
+  },
 };
