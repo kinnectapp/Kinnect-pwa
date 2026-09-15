@@ -51,8 +51,8 @@ const ReferralPage: React.FC = () => {
   }, []);
 
   return (
-    <main className="min-h-[100dvh] bg-white pb-10">
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-[#EFE8F4] bg-white px-4">
+    <main className="min-h-[100dvh] bg-white pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+      <header className="sticky top-0 z-10 flex min-h-[calc(4rem+env(safe-area-inset-top))] items-center justify-between border-b border-[#EFE8F4] bg-white px-4 pt-[env(safe-area-inset-top)]">
         <button type="button" onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F1ECF5]" aria-label="Go back">
           <ChevronLeft size={19} />
         </button>
