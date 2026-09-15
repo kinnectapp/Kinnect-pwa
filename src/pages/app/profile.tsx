@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronRight, Star, ChevronLeft, Minus, Plus, X } from "lucide-react";
+import { ChevronRight, Star, ChevronLeft, Minus, Plus, X, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/api/auth";
@@ -532,6 +532,13 @@ const ProfilePage: React.FC = () => {
     (Array.isArray(user?.profilePhotos) ? user?.profilePhotos[0] : null) ||
     UserImage;
   const profileStrength = user ? calculateProfileStrength(user) : 0;
+  // Temporary preview fallback: show Referral until the backend starts sending
+  // the feature flag. An explicit false from any supported flag still hides it.
+  const referralEnabled =
+    user?.referral_enabled ??
+    user?.referral_enable ??
+    user?.reveral_enabled ??
+    true;
 
   const handleConfirmLogout = React.useCallback(async () => {
     try {
@@ -552,6 +559,13 @@ const ProfilePage: React.FC = () => {
       label: "My Profile",
       onClick: () => navigate("/app/my-profile"),
     },
+    ...(referralEnabled
+      ? [{
+          icon: () => <Gift size={16} className="text-[#6B7280]" />,
+          label: "Referral",
+          onClick: () => navigate("/app/referral"),
+        }]
+      : []),
     {
       icon: SubscriptionIcon,
       label: "Subscriptions",

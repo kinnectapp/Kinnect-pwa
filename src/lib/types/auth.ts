@@ -13,6 +13,7 @@ export interface RegisterPayload {
   dob: string;
   phone: string;
   confirmPassword: string;
+  referralCode?: string;
 }
 
 export interface SendOtpPayload {
@@ -77,6 +78,9 @@ export interface User {
   isPaid?: boolean;
   isPremium?: boolean;
   hasActiveSubscription?: boolean;
+  referral_enabled?: boolean;
+  referral_enable?: boolean;
+  reveral_enabled?: boolean;
   createdAt: string;
   updatedAt: string;
   [key: string]: unknown;

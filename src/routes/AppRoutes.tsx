@@ -14,6 +14,8 @@ import PrivacyPolicyPage from "@/pages/app/privacy-policy";
 import SubscriptionsPage from "@/pages/app/subscriptions";
 import ProfilePage from "@/pages/app/profile";
 import NotificationsPage from "@/pages/app/notifications";
+import ReferralPage from "@/pages/app/referral";
+import ReferralEarningsPage from "@/pages/app/referral-earnings";
 import MainComponent from "@/pages/main";
 import { Routes, Route } from "react-router-dom";
 
@@ -68,6 +70,11 @@ const AppRoutes = () => (
     <Route
       path="blocked-users"
       element={<LazyRoute Component={BlockedUsersPage} />}
+    />
+    <Route path="referral" element={<LazyRoute Component={ReferralPage} />} />
+    <Route
+      path="referral/earnings"
+      element={<LazyRoute Component={ReferralEarningsPage} />}
     />
   </Routes>
 );
