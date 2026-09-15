@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ interface RegistrationData {
   dob: string;
   password: string;
   confirmPassword: string;
+  referralCode: string;
 }
 
 type RegistrationDraft = RegistrationData & {
@@ -298,6 +299,7 @@ const getDuplicateRegistrationError = (
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { useRegisterMutation } = useAuth();
   const { mutate: register, isPending } = useRegisterMutation();
   const defaultCountry = COUNTRIES.find((country) => country.iso3 === "NGA");
@@ -326,6 +328,7 @@ const Register: React.FC = () => {
     dob: storedDraft?.dob || "",
     password: storedDraft?.password || "",
     confirmPassword: storedDraft?.confirmPassword || "",
+    referralCode: searchParams.get("ref")?.trim() || storedDraft?.referralCode || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = React.useState(false);
@@ -477,6 +480,7 @@ const Register: React.FC = () => {
           const payload: RegisterPayload = {
             ...formData,
             phone: `${countryCode}${normalizedPhone}`,
+            referralCode: formData.referralCode.trim() || undefined,
           };
 
           // Store registration data in localStorage so it survives tab close
@@ -702,6 +706,20 @@ const Register: React.FC = () => {
                 <p className="text-xs text-red-500">{errors.dob}</p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[14px] font-[500] text-[#1C1C1C]">
+              Referral Code <span className="font-normal text-[#8B8792]">(Optional)</span>
+            </Label>
+            <Input
+              name="referralCode"
+              placeholder="Enter referral code"
+              value={formData.referralCode}
+              onChange={handleChange}
+              autoCapitalize="characters"
+              className="h-11 border-[#E4E4F0] text-[14px] [-webkit-text-size-adjust:100%]"
+            />
           </div>
 
           <div className="space-y-1.5">
